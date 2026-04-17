@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vercel *)",
+      "Bash(npm run *)",
+      "Bash(curl -s \"https://geoserver-portal.aodn.org.au/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=imos:anmn_wave_map&outputFormat=application/json&maxFeatures=20\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\")",
+      "Bash(curl -s \"https://geoserver-portal.aodn.org.au/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=imos:anmn_wave_map&outputFormat=application/json&maxFeatures=20\" -o anmn.json)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('anmn.json','utf8'\\); const j=JSON.parse\\(d\\); j.features?.slice\\(0,5\\).forEach\\(f=>console.log\\(JSON.stringify\\(f.properties\\)\\)\\)\")",
+      "Bash(curl -s \"https://geoserver-portal.aodn.org.au/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=imos:anmn_nrs_rt_wave_timeseries_map&outputFormat=application/json&maxFeatures=30\" -o nrt_wave.json)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('nrt_wave.json','utf8'\\); const j=JSON.parse\\(d\\); j.features?.forEach\\(f=>console.log\\(JSON.stringify\\({site:f.properties.site_code,lat:f.properties.mean_latitude,lng:f.properties.mean_longitude,last:f.properties.time_coverage_end?.slice\\(0,16\\)}\\)\\)\\)\")",
+      "Bash(curl -s \"https://www.transport.wa.gov.au/CMSPages/GetCurrentWaveData.ashx\" -I)",
+      "Bash(curl -s \"https://www.transport.wa.gov.au/CMSPages/GetCurrentWaveData.ashx\")",
+      "Bash(curl -s \"https://oceancurrent.aodn.org.au/waverider/cotty.txt\" -I)",
+      "Bash(curl -s \"https://oceancurrent.aodn.org.au/waverider/cotty.txt\")",
+      "Bash(curl -s \"https://app.swellnet.com.au/api/buoy/cottesloe\" -I)",
+      "Bash(curl -s \"https://api.willyweather.com.au/v2/wave/data?locationId=5\" -I)",
+      "Bash(curl -s \"https://erddap.aodn.org.au/erddap/tabledap/IMOS_-_Coastal_Wave_Buoys_-_Western_Australia.json?time,sea_surface_wave_significant_height,sea_surface_wave_mean_period,sea_surface_primary_wave_from_direction&station_name=%22Cottesloe%22&orderByMax\\(%22time%22\\)&time%3E=now-3hours\")",
+      "Bash(curl -s \"https://erddap.aodn.org.au/erddap/search/index.json?searchFor=wave+buoy+western+australia&page=1&itemsPerPage=5\")",
+      "Bash(curl -s \"https://erddap.aodn.org.au/erddap/search/index.json?searchFor=wave+buoy+WA&page=1&itemsPerPage=5\" -o erddap.json)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('erddap.json','utf8'\\); try{const j=JSON.parse\\(d\\); console.log\\(JSON.stringify\\(j,null,2\\).slice\\(0,2000\\)\\)}catch\\(e\\){console.log\\(d.slice\\(0,500\\)\\)}\")",
+      "Bash(cd /tmp)",
+      "Bash(curl -s \"https://erddap.aodn.org.au/erddap/search/index.json?searchFor=cottesloe+wave&page=1&itemsPerPage=5\" -o e1.json)",
+      "Bash(curl -s \"https://erddap.aodn.org.au/erddap/tabledap/index.json?searchFor=wave+WA\" -o e2.json)",
+      "Bash(node_modules/.bin/next build *)",
+      "Bash(curl -s \"https://marine-api.open-meteo.com/v1/marine?latitude=-31.88&longitude=115.75&hourly=swell_wave_height,swell_wave_period,swell_wave_direction&models=icon_seamless&timezone=Australia%2FPerth&forecast_days=1\" -o icon_s.json)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('icon_s.json','utf8'\\)\\); const h=d.hourly; console.log\\('icon_seamless swellH[0..3]:', h?.swell_wave_height?.slice\\(0,3\\)\\)\")",
+      "Bash(curl -s \"https://marine-api.open-meteo.com/v1/marine?latitude=-31.88&longitude=115.75&hourly=swell_wave_height,swell_wave_period,swell_wave_direction&timezone=Australia%2FPerth&forecast_days=2\")",
+      "Bash(node -e \"const c=[]; process.stdin.on\\('data',d=>c.push\\(d\\)\\); process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(c.join\\(''\\)\\);console.log\\('no-model \\(default\\):',j.hourly?.swell_wave_height?.slice\\(0,4\\), '| model used:', j.model||'?'\\)}\\)\")",
+      "Bash(curl -s \"https://marine-api.open-meteo.com/v1/marine?latitude=-31.88&longitude=115.75&hourly=swell_wave_height&timezone=Australia%2FPerth&forecast_days=1\")",
+      "Bash(node -e \"const c=[]; process.stdin.on\\('data',d=>c.push\\(d\\)\\); process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(c.join\\(''\\)\\); delete j.hourly; console.log\\(JSON.stringify\\(j,null,2\\)\\)}\\)\")",
+      "mcp__claude_ai_Vercel__check_domain_availability_and_price"
+    ]
+  }
+}
