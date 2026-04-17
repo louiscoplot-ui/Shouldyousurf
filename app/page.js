@@ -378,16 +378,26 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
     return out;
   }, [query]);
 
-  async function geoSearch() {
-    if (!query.trim()) return;
-    setSearching(true); setSearchResults([]);
+  async function geoSearch(q) {
+    const term = (q ?? query).trim();
+    if (!term) { setSearchResults([]); return; }
+    setSearching(true);
     try {
-      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&country=AU&language=en&format=json`;
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&language=en&format=json`;
       const res = await fetch(url);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch {} finally { setSearching(false); }
   }
+
+  // Debounced auto-search as the user types — covers beaches worldwide.
+  useEffect(() => {
+    const term = query.trim();
+    if (term.length < 2) { setSearchResults([]); return; }
+    const timer = setTimeout(() => { geoSearch(term); }, 450);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -403,25 +413,35 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === "Enter" && geoSearch()}
               placeholder={t("search_placeholder")}/>
-            <button className="search-btn" onClick={geoSearch}>{searching ? "…" : "🔍"}</button>
+            <button className="search-btn" onClick={() => geoSearch()}>{searching ? "…" : "🔍"}</button>
           </div>
 
-          {searchResults.length > 0 && (
+          {query.trim().length >= 2 && (
             <>
-              <div className="region-header">{t("search_results")}</div>
-              {searchResults.map((r, i) => (
-                <div key={i} className="break-row">
-                  <button className="break-row-main" onClick={() => onSelect({
-                    id: `custom-${r.latitude.toFixed(4)}-${r.longitude.toFixed(4)}`,
-                    name: r.name, region: `${r.admin1 || ""}, AU`,
-                    lat: r.latitude, lng: r.longitude,
-                    idealSwellDir: 225, offshoreWindDir: 90, type: "beach",
-                  })}>
-                    <div className="break-row-title">{r.name}</div>
-                    <div className="break-row-sub">{r.admin1}{r.admin2 ? ` · ${r.admin2}` : ""}</div>
-                  </button>
-                </div>
-              ))}
+              <div className="region-header">
+                {searching ? t("searching") : t("search_results")}
+              </div>
+              {searchResults.map((r, i) => {
+                const country = r.country_code ? `${r.country_code}` : "";
+                const regionLabel = [r.admin1, r.admin2].filter(Boolean).join(" · ");
+                return (
+                  <div key={i} className="break-row">
+                    <button className="break-row-main" onClick={() => onSelect({
+                      id: `custom-${r.latitude.toFixed(4)}-${r.longitude.toFixed(4)}`,
+                      name: r.name,
+                      region: [regionLabel, country].filter(Boolean).join(", ") || r.name,
+                      lat: r.latitude, lng: r.longitude,
+                      idealSwellDir: 225, offshoreWindDir: 90, type: "beach",
+                    })}>
+                      <div className="break-row-title">{r.name} <span className="break-row-flag">{country}</span></div>
+                      <div className="break-row-sub">{regionLabel || "—"}</div>
+                    </button>
+                  </div>
+                );
+              })}
+              {!searching && searchResults.length === 0 && (
+                <div className="break-empty mono">{t("search_none")}</div>
+              )}
             </>
           )}
 
@@ -1260,6 +1280,8 @@ export default function SurfApp() {
         .break-row-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); margin-top: 2px; }
         .break-row-fav { background: none; border: none; cursor: pointer; font-size: 14px; padding: 6px; color: var(--text-mu); }
         .break-row-fav.active { color: var(--warn); }
+        .break-row-flag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); font-weight: 400; margin-left: 4px; }
+        .break-empty { font-size: 11px; color: var(--text-mu); padding: 12px 0; text-align: center; letter-spacing: 0.04em; }
 
         .lang-row { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; border-top: 1px solid var(--border); padding: 14px 0; cursor: pointer; color: var(--text); text-align: left; }
         .lang-row.active { color: var(--accent); }
