@@ -1065,6 +1065,7 @@ export default function SurfApp() {
           })}
         </div>
 
+        <div className="disclaimer">{t("disclaimer")}</div>
         <div className="footer-text mono">{t("footer")}</div>
       </div>
 
@@ -1246,7 +1247,8 @@ export default function SurfApp() {
         .hd-cell-name { font-size: 8px; color: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
         .hd-cell-v { font-size: 8px !important; padding: 2px 4px !important; }
 
-        .footer-text { font-size: 9px; color: var(--text-dim); text-align: center; margin-top: 32px; letter-spacing: 0.05em; }
+        .disclaimer { font-size: 10px; color: var(--text-mu); text-align: center; margin-top: 36px; line-height: 1.5; max-width: 360px; margin-left: auto; margin-right: auto; font-style: italic; opacity: 0.75; }
+        .footer-text { font-size: 9px; color: var(--text-dim); text-align: center; margin-top: 10px; letter-spacing: 0.05em; }
         .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(238,244,248,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border-str); padding: 8px 16px 12px; display: flex; align-items: center; gap: 10px; z-index: 50; }
         .sb-time { font-size: 10px; color: var(--text-dim); min-width: 34px; }
         .sb-score { font-size: 22px; font-weight: 500; line-height: 1; min-width: 28px; }
