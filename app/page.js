@@ -574,7 +574,7 @@ export default function SurfApp() {
       const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
       const pastWindUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
       const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${encodeURIComponent(tz)}&forecast_days=5`;
-      const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
+      const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
 
       const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
         fetch(pastMarineUrl).catch(() => null),
@@ -643,7 +643,17 @@ export default function SurfApp() {
       const allHoursFlat = orderedDays.flatMap(([, hrs]) => hrs);
       const todayIdx = orderedDays.findIndex(([d]) => d === todayStr);
 
-      setData({ hours: allHoursFlat, days: orderedDays });
+      const sunByDay = {};
+      if (futureWind.daily?.time) {
+        futureWind.daily.time.forEach((d, i) => {
+          sunByDay[d] = {
+            sunrise: futureWind.daily.sunrise?.[i] ?? null,
+            sunset: futureWind.daily.sunset?.[i] ?? null,
+          };
+        });
+      }
+
+      setData({ hours: allHoursFlat, days: orderedDays, sunByDay });
       setSelected(null);
       const tIdx = todayIdx >= 0 ? todayIdx : 0;
       setActiveDay(tIdx);
@@ -724,6 +734,15 @@ export default function SurfApp() {
   const faceFtLow = Math.max(1, Math.floor(mToFt(faceM) - 0.5));
   const faceFtHigh = Math.ceil(mToFt(faceM) + 0.5);
   const windKmh = Math.round(knToKmh(sel.windSpeedKn));
+  const selIdx = dayHours.indexOf(sel);
+  const nextHour = selIdx >= 0 ? dayHours[selIdx + 1] : null;
+  const windTrend = (() => {
+    if (!nextHour) return null;
+    const next = Math.round(knToKmh(nextHour.windSpeedKn));
+    const diff = next - windKmh;
+    if (Math.abs(diff) < 3) return null;
+    return diff > 0 ? "up" : "down";
+  })();
 
   function toggleExpand(timeKey) {
     setExpandedHours(prev => { const n = new Set(prev); n.has(timeKey) ? n.delete(timeKey) : n.add(timeKey); return n; });
@@ -765,6 +784,7 @@ export default function SurfApp() {
           <div className="spot-region">{spot.region} · {t(spot.type || "beach")}{spot.heavy ? ` · ${t("heavy")}` : ""}</div>
         </div>
 
+        <div className="sticky-tabs">
         <div className="tabs" ref={tabsRef}>
           {dayEntries.map(([day], di) => {
             const { label, date } = unifiedTabLabel(day, tz, t);
@@ -784,6 +804,7 @@ export default function SurfApp() {
               </button>
             );
           })}
+        </div>
         </div>
 
         <div className="verdict">
@@ -840,7 +861,10 @@ export default function SurfApp() {
             </div>
             <div className="metric">
               <div className="metric-label mono">{t("wind")}</div>
-              <div className="metric-value">{windKmh}<span className="metric-unit">km/h</span></div>
+              <div className="metric-value">
+                {windKmh}<span className="metric-unit">km/h</span>
+                {windTrend && <span className="trend" aria-label={windTrend === "up" ? "rising" : "dropping"}>{windTrend === "up" ? "↗" : "↘"}</span>}
+              </div>
               <div className="metric-sub mono">{degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}</div>
             </div>
           </div>
@@ -849,7 +873,12 @@ export default function SurfApp() {
             const airTemp = sel.airTemp != null ? Math.round(sel.airTemp) : null;
             const seaTemp = dayHours.find(h => h.seaTemp != null)?.seaTemp ?? null;
             const curVel = sel.currentVel;
-            if (airTemp == null && seaTemp == null) return null;
+            const dayKey = sel.time.split("T")[0];
+            const sun = data.sunByDay?.[dayKey];
+            const fmtTime = (iso) => iso ? new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz }).toLowerCase().replace(" ", "") : null;
+            const sunrise = sun ? fmtTime(sun.sunrise) : null;
+            const sunset = sun ? fmtTime(sun.sunset) : null;
+            if (airTemp == null && seaTemp == null && !sunrise) return null;
             return (
               <div className="temp-strip">
                 {airTemp != null && (
@@ -862,6 +891,15 @@ export default function SurfApp() {
                   <div className="temp-item">
                     <div className="temp-label mono">{t("water_temp")}</div>
                     <div className="metric-value">{Math.round(seaTemp)}<span className="metric-unit">°C</span></div>
+                  </div>
+                )}
+                {sunrise && sunset && (
+                  <div className="temp-item">
+                    <div className="temp-label mono">{t("daylight")}</div>
+                    <div className="sun-times mono">
+                      <span>↑{sunrise}</span>
+                      <span>↓{sunset}</span>
+                    </div>
                   </div>
                 )}
                 {curVel != null && curVel > 0.05 && (
@@ -1069,7 +1107,8 @@ export default function SurfApp() {
 
         .history-badge { display: inline-block; font-size: 9px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2); border-radius: 4px; padding: 3px 8px; margin-bottom: 10px; }
 
-        .tabs { display: flex; gap: 2px; margin-bottom: 22px; background: var(--bg-el); padding: 3px; border-radius: 8px; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; animation: rise 0.5s 0.1s ease both; }
+        .sticky-tabs { position: sticky; top: 0; z-index: 21; background: var(--bg); margin: 0 -20px 14px; padding: 6px 20px 8px; }
+        .tabs { display: flex; gap: 2px; margin-bottom: 0; background: var(--bg-el); padding: 3px; border-radius: 8px; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; animation: rise 0.5s 0.1s ease both; }
         .tabs::-webkit-scrollbar { display: none; }
         .tab { flex: 0 0 auto; width: 56px; background: none; border: none; padding: 8px 2px; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-mu); touch-action: manipulation; }
         .tab.active { background: var(--bg-hi); }
@@ -1113,7 +1152,7 @@ export default function SurfApp() {
         .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
-        .sticky-info { position: sticky; top: 0; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
+        .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
         .face-height { padding: 18px 0 14px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
         .face-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
         .face-value { font-weight: 500; font-size: 46px; line-height: 1; letter-spacing: -0.03em; }
@@ -1127,6 +1166,9 @@ export default function SurfApp() {
         .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
         .metric-value { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; display: flex; align-items: baseline; gap: 4px; }
         .metric-unit { font-size: 12px; color: var(--text-mu); font-weight: 400; }
+        .trend { font-size: 14px; color: var(--text-dim); margin-left: 6px; line-height: 1; }
+        .sun-times { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text); line-height: 1.3; }
+        .sun-times span { white-space: nowrap; }
         .metric-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
         .temp-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
