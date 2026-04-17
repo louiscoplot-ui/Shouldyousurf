@@ -515,8 +515,7 @@ export default function SurfApp() {
     const isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
     if (!isMobile) return;
     try { if (localStorage.getItem("surf-pwa-shown")) return; } catch {}
-    const timer = setTimeout(() => setShowPwa(true), 2000);
-    return () => clearTimeout(timer);
+    setShowPwa(true);
   }, []);
 
   function saveCustomLang(cl) {
