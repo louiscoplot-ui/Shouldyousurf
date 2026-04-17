@@ -823,55 +823,57 @@ export default function SurfApp() {
           )}
         </div>
 
-        <div className="face-height">
-          <div className="face-label mono">{t("expected_face")}</div>
-          <div className="face-value serif">{faceFtLow}–{faceFtHigh} ft</div>
-          <div className="face-sub mono">{faceM.toFixed(1)} m · {sel.swellHeight?.toFixed(1)}m @ {sel.swellPeriod?.toFixed(0)}s</div>
-          <div className="face-hint">{t(describeFaceHeightKey(faceFtHigh))}</div>
-        </div>
-
-        <div className="metrics">
-          <div className="metric">
-            <div className="metric-label mono">{t("swell")}</div>
-            <div className="metric-value">{sel.swellHeight?.toFixed(1)}<span className="metric-unit">m</span></div>
-            <div className="metric-sub mono">{t("from")} {degToCompass(sel.swellDir)} · {sel.swellPeriod?.toFixed(0)}s</div>
+        <div className="sticky-info">
+          <div className="face-height">
+            <div className="face-label mono">{t("expected_face")}</div>
+            <div className="face-value serif">{faceFtLow}–{faceFtHigh} ft</div>
+            <div className="face-sub mono">{faceM.toFixed(1)} m · {sel.swellHeight?.toFixed(1)}m @ {sel.swellPeriod?.toFixed(0)}s</div>
+            <div className="face-hint">{t(describeFaceHeightKey(faceFtHigh))}</div>
           </div>
-          <div className="metric">
-            <div className="metric-label mono">{t("wind")}</div>
-            <div className="metric-value">{windKmh}<span className="metric-unit">km/h</span></div>
-            <div className="metric-sub mono">{degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}</div>
-          </div>
-        </div>
 
-        {(() => {
-          const airTemp = sel.airTemp != null ? Math.round(sel.airTemp) : null;
-          const seaTemp = dayHours.find(h => h.seaTemp != null)?.seaTemp ?? null;
-          const curVel = sel.currentVel;
-          if (airTemp == null && seaTemp == null) return null;
-          return (
-            <div className="temp-strip">
-              {airTemp != null && (
-                <div className="temp-item">
-                  <div className="temp-label mono">{t("air_temp")}</div>
-                  <div className="metric-value">{airTemp}<span className="metric-unit">°C</span></div>
-                </div>
-              )}
-              {seaTemp != null && (
-                <div className="temp-item">
-                  <div className="temp-label mono">{t("water_temp")}</div>
-                  <div className="metric-value">{Math.round(seaTemp)}<span className="metric-unit">°C</span></div>
-                </div>
-              )}
-              {curVel != null && curVel > 0.05 && (
-                <div className="temp-item">
-                  <div className="temp-label mono">{t("current")}</div>
-                  <div className="metric-value">{(curVel * 3.6).toFixed(1)}<span className="metric-unit">km/h</span></div>
-                  <div className="metric-sub mono">{degToCompass(sel.currentDir)}</div>
-                </div>
-              )}
+          <div className="metrics">
+            <div className="metric">
+              <div className="metric-label mono">{t("swell")}</div>
+              <div className="metric-value">{sel.swellHeight?.toFixed(1)}<span className="metric-unit">m</span></div>
+              <div className="metric-sub mono">{t("from")} {degToCompass(sel.swellDir)} · {sel.swellPeriod?.toFixed(0)}s</div>
             </div>
-          );
-        })()}
+            <div className="metric">
+              <div className="metric-label mono">{t("wind")}</div>
+              <div className="metric-value">{windKmh}<span className="metric-unit">km/h</span></div>
+              <div className="metric-sub mono">{degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}</div>
+            </div>
+          </div>
+
+          {(() => {
+            const airTemp = sel.airTemp != null ? Math.round(sel.airTemp) : null;
+            const seaTemp = dayHours.find(h => h.seaTemp != null)?.seaTemp ?? null;
+            const curVel = sel.currentVel;
+            if (airTemp == null && seaTemp == null) return null;
+            return (
+              <div className="temp-strip">
+                {airTemp != null && (
+                  <div className="temp-item">
+                    <div className="temp-label mono">{t("air_temp")}</div>
+                    <div className="metric-value">{airTemp}<span className="metric-unit">°C</span></div>
+                  </div>
+                )}
+                {seaTemp != null && (
+                  <div className="temp-item">
+                    <div className="temp-label mono">{t("water_temp")}</div>
+                    <div className="metric-value">{Math.round(seaTemp)}<span className="metric-unit">°C</span></div>
+                  </div>
+                )}
+                {curVel != null && curVel > 0.05 && (
+                  <div className="temp-item">
+                    <div className="temp-label mono">{t("current")}</div>
+                    <div className="metric-value">{(curVel * 3.6).toFixed(1)}<span className="metric-unit">km/h</span></div>
+                    <div className="metric-sub mono">{degToCompass(sel.currentDir)}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
 
         <div className="levels">
           <div className="levels-label mono">{t("can_you_surf")}</div>
@@ -1110,7 +1112,8 @@ export default function SurfApp() {
         .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
-        .face-height { padding: 22px 0; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
+        .sticky-info { position: sticky; top: 0; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
+        .face-height { padding: 18px 0 14px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
         .face-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
         .face-value { font-weight: 500; font-size: 46px; line-height: 1; letter-spacing: -0.03em; }
         .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 8px; letter-spacing: 0.03em; }
