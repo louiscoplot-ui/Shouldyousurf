@@ -112,12 +112,30 @@ function getWindTypeKey(sel, spot) {
   return "cross_shore";
 }
 
-function getLevel(s) {
+function getLevel(s, h, spot) {
   if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#16a34a" };
   if (s >= 55) return { labelKey: "score_55_74",  subKey: "score_55_74_sub",  color: "#65a30d" };
   if (s >= 35) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#ca8a04" };
-  if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#ea580c" };
-  return       { labelKey: "score_0_14",   subKey: "score_0_14_sub",   color: "#dc2626" };
+
+  // Below 35 — distinguish "truly flat" vs "waves ruined by wind" vs "small but OK".
+  if (h && spot) {
+    const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
+    const kmh = knToKmh(h.windSpeedKn);
+    const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
+    const isOnshore = windDelta >= 90;
+    const windIsBad = (isOnshore && kmh > 20) || kmh > 35;
+
+    if (faceFt < 1) {
+      return { labelKey: "score_flat", subKey: "score_flat_sub", color: "#dc2626" };
+    }
+    if (windIsBad) {
+      const color = s >= 15 ? "#ea580c" : "#dc2626";
+      return { labelKey: "score_blown", subKey: "score_blown_sub", color };
+    }
+  }
+
+  if (s >= 15) return { labelKey: "score_15_34", subKey: "score_15_34_sub", color: "#ea580c" };
+  return       { labelKey: "score_0_14",  subKey: "score_0_14_sub",  color: "#dc2626" };
 }
 
 function degToCompass(deg) {
@@ -231,19 +249,22 @@ function CustomLangModal({ onSave, onClose }) {
 }
 
 // ── PWA Install Prompt ─────────────────────────────────────────────────
-function PwaInstallPrompt({ onDismiss }) {
+function PwaInstallPrompt({ onDismiss, t }) {
   const [isIos, setIsIos] = useState(false);
+  const [inApp, setInApp] = useState(false);
   useEffect(() => {
-    setIsIos(/iPhone|iPad|iPod/.test(navigator.userAgent));
+    const ua = navigator.userAgent || "";
+    setIsIos(/iPhone|iPad|iPod/.test(ua));
+    setInApp(/Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|MicroMessenger|KAKAOTALK|TikTok|musical_ly|Snapchat|LinkedInApp|Twitter|Pinterest/i.test(ua));
   }, []);
+  const title = inApp ? t("pwa_inapp_title") : t("pwa_title");
+  const instructions = inApp ? t("pwa_inapp") : (isIos ? t("pwa_ios") : t("pwa_android"));
   return (
     <div className="pwa-banner">
-      <div className="pwa-icon">🏄</div>
+      <div className="pwa-icon">{inApp ? "🔗" : "🏄"}</div>
       <div className="pwa-content">
-        <div className="pwa-title">Add to your home screen</div>
-        <div className="pwa-instructions">
-          {isIos ? "Tap Share ⬆ → \"Add to Home Screen\"" : "Tap ⋮ → \"Install App\""}
-        </div>
+        <div className="pwa-title">{title}</div>
+        <div className="pwa-instructions">{instructions}</div>
       </div>
       <button className="pwa-close" onClick={onDismiss}>✕</button>
     </div>
@@ -691,7 +712,7 @@ export default function SurfApp() {
   if (!sel) return null;
 
   const { score, notes } = scoreSurf(sel, spot);
-  const level = getLevel(score);
+  const level = getLevel(score, sel, spot);
   const levelMatrix = surfabilityByLevel(sel, spot);
   const bestOfDay = dayHours.reduce((b, h) => {
     const s = scoreSurf(h, spot).score;
@@ -746,8 +767,12 @@ export default function SurfApp() {
         <div className="tabs" ref={tabsRef}>
           {dayEntries.map(([day], di) => {
             const { label, date } = unifiedTabLabel(day, tz, t);
-            const bestScore = dayEntries[di][1].reduce((m,h) => Math.max(m, scoreSurf(h, spot).score), 0);
-            const lv = getLevel(bestScore);
+            const bestHour = dayEntries[di][1].reduce((b, h) => {
+              const s = scoreSurf(h, spot).score;
+              return s > (b?.score ?? -1) ? { h, score: s } : b;
+            }, null);
+            const bestScore = bestHour?.score ?? 0;
+            const lv = getLevel(bestScore, bestHour?.h, spot);
             const todayIdx = dayEntries.findIndex(([d]) => d === todayStr);
             const isPastTab = di < todayIdx;
             return (
@@ -796,24 +821,6 @@ export default function SurfApp() {
               </div>
             </div>
           )}
-
-          <div className="levels">
-            <div className="levels-label mono">{t("can_you_surf")}</div>
-            {levelMatrix.map(l => (
-              <div key={l.nameKey} className="level-row">
-                <div>
-                  <div className="level-name">{t(l.nameKey)}</div>
-                  <div className="level-reason">{t(l.reasonKey)}</div>
-                </div>
-                <div className={`level-verdict ${l.verdict} mono`}>
-                  {l.verdict==="yes" ? t("go") : l.verdict==="ok" ? t("maybe") : t("skip")}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="notes-label mono">{t("what_driving")}</div>
-          <div className="notes">{notes.map((n, i) => <span key={i} className="note mono">{t(n)}</span>)}</div>
         </div>
 
         <div className="face-height">
@@ -866,7 +873,25 @@ export default function SurfApp() {
           );
         })()}
 
-        {bestOfDay && getLevel(bestOfDay.score).labelKey !== "score_0_14" && (
+        <div className="levels">
+          <div className="levels-label mono">{t("can_you_surf")}</div>
+          {levelMatrix.map(l => (
+            <div key={l.nameKey} className="level-row">
+              <div>
+                <div className="level-name">{t(l.nameKey)}</div>
+                <div className="level-reason">{t(l.reasonKey)}</div>
+              </div>
+              <div className={`level-verdict ${l.verdict} mono`}>
+                {l.verdict==="yes" ? t("go") : l.verdict==="ok" ? t("maybe") : t("skip")}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="notes-label mono">{t("what_driving")}</div>
+        <div className="notes">{notes.map((n, i) => <span key={i} className="note mono">{t(n)}</span>)}</div>
+
+        {bestOfDay && !["score_0_14","score_flat","score_blown"].includes(getLevel(bestOfDay.score, bestOfDay, spot).labelKey) && (
           <div className="best">
             <div className="best-label mono">{t("best_window")}</div>
             <div className="best-text">{t("around")} {fmtHour(bestOfDay.time, tz)} · {bestOfDay.score} {t("score_lbl")}</div>
@@ -911,7 +936,7 @@ export default function SurfApp() {
             if (!isEven && !expandedHours.has(prevHour.time)) return null;
             const idx = data.hours.indexOf(h);
             const { score: s } = scoreSurf(h, spot);
-            const lv = getLevel(s);
+            const lv = getLevel(s, h, spot);
             const isSel = sel === h;
             const dawn = isDawn(h.time, tz);
             const face = estimateFaceHeight(h.swellHeight, h.swellPeriod);
@@ -995,7 +1020,7 @@ export default function SurfApp() {
       {langOpen && <LangPicker lang={lang} setLang={setLang} onClose={() => setLangOpen(false)} customLangs={customLangs} onDeleteCustom={deleteCustomLang} onAddLang={() => setShowAddLang(true)} />}
       {showAddLang && <CustomLangModal onSave={saveCustomLang} onClose={() => setShowAddLang(false)} />}
       {faqOpen && <FaqSheet onClose={() => setFaqOpen(false)} t={t} />}
-      {showPwa && <PwaInstallPrompt onDismiss={dismissPwa} />}
+      {showPwa && <PwaInstallPrompt onDismiss={dismissPwa} t={t} />}
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
