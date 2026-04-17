@@ -1173,14 +1173,14 @@ export default function SurfApp() {
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
         .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
-        .face-height { padding: 18px 0 14px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
-        .face-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
-        .face-value { font-weight: 500; font-size: 46px; line-height: 1; letter-spacing: -0.03em; }
-        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 8px; letter-spacing: 0.03em; }
-        .face-hint { font-size: 12px; color: var(--text-mu); margin-top: 12px; line-height: 1.4; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
+        .face-height { padding: 14px 0 10px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
+        .face-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+        .face-value { font-weight: 500; font-size: 40px; line-height: 1; letter-spacing: -0.03em; }
+        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 6px; letter-spacing: 0.03em; }
+        .face-hint { font-size: 12px; color: var(--text-mu); margin-top: 8px; line-height: 1.35; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
 
         .metrics { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .metric { padding: 16px 0; }
+        .metric { padding: 12px 0; }
         .metric:first-child { padding-right: 16px; border-right: 1px solid var(--border); }
         .metric:last-child { padding-left: 16px; }
         .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
@@ -1192,7 +1192,7 @@ export default function SurfApp() {
         .metric-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
         .temp-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .temp-item { padding: 14px 0; border-right: 1px solid var(--border); }
+        .temp-item { padding: 11px 0; border-right: 1px solid var(--border); }
         .temp-item:last-child { border-right: none; padding-left: 16px; }
         .temp-item:not(:first-child) { padding-left: 16px; }
         .temp-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
