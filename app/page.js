@@ -394,10 +394,18 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
   useEffect(() => {
     const term = query.trim();
     if (term.length < 2) { setSearchResults([]); return; }
-    const timer = setTimeout(() => { geoSearch(term); }, 450);
+    const timer = setTimeout(() => { geoSearch(term); }, 220);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  const localMatches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return BREAKS.filter(b => (b.name + " " + b.region).toLowerCase().includes(q));
+  }, [query]);
+
+  const isSearching = query.trim().length >= 2;
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -416,8 +424,17 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
             <button className="search-btn" onClick={() => geoSearch()}>{searching ? "…" : "🔍"}</button>
           </div>
 
-          {query.trim().length >= 2 && (
+          {isSearching && (
             <>
+              {localMatches.length > 0 && (
+                <>
+                  <div className="region-header">{t("known_breaks")}</div>
+                  {localMatches.map(b => (
+                    <BreakRow key={b.id} b={b} onSelect={onSelect} toggleFav={toggleFav} isFav={favorites.includes(b.id)} current={currentId===b.id} t={t}/>
+                  ))}
+                </>
+              )}
+
               <div className="region-header">
                 {searching ? t("searching") : t("search_results")}
               </div>
@@ -439,13 +456,13 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
                   </div>
                 );
               })}
-              {!searching && searchResults.length === 0 && (
+              {!searching && searchResults.length === 0 && localMatches.length === 0 && (
                 <div className="break-empty mono">{t("search_none")}</div>
               )}
             </>
           )}
 
-          {favorites.length > 0 && !query && (
+          {!isSearching && favorites.length > 0 && (
             <>
               <div className="region-header">{t("favourites")}</div>
               {favorites.map(id => {
@@ -456,7 +473,7 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
             </>
           )}
 
-          {Object.entries(grouped).map(([region, breaks]) => (
+          {!isSearching && Object.entries(grouped).map(([region, breaks]) => (
             <div key={region}>
               <div className="region-header">{region}</div>
               {breaks.map(b => (
