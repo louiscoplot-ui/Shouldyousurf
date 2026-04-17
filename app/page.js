@@ -113,29 +113,31 @@ function getWindTypeKey(sel, spot) {
 }
 
 function getLevel(s, h, spot) {
-  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#16a34a" };
-  if (s >= 55) return { labelKey: "score_55_74",  subKey: "score_55_74_sub",  color: "#65a30d" };
-  if (s >= 35) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#ca8a04" };
-
-  // Below 35 — distinguish "truly flat" vs "waves ruined by wind" vs "small but OK".
+  // Wind / wave overrides — applied even when the raw score sits mid-range,
+  // because a great swell ruined by strong side/onshore wind still scores OK.
   if (h && spot) {
     const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
     const kmh = knToKmh(h.windSpeedKn);
     const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
-    const isOnshore = windDelta >= 90;
-    const windIsBad = (isOnshore && kmh > 20) || kmh > 35;
+    const isOffshore = windDelta <= 45;
 
     if (faceFt < 1) {
       return { labelKey: "score_flat", subKey: "score_flat_sub", color: "#dc2626" };
     }
-    if (windIsBad) {
-      const color = s >= 15 ? "#ea580c" : "#dc2626";
-      return { labelKey: "score_blown", subKey: "score_blown_sub", color };
+
+    // Wind ruins the wave: non-offshore ≥25 km/h, or any direction ≥40 km/h.
+    // Offshore stays surfable until it gets truly gale-force.
+    const blownOut = (!isOffshore && kmh >= 25) || kmh >= 40 || (isOffshore && kmh >= 55);
+    if (blownOut && s < 75) {
+      return { labelKey: "score_blown", subKey: "score_blown_sub", color: "#dc2626" };
     }
   }
 
-  if (s >= 15) return { labelKey: "score_15_34", subKey: "score_15_34_sub", color: "#ea580c" };
-  return       { labelKey: "score_0_14",  subKey: "score_0_14_sub",  color: "#dc2626" };
+  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#16a34a" };
+  if (s >= 55) return { labelKey: "score_55_74",  subKey: "score_55_74_sub",  color: "#65a30d" };
+  if (s >= 35) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#ca8a04" };
+  if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#ea580c" };
+  return       { labelKey: "score_0_14",   subKey: "score_0_14_sub",   color: "#dc2626" };
 }
 
 function degToCompass(deg) {
