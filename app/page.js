@@ -864,7 +864,7 @@ export default function SurfApp() {
           <div className="verdict-row">
             <div className="verdict-main serif" style={{ color: level.color }}>{t(level.labelKey)}</div>
             <button className="verdict-score mono" onClick={() => setScoreExplainer(v => !v)}>
-              <strong>{score}</strong>/{t("score_lbl")} 100
+              <strong style={{ color: level.color }}>{score}</strong>/{t("score_lbl")} 100
               <span className="score-chev">{scoreExplainer ? "▲" : "▼"}</span>
             </button>
           </div>
