@@ -133,10 +133,10 @@ function getLevel(s, h, spot) {
     }
   }
 
-  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#16a34a" };
-  if (s >= 55) return { labelKey: "score_55_74",  subKey: "score_55_74_sub",  color: "#65a30d" };
-  if (s >= 45) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#ca8a04" };
-  if (s >= 35) return { labelKey: "score_35_44",  subKey: "score_35_44_sub",  color: "#b45309" };
+  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#15803d" };
+  if (s >= 55) return { labelKey: "score_55_74",  subKey: "score_55_74_sub",  color: "#16a34a" };
+  if (s >= 45) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#65a30d" };
+  if (s >= 35) return { labelKey: "score_35_44",  subKey: "score_35_44_sub",  color: "#84cc16" };
   if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#ea580c" };
   return       { labelKey: "score_0_14",   subKey: "score_0_14_sub",   color: "#dc2626" };
 }
@@ -873,10 +873,10 @@ export default function SurfApp() {
               <div className="score-explainer-title mono">{t("how_score")}</div>
               <p className="score-explainer-p">{t("score_desc")}</p>
               <div className="score-scale">
-                <div className="scale-row"><span className="scale-dot" style={{background:"#16a34a"}}/><span className="scale-range mono">75-100</span><span className="scale-desc"><strong>{t("score_75_100")}</strong> — {t("score_rare")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#65a30d"}}/><span className="scale-range mono">55-74</span><span className="scale-desc"><strong>{t("score_55_74")}</strong> — {t("score_solid")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#ca8a04"}}/><span className="scale-range mono">45-54</span><span className="scale-desc"><strong>{t("score_35_54")}</strong> — {t("score_workable")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#b45309"}}/><span className="scale-range mono">35-44</span><span className="scale-desc"><strong>{t("score_35_44")}</strong> — {t("score_scrappy_desc")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#15803d"}}/><span className="scale-range mono">75-100</span><span className="scale-desc"><strong>{t("score_75_100")}</strong> — {t("score_rare")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#16a34a"}}/><span className="scale-range mono">55-74</span><span className="scale-desc"><strong>{t("score_55_74")}</strong> — {t("score_solid")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#65a30d"}}/><span className="scale-range mono">45-54</span><span className="scale-desc"><strong>{t("score_35_54")}</strong> — {t("score_workable")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#84cc16"}}/><span className="scale-range mono">35-44</span><span className="scale-desc"><strong>{t("score_35_44")}</strong> — {t("score_scrappy_desc")}</span></div>
                 <div className="scale-row"><span className="scale-dot" style={{background:"#ea580c"}}/><span className="scale-range mono">15-34</span><span className="scale-desc"><strong>{t("score_15_34")}</strong> — {t("score_small_fun")}</span></div>
                 <div className="scale-row"><span className="scale-dot" style={{background:"#dc2626"}}/><span className="scale-range mono">0-14</span><span className="scale-desc"><strong>{t("score_0_14")}</strong> — {t("score_flat_desc")}</span></div>
               </div>
@@ -986,7 +986,7 @@ export default function SurfApp() {
         {hoursGuide && (
           <div className="hours-guide">
             <div className="guide-color-row">
-              {[["#16a34a","Pumping"],["#65a30d","Good"],["#ca8a04","Okay"],["#ea580c","Small"],["#dc2626","Flat"]].map(([c,l]) => (
+              {[["#15803d","Pumping"],["#16a34a","Great"],["#65a30d","Good"],["#84cc16","Fun"],["#ea580c","Small"],["#dc2626","Flat"]].map(([c,l]) => (
                 <div key={l} style={{ textAlign:"center" }}>
                   <div style={{ width:8, height:8, borderRadius:"50%", background:c, margin:"0 auto 3px" }}/>
                   <div style={{ fontSize:8, color:c, fontFamily:"JetBrains Mono,monospace", fontWeight:500, letterSpacing:"0.04em" }}>{l}</div>
