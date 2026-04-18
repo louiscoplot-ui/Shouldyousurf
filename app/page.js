@@ -1155,8 +1155,8 @@ export default function SurfApp() {
         .verdict-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; }
         .verdict-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
         .verdict-main { font-weight: 500; font-size: 58px; line-height: 1; letter-spacing: -0.03em; font-variation-settings: "SOFT" 100; }
-        .verdict-score { background: none; border: none; font-size: 14px; color: var(--text-mu); padding-top: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .verdict-score strong { color: var(--text); font-weight: 600; font-size: 24px; letter-spacing: -0.02em; }
+        .verdict-score { background: none; border: none; font-size: 12px; color: var(--text-mu); padding-top: 6px; cursor: pointer; display: flex; align-items: baseline; gap: 6px; }
+        .verdict-score strong { color: var(--text); font-weight: 600; font-size: 42px; letter-spacing: -0.03em; line-height: 1; }
         .score-chev { font-size: 8px; color: var(--text-dim); }
         .score-explainer { margin-top: 16px; padding: 14px 16px; background: var(--bg-el); border: 1px solid var(--border); border-radius: 8px; animation: rise 0.25s ease both; }
         .score-explainer-title { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; }
