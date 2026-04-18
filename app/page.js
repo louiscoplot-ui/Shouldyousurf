@@ -1029,7 +1029,30 @@ export default function SurfApp() {
                 <div className="hour-stats mono">
                   {faceLow}–{faceHigh}ft · {Math.round(knToKmh(h.windSpeedKn))}km/h
                 </div>
-              </button>
+              </button>,
+              isSel && (
+                <div key={`d-${h.time}`} className="hour-detail">
+                  <div className="hd-head">
+                    <span className="hd-num serif" style={{color:level.color}}>{score}</span>
+                    <span className="hd-lbl" style={{color:level.color}}>{t(level.labelKey)}</span>
+                    <span className="hd-sep">·</span>
+                    <span className="hd-sub mono">{t(level.subKey)}</span>
+                  </div>
+                  <div className="hd-notes">
+                    {notes.map((n,ni) => <span key={ni} className="note mono">{t(n)}</span>)}
+                  </div>
+                  <div className="hd-grid">
+                    {levelMatrix.map(lvl => (
+                      <div key={lvl.nameKey} className="hd-cell">
+                        <div className="hd-cell-name mono">{t(lvl.nameKey)}</div>
+                        <div className={`level-verdict ${lvl.verdict} mono hd-cell-v`}>
+                          {lvl.verdict==="yes"?t("go"):lvl.verdict==="ok"?t("maybe"):t("skip")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
             ];
           })}
         </div>
