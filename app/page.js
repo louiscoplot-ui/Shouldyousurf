@@ -1011,9 +1011,6 @@ export default function SurfApp() {
         )}
         <div className="hours">
           {dayHours.map((h, i) => {
-            const isEven = i % 2 === 0;
-            const prevHour = !isEven ? dayHours[i - 1] : null;
-            if (!isEven && !expandedHours.has(prevHour.time)) return null;
             const idx = data.hours.indexOf(h);
             const { score: s } = scoreSurf(h, spot);
             const lv = getLevel(s, h, spot);
@@ -1022,47 +1019,17 @@ export default function SurfApp() {
             const face = estimateFaceHeight(h.swellHeight, h.swellPeriod);
             const faceLow = Math.max(1, Math.floor(mToFt(face) - 0.5));
             const faceHigh = Math.ceil(mToFt(face) + 0.5);
-            const isExpanded = isEven && expandedHours.has(h.time);
-            // Detail appears after the odd hour, only for the group containing sel
-            const showDetail = !isEven && (isSel || prevHour === sel);
             return [
               <button key={h.time}
-                className={`hour-btn ${isSel?"sel":""} ${!isEven?"hour-sub":""}`}
-                onClick={() => {
-                  setSelected(idx);
-                  if (isEven) toggleExpand(h.time);
-                }}>
+                className={`hour-btn ${isSel?"sel":""}`}
+                onClick={() => setSelected(idx)}>
                 <div className={`hour-time mono ${dawn?"dawn":""}`}>{fmtHour(h.time, tz)}</div>
                 <div className="hour-bar"><div className="hour-bar-fill" style={{ width:`${s}%`, background:lv.color }}/></div>
                 <div className="hour-label mono" style={{ color:lv.color }}>{t(lv.labelKey).toUpperCase()}</div>
                 <div className="hour-stats mono">
                   {faceLow}–{faceHigh}ft · {Math.round(knToKmh(h.windSpeedKn))}km/h
-                  {isEven && <span className="expand-chev">{isExpanded?" ▴":" ▾"}</span>}
                 </div>
-              </button>,
-              showDetail && (
-                <div key={`d-${h.time}`} className="hour-detail">
-                  <div className="hd-head">
-                    <span className="hd-num serif" style={{color:level.color}}>{score}</span>
-                    <span className="hd-lbl" style={{color:level.color}}>{t(level.labelKey)}</span>
-                    <span className="hd-sep">·</span>
-                    <span className="hd-sub mono">{t(level.subKey)}</span>
-                  </div>
-                  <div className="hd-notes">
-                    {notes.map((n,ni) => <span key={ni} className="note mono">{t(n)}</span>)}
-                  </div>
-                  <div className="hd-grid">
-                    {levelMatrix.map(lvl => (
-                      <div key={lvl.nameKey} className="hd-cell">
-                        <div className="hd-cell-name mono">{t(lvl.nameKey)}</div>
-                        <div className={`level-verdict ${lvl.verdict} mono hd-cell-v`}>
-                          {lvl.verdict==="yes"?t("go"):lvl.verdict==="ok"?t("maybe"):t("skip")}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
+              </button>
             ];
           })}
         </div>
