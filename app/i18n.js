@@ -15,7 +15,7 @@ export const LANGUAGES = [
 
 const T = {
   en: {
-    brand: "should you surf?",
+    brand: "Should You Surf?",
     loading: "Reading the ocean…",
     error_title: "Connection failed",
     error_api: "Marine API unreachable.",
@@ -205,7 +205,7 @@ const T = {
     faq_a9: "All data comes from Open-Meteo (open-meteo.com). Two models: Marine API (ECMWF) for swell height, period, direction, sea surface temperature and ocean currents — Forecast API (GFS/ICON) for wind and air temperature. When you select an hour: air temp is the actual forecast value for that exact hour. Water temp is a daily sea surface temperature (same all day — ocean changes slowly). Current only appears if speed exceeds 0.05 m/s — below that it's irrelevant for surfing. Past days use the Archive API with real recorded values.",
   },
   fr: {
-    brand: "tu peux surfer ?",
+    brand: "Tu peux surfer ?",
     loading: "Lecture de l'océan…",
     error_title: "Connexion impossible",
     error_api: "API marine inaccessible.",
@@ -376,7 +376,7 @@ const T = {
     faq_a9: "Toutes les données viennent d'Open-Meteo (open-meteo.com). Deux modèles : API Marine (ECMWF) pour la houle, la température de surface et les courants — API Prévision (GFS/ICON) pour le vent et la température de l'air. Quand tu sélectionnes une heure : la temp air est la valeur réelle prévue pour cette heure précise. La temp eau est une température de surface journalière (identique toute la journée — l'océan change lentement). Le courant n'apparaît que si sa vitesse dépasse 0.05 m/s — en dessous c'est sans impact pour le surf. Les jours passés utilisent l'API Archive avec les valeurs réellement enregistrées.",
   },
   es: {
-    brand: "¿puedes surfear?",
+    brand: "¿Puedes surfear?",
     loading: "Leyendo el océano…",
     error_title: "Conexión fallida",
     error_api: "API marina inaccesible.",
@@ -472,7 +472,7 @@ const T = {
     fh_7: "Enorme — solo expertos y guns. Conoce el spot.",
   },
   pt: {
-    brand: "dá pra surfar?",
+    brand: "Dá pra surfar?",
     loading: "Lendo o oceano…",
     error_title: "Conexão falhou",
     error_api: "API marinha inacessível.",
@@ -568,7 +568,7 @@ const T = {
     fh_7: "Enorme — só experts e guns. Conheça o spot.",
   },
   de: {
-    brand: "surfen heute?",
+    brand: "Surfen heute?",
     loading: "Ozean wird gelesen…",
     error_title: "Verbindung fehlgeschlagen",
     error_api: "Marine-API nicht erreichbar.",
@@ -664,7 +664,7 @@ const T = {
     fh_7: "Riesig — nur Experten und Guns. Kenne den Spot.",
   },
   it: {
-    brand: "si surfa oggi?",
+    brand: "Si surfa oggi?",
     loading: "Leggendo l'oceano…",
     error_title: "Connessione fallita",
     error_api: "API marina non raggiungibile.",
@@ -760,7 +760,7 @@ const T = {
     fh_7: "Enorme — solo esperti e gun. Conosci lo spot.",
   },
   nl: {
-    brand: "kan je surfen?",
+    brand: "Kan je surfen?",
     loading: "Oceaan wordt gelezen…",
     error_title: "Verbinding mislukt",
     error_api: "Marine API niet bereikbaar.",
@@ -952,7 +952,7 @@ const T = {
     fh_7: "巨大 — エキスパートとガンのみ。",
   },
   id: {
-    brand: "bisa surfing?",
+    brand: "Bisa surfing?",
     loading: "Membaca lautan…",
     error_title: "Koneksi gagal",
     error_api: "Marine API tidak dapat dijangkau.",
@@ -1048,7 +1048,7 @@ const T = {
     fh_7: "Raksasa — hanya ahli dan gun. Kenali spotnya.",
   },
   ru: {
-    brand: "серфить сегодня?",
+    brand: "Сёрфить сегодня?",
     loading: "Читаем океан…",
     error_title: "Нет соединения",
     error_api: "API недоступен.",

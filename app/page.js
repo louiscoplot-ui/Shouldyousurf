@@ -827,14 +827,42 @@ export default function SurfApp() {
   }, [spot.id]);
 
   if (loading) return (
-    <div className="load-wrap">
-      <div className="load-brand">{t("brand")}</div>
-      <div className="load-dots">
-        <div className="load-dot"/>
-        <div className="load-dot"/>
-        <div className="load-dot"/>
+    <div
+      className="load-wrap"
+      style={{
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        gap: 20, padding: "0 24px", textAlign: "center",
+        background: "linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%)",
+        zIndex: 9999,
+      }}
+    >
+      <div
+        className="load-brand"
+        style={{
+          fontFamily: "'Fraunces', Georgia, serif",
+          fontWeight: 500, fontSize: 44, lineHeight: 1.1,
+          letterSpacing: "-0.03em",
+          background: "linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%)",
+          WebkitBackgroundClip: "text", backgroundClip: "text",
+          WebkitTextFillColor: "transparent", color: "#0c2a5e",
+        }}
+      >{t("brand")}</div>
+      <div className="load-dots" style={{ display: "flex", gap: 7 }}>
+        <div className="load-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }}/>
+        <div className="load-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#1558b5" }}/>
+        <div className="load-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }}/>
       </div>
-      <p className="load-text">{t("loading")}</p>
+      <p
+        className="load-text"
+        style={{
+          fontFamily: "'Inter', system-ui, sans-serif",
+          fontSize: 11, color: "#f59e0b",
+          letterSpacing: "0.2em", textTransform: "uppercase",
+          fontWeight: 500, margin: 0,
+        }}
+      >{t("loading")}</p>
     </div>
   );
 
