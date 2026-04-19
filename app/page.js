@@ -963,6 +963,7 @@ export default function SurfApp() {
   const [userLevel, setUserLevel] = useState(null);
   const [levelPickerOpen, setLevelPickerOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [notifOptIn, setNotifOptIn] = useState(false);
   const [country, setCountry] = useState("AU");
   const [sharedDay, setSharedDay] = useState(null);
   const tabsRef = useRef(null);
@@ -988,6 +989,10 @@ export default function SurfApp() {
       if (savedLvl) setUserLevel(savedLvl);
       const onboarded = localStorage.getItem("surf-onboarded");
       if (!onboarded && !savedLvl) setOnboardingOpen(true);
+      const notifOpt = localStorage.getItem("surf-notif-opt-in");
+      if (notifOpt && typeof Notification !== "undefined" && Notification.permission === "granted") {
+        setNotifOptIn(true);
+      }
       const savedCountry = localStorage.getItem("surf-country");
       if (savedCountry) setCountry(savedCountry);
       // Shared URL params — override the saved state so a shared link opens
@@ -1066,11 +1071,18 @@ export default function SurfApp() {
     return best;
   }
 
-  async function enableNotifications() {
+  async function toggleNotifications() {
     if (typeof Notification === "undefined") {
       alert(t("notif_unsupported"));
       return;
     }
+    // Already on → turn off
+    if (notifOptIn) {
+      try { localStorage.removeItem("surf-notif-opt-in"); } catch {}
+      setNotifOptIn(false);
+      return;
+    }
+    // Turning on → ask permission if needed
     let perm = Notification.permission;
     if (perm === "default") {
       perm = await Notification.requestPermission();
@@ -1080,6 +1092,7 @@ export default function SurfApp() {
       return;
     }
     try { localStorage.setItem("surf-notif-opt-in", "1"); } catch {}
+    setNotifOptIn(true);
     const best = findUpcomingGoodWindow(data.hours);
     if (best) {
       const when = `${fmtLongDay(best.hour.time.split("T")[0], tz, t)} ${fmtHour(best.hour.time, tz)}`;
@@ -1466,8 +1479,12 @@ export default function SurfApp() {
             <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
               {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
             </button>
-            <button className="share-btn mono" onClick={enableNotifications} title={t("notify_me")}>
-              🔔
+            <button
+              className={`notif-btn mono${notifOptIn ? " on" : ""}`}
+              onClick={toggleNotifications}
+              title={notifOptIn ? t("notify_off") : t("notify_me")}
+              aria-pressed={notifOptIn}>
+              {notifOptIn ? "🔔 " + t("notify_on_short") : "🔕"}
             </button>
           </div>
           {(() => {
@@ -1786,6 +1803,9 @@ export default function SurfApp() {
         .sticky-level-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 0.03em; padding: 5px 11px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
         .sticky-level-btn:hover { filter: brightness(1.08); }
         .share-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 4px 9px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; }
+        .notif-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 4px 9px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; transition: all 0.15s; }
+        .notif-btn:hover { color: var(--text); }
+        .notif-btn.on { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.35); color: var(--accent); }
         .share-btn:hover { color: var(--text); }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
