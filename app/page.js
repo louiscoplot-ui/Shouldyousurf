@@ -1463,12 +1463,13 @@ export default function SurfApp() {
               <div className="score-explainer-title mono">{t("how_score")}</div>
               <p className="score-explainer-p">{t("score_desc")}</p>
               <div className="score-scale">
-                <div className="scale-row"><span className="scale-dot" style={{background:"#15803d"}}/><span className="scale-range mono">75-100</span><span className="scale-desc"><strong>{t("score_75_100")}</strong> — {t("score_rare")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#16a34a"}}/><span className="scale-range mono">55-74</span><span className="scale-desc"><strong>{t("score_55_74")}</strong> — {t("score_solid")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#65a30d"}}/><span className="scale-range mono">45-54</span><span className="scale-desc"><strong>{t("score_35_54")}</strong> — {t("score_workable")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#84cc16"}}/><span className="scale-range mono">35-44</span><span className="scale-desc"><strong>{t("score_35_44")}</strong> — {t("score_scrappy_desc")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#ea580c"}}/><span className="scale-range mono">15-34</span><span className="scale-desc"><strong>{t("score_15_34")}</strong> — {t("score_small_fun")}</span></div>
-                <div className="scale-row"><span className="scale-dot" style={{background:"#dc2626"}}/><span className="scale-range mono">0-14</span><span className="scale-desc"><strong>{t("score_0_14")}</strong> — {t("score_flat_desc")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#0b6e2e"}}/><span className="scale-range mono">75-100</span><span className="scale-desc"><strong>{t("score_75_100")}</strong> — {t("score_75_100_sub")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#15803d"}}/><span className="scale-range mono">65-74</span><span className="scale-desc"><strong>{t("score_65_74")}</strong> — {t("score_65_74_sub")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#16a34a"}}/><span className="scale-range mono">55-64</span><span className="scale-desc"><strong>{t("score_55_64")}</strong> — {t("score_55_64_sub")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#65a30d"}}/><span className="scale-range mono">45-54</span><span className="scale-desc"><strong>{t("score_35_54")}</strong> — {t("score_35_54_sub")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#84cc16"}}/><span className="scale-range mono">35-44</span><span className="scale-desc"><strong>{t("score_35_44")}</strong> — {t("score_35_44_sub")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#ea580c"}}/><span className="scale-range mono">15-34</span><span className="scale-desc"><strong>{t("score_15_34")}</strong> — {t("score_15_34_sub")}</span></div>
+                <div className="scale-row"><span className="scale-dot" style={{background:"#dc2626"}}/><span className="scale-range mono">0-14</span><span className="scale-desc"><strong>{t("score_0_14")}</strong> — {t("score_0_14_sub")}</span></div>
               </div>
             </div>
           )}
