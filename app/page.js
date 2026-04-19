@@ -1060,9 +1060,13 @@ export default function SurfApp() {
     for (const h of hours) {
       const t = new Date(h.time).getTime();
       if (t < now) continue;
-      const hourOfDay = new Date(h.time).toLocaleTimeString("en-AU", { hour: "numeric", hour12: false, timeZone: tz });
-      const hr = parseInt(hourOfDay, 10);
-      if (hr < 6 || hr > 19) continue;
+      // Only keep hours within the daylight window of that day
+      const dayKey = h.time.split("T")[0];
+      const sun = data.sunByDay?.[dayKey];
+      const sunrise = sun?.sunrise ? new Date(sun.sunrise).getTime() : null;
+      const sunset  = sun?.sunset  ? new Date(sun.sunset).getTime()  : null;
+      if (sunrise != null && t < sunrise - 3600000) continue;
+      if (sunset  != null && t > sunset  + 3600000) continue;
       const { score } = scoreSurf(h, spot, null);
       if (score >= 65 && (!best || score > best.score)) {
         best = { hour: h, score };
@@ -1352,7 +1356,21 @@ export default function SurfApp() {
   const { score, notes } = scoreSurf(sel, spot, selDayTideCtx);
   const level = getLevel(score, sel, spot);
   const levelMatrix = surfabilityByLevel(sel, spot);
+  // Best window must fall within usable daylight — from 1h before sunrise up
+  // to 1h after sunset — otherwise we're recommending surf sessions in the
+  // pitch black, which is pointless.
+  const bestOfDaySun = (() => {
+    const dayKey = currentDay?.[0];
+    const sun = data.sunByDay?.[dayKey];
+    return {
+      sunrise: sun?.sunrise ? new Date(sun.sunrise).getTime() : null,
+      sunset:  sun?.sunset  ? new Date(sun.sunset).getTime() : null,
+    };
+  })();
   const bestOfDay = dayHours.reduce((b, h) => {
+    const t = new Date(h.time).getTime();
+    if (bestOfDaySun.sunrise != null && t < bestOfDaySun.sunrise - 3600000) return b;
+    if (bestOfDaySun.sunset  != null && t > bestOfDaySun.sunset  + 3600000) return b;
     const s = scoreSurf(h, spot, selDayTideCtx).score;
     return s > (b?.score ?? -1) ? { ...h, score: s } : b;
   }, null);
