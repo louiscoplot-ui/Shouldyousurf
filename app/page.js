@@ -370,18 +370,18 @@ function LevelPicker({ userLevel, onPick, onClose, t }) {
           </div>
           <p className="level-picker-sub">{t("level_picker_sub")}</p>
           {USER_LEVELS.map(lvl => (
-            <button key={lvl} className={`lang-row ${userLevel === lvl ? "active" : ""}`}
+            <button key={lvl} className={`level-item ${userLevel === lvl ? "active" : ""}`}
               onClick={() => { onPick(lvl); onClose(); }}>
               <div style={{ flex: 1 }}>
-                <div className="break-row-title">{t("lvl_" + lvl)}</div>
-                <div className="break-row-sub">{t("lvl_" + lvl + "_sub")}</div>
+                <div className="level-item-title">{t("lvl_" + lvl)}</div>
+                <div className="level-item-sub">{t("lvl_" + lvl + "_sub")}</div>
               </div>
-              {userLevel === lvl && <span style={{ color: "var(--accent)", fontSize: 14 }}>✓</span>}
+              {userLevel === lvl && <span className="level-item-check">✓</span>}
             </button>
           ))}
           {userLevel && (
-            <button className="lang-row" onClick={() => { onPick(null); onClose(); }}>
-              <div className="break-row-title" style={{ color: "var(--text-mu)" }}>{t("level_clear")}</div>
+            <button className="level-item level-item-clear" onClick={() => { onPick(null); onClose(); }}>
+              <div className="level-item-title">{t("level_clear")}</div>
             </button>
           )}
         </div>
@@ -997,7 +997,7 @@ export default function SurfApp() {
 
         <div className="sticky-info">
           <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
-            👤 {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
+            {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
           </button>
           {(() => {
             if (userLevel) {
@@ -1099,7 +1099,7 @@ export default function SurfApp() {
           <div className="levels-header">
             <span className="levels-label mono">{t("can_you_surf")}</span>
             <button className="level-pick-btn mono" onClick={() => setLevelPickerOpen(true)}>
-              👤 {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
+              {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
             </button>
           </div>
           {levelMatrix.map((l, idx) => {
@@ -1304,7 +1304,14 @@ export default function SurfApp() {
         .level-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
         .level-row.user-level { background: rgba(14,165,233,0.05); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-left: 2px solid var(--accent); }
         .you-pill { display: inline-block; background: var(--accent); color: #fff; font-size: 8px; letter-spacing: 0.1em; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
-        .level-picker-sub { font-size: 12px; color: var(--text-mu); margin: 0 0 10px; line-height: 1.4; }
+        .level-picker-sub { font-size: 13px; color: var(--text-mu); margin: 0 0 14px; line-height: 1.45; font-family: 'Inter', system-ui, sans-serif; }
+        .level-item { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; border-top: 1px solid var(--border); padding: 14px 0; cursor: pointer; color: var(--text); text-align: left; font-family: 'Inter', system-ui, sans-serif; }
+        .level-item:last-child { border-bottom: 1px solid var(--border); }
+        .level-item.active { background: rgba(14,165,233,0.05); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-left: 2px solid var(--accent); }
+        .level-item-title { font-size: 15px; font-weight: 500; color: var(--text); }
+        .level-item-sub { font-size: 13px; color: var(--text-mu); margin-top: 3px; line-height: 1.4; }
+        .level-item-check { color: var(--accent); font-size: 16px; font-weight: 600; }
+        .level-item-clear .level-item-title { color: var(--text-mu); font-weight: 400; }
         .level-row:last-child { border-bottom: 1px solid var(--border); }
         .level-name { font-size: 13px; font-weight: 500; }
         .level-reason { font-size: 11px; color: var(--text-mu); margin-top: 2px; line-height: 1.3; }
