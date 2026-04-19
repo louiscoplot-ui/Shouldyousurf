@@ -192,6 +192,37 @@ function dayTideCtx(dayHours) {
   return { min, max };
 }
 
+function TideCurve({ dayHours, selHour, tz }) {
+  const tides = dayHours.filter(h => h.tideM != null);
+  if (tides.length < 3) return null;
+  const min = Math.min(...tides.map(t => t.tideM));
+  const max = Math.max(...tides.map(t => t.tideM));
+  const range = max - min || 0.1;
+  const W = 280, H = 56, padY = 6;
+  const pts = tides.map((t, i) => {
+    const x = (i / (tides.length - 1)) * W;
+    const y = H - padY - ((t.tideM - min) / range) * (H - padY * 2);
+    return [x, y, t];
+  });
+  const polyline = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const areaPath = `M 0 ${H} L ${pts.map(p => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L ")} L ${W} ${H} Z`;
+  const selIdx = tides.findIndex(t => t.time === selHour?.time);
+  const sel = selIdx >= 0 ? pts[selIdx] : null;
+  const fmtTime = (iso) => new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", hour12: true, timeZone: tz }).toLowerCase().replace(" ", "");
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: 48, display: "block" }}>
+      <path d={areaPath} fill="rgba(14,165,233,0.12)"/>
+      <polyline points={polyline} fill="none" stroke="var(--accent)" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+      {sel && (
+        <g>
+          <line x1={sel[0]} x2={sel[0]} y1={0} y2={H} stroke="var(--accent)" strokeWidth="1" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" opacity="0.4"/>
+          <circle cx={sel[0]} cy={sel[1]} r="4" fill="var(--accent)"/>
+        </g>
+      )}
+    </svg>
+  );
+}
+
 function tideTrend(hours, sel) {
   if (!hours || !sel) return null;
   const idx = hours.findIndex(h => h.time === sel.time);
@@ -943,6 +974,13 @@ export default function SurfApp() {
     setShowPwa(true);
   }, []);
 
+  // Register service worker — future push support + offline shell
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   function saveCustomLang(cl) {
     setCustomLangs(prev => {
       const next = prev.filter(c => c.code !== cl.code).concat(cl);
@@ -966,6 +1004,53 @@ export default function SurfApp() {
   function saveCountry(code) {
     setCountry(code);
     try { localStorage.setItem("surf-country", code); } catch {}
+  }
+
+  function findUpcomingGoodWindow(hours) {
+    if (!hours || !hours.length) return null;
+    const now = Date.now();
+    let best = null;
+    for (const h of hours) {
+      const t = new Date(h.time).getTime();
+      if (t < now) continue;
+      const hourOfDay = new Date(h.time).toLocaleTimeString("en-AU", { hour: "numeric", hour12: false, timeZone: tz });
+      const hr = parseInt(hourOfDay, 10);
+      if (hr < 6 || hr > 19) continue;
+      const { score } = scoreSurf(h, spot, null);
+      if (score >= 65 && (!best || score > best.score)) {
+        best = { hour: h, score };
+      }
+    }
+    return best;
+  }
+
+  async function enableNotifications() {
+    if (typeof Notification === "undefined") {
+      alert(t("notif_unsupported"));
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm === "default") {
+      perm = await Notification.requestPermission();
+    }
+    if (perm !== "granted") {
+      alert(t("notif_denied"));
+      return;
+    }
+    try { localStorage.setItem("surf-notif-opt-in", "1"); } catch {}
+    const best = findUpcomingGoodWindow(data.hours);
+    if (best) {
+      const when = `${fmtLongDay(best.hour.time.split("T")[0], tz, t)} ${fmtHour(best.hour.time, tz)}`;
+      new Notification(`🌊 ${spot.name}`, {
+        body: `${t("notif_best_window")}: ${when} · ${best.score}/100`,
+        icon: "/icon-192.png",
+      });
+    } else {
+      new Notification(`${spot.name}`, {
+        body: t("notif_none_upcoming"),
+        icon: "/icon-192.png",
+      });
+    }
   }
 
   function saveUserLevel(lvl) {
@@ -1353,6 +1438,9 @@ export default function SurfApp() {
             }}>
               ↗ {t("share")}
             </button>
+            <button className="share-btn mono" onClick={enableNotifications} title={t("notify_me")}>
+              🔔
+            </button>
           </div>
           {(() => {
             if (userLevel) {
@@ -1462,29 +1550,11 @@ export default function SurfApp() {
               </div>
             );
           })()}
-        </div>
-
-        <div className="levels">
-          <div className="levels-header">
-            <span className="levels-label mono">{t("can_you_surf")}</span>
-            <button className="level-pick-btn mono" onClick={() => setLevelPickerOpen(true)}>
-              {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
-            </button>
-          </div>
-          {levelMatrix.map((l, idx) => {
-            const isUserRow = userLevel && USER_LEVEL_TO_MATRIX[userLevel] === idx;
-            return (
-              <div key={l.nameKey} className={`level-row ${isUserRow ? "user-level" : ""}`}>
-                <div>
-                  <div className="level-name">{t(l.nameKey)}{isUserRow && <span className="you-pill mono">{t("you")}</span>}</div>
-                  <div className="level-reason">{t(l.reasonKey)}</div>
-                </div>
-                <div className={`level-verdict ${l.verdict} mono`}>
-                  {l.verdict==="yes" ? t("go") : l.verdict==="ok" ? t("maybe") : t("skip")}
-                </div>
-              </div>
-            );
-          })}
+          {dayHours.some(h => h.tideM != null) && (
+            <div className="tide-curve-row">
+              <TideCurve dayHours={dayHours} selHour={sel} tz={tz}/>
+            </div>
+          )}
         </div>
 
         <div className="notes-label mono">{t("what_driving")}</div>
@@ -1573,6 +1643,29 @@ export default function SurfApp() {
                 </div>
               )
             ];
+          })}
+        </div>
+
+        <div className="levels">
+          <div className="levels-header">
+            <span className="levels-label mono">{userLevel ? t("can_you_surf_others") : t("can_you_surf")}</span>
+            <button className="level-pick-btn mono" onClick={() => setLevelPickerOpen(true)}>
+              {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
+            </button>
+          </div>
+          {levelMatrix.map((l, idx) => {
+            const isUserRow = userLevel && USER_LEVEL_TO_MATRIX[userLevel] === idx;
+            return (
+              <div key={l.nameKey} className={`level-row ${isUserRow ? "user-level" : ""}`}>
+                <div>
+                  <div className="level-name">{t(l.nameKey)}{isUserRow && <span className="you-pill mono">{t("you")}</span>}</div>
+                  <div className="level-reason">{t(l.reasonKey)}</div>
+                </div>
+                <div className={`level-verdict ${l.verdict} mono`}>
+                  {l.verdict==="yes" ? t("go") : l.verdict==="ok" ? t("maybe") : t("skip")}
+                </div>
+              </div>
+            );
           })}
         </div>
 
@@ -1714,6 +1807,7 @@ export default function SurfApp() {
 
         .temp-strip { display: flex; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
         .temp-item { flex: 1; min-width: 0; padding: 8px 0; border-right: 1px solid var(--border); overflow: hidden; }
+        .tide-curve-row { padding: 4px 0 6px; border-bottom: 1px solid var(--border); }
         .temp-item:last-child { border-right: none; padding-left: 14px; }
         .temp-item:not(:first-child) { padding-left: 14px; }
         .temp-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
