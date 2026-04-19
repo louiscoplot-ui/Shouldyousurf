@@ -39,8 +39,54 @@ export const BREAKS = [
   { id: "waits",        name: "Waitpinga",          region: "Fleurieu, SA", lat: -35.6467, lng: 138.5644, idealSwellDir: 225, offshoreWindDir: 360 },
 
   // ─── Tasmania ────────────────────────────────────────────────────────
-  { id: "shipstern",    name: "Shipstern Bluff",    region: "Tasmania",     lat: -43.1889, lng: 147.7500, idealSwellDir: 225, offshoreWindDir: 45 },
+  { id: "shipstern",    name: "Shipstern Bluff",    region: "Tasmania",     lat: -43.1889, lng: 147.7500, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true },
   { id: "clifton",      name: "Clifton Beach",      region: "Hobart, TAS",  lat: -42.9817, lng: 147.5217, idealSwellDir: 135, offshoreWindDir: 315 },
+
+  // ─── Indonesia ───────────────────────────────────────────────────────
+  { id: "uluwatu",      name: "Uluwatu",            region: "Bali, Indonesia",     lat: -8.8152, lng: 115.0883, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true },
+  { id: "padang",       name: "Padang Padang",      region: "Bali, Indonesia",     lat: -8.8067, lng: 115.1000, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true },
+  { id: "keramas",      name: "Keramas",            region: "Bali, Indonesia",     lat: -8.5850, lng: 115.3383, idealSwellDir: 135, offshoreWindDir: 270, type: "reef" },
+  { id: "balangan",     name: "Balangan",           region: "Bali, Indonesia",     lat: -8.7917, lng: 115.1233, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef" },
+  { id: "medewi",       name: "Medewi",             region: "Bali, Indonesia",     lat: -8.4100, lng: 114.8050, idealSwellDir: 225, offshoreWindDir: 90 },
+  { id: "lakey-peak",   name: "Lakey Peak",         region: "Sumbawa, Indonesia",  lat: -8.8750, lng: 118.4333, idealSwellDir: 225, offshoreWindDir: 45,  type: "reef" },
+  { id: "gland",        name: "G-Land",             region: "Java, Indonesia",     lat: -8.6667, lng: 114.3500, idealSwellDir: 200, offshoreWindDir: 45,  type: "reef", heavy: true },
+
+  // ─── France ──────────────────────────────────────────────────────────
+  { id: "hossegor",     name: "La Gravière",        region: "Hossegor, France",    lat: 43.6667, lng: -1.4333, idealSwellDir: 295, offshoreWindDir: 90 },
+  { id: "biarritz",     name: "Grande Plage",       region: "Biarritz, France",    lat: 43.4832, lng: -1.5586, idealSwellDir: 295, offshoreWindDir: 135 },
+  { id: "lacanau",      name: "Lacanau",            region: "Gironde, France",     lat: 45.0000, lng: -1.2000, idealSwellDir: 280, offshoreWindDir: 90 },
+
+  // ─── Portugal / Spain ────────────────────────────────────────────────
+  { id: "nazare",       name: "Nazaré (Praia do Norte)", region: "Nazaré, Portugal", lat: 39.6083, lng: -9.0783, idealSwellDir: 290, offshoreWindDir: 90, heavy: true },
+  { id: "ericeira",     name: "Ribeira d'Ilhas",    region: "Ericeira, Portugal",  lat: 38.9800, lng: -9.4167, idealSwellDir: 290, offshoreWindDir: 90,  type: "reef" },
+  { id: "peniche",      name: "Supertubos",         region: "Peniche, Portugal",   lat: 39.3500, lng: -9.3667, idealSwellDir: 290, offshoreWindDir: 45 },
+  { id: "mundaka",      name: "Mundaka",            region: "Basque Country, Spain", lat: 43.4060, lng: -2.7006, idealSwellDir: 315, offshoreWindDir: 180 },
+
+  // ─── USA ─────────────────────────────────────────────────────────────
+  { id: "pipeline",     name: "Pipeline",           region: "Oahu, Hawaii",        lat: 21.6611, lng: -158.0528, idealSwellDir: 315, offshoreWindDir: 135, type: "reef", heavy: true },
+  { id: "waikiki",      name: "Waikiki",            region: "Oahu, Hawaii",        lat: 21.2760, lng: -157.8330, idealSwellDir: 180, offshoreWindDir: 45 },
+  { id: "malibu",       name: "Malibu (First Point)", region: "California, USA",   lat: 34.0381, lng: -118.6775, idealSwellDir: 225, offshoreWindDir: 45 },
+  { id: "rincon",       name: "Rincon",             region: "California, USA",     lat: 34.3733, lng: -119.4797, idealSwellDir: 270, offshoreWindDir: 45 },
+  { id: "trestles",     name: "Lower Trestles",     region: "California, USA",     lat: 33.3869, lng: -117.5894, idealSwellDir: 225, offshoreWindDir: 45 },
+  { id: "ocean-beach",  name: "Ocean Beach SF",     region: "California, USA",     lat: 37.7593, lng: -122.5107, idealSwellDir: 270, offshoreWindDir: 90 },
+
+  // ─── Mexico / Central America ────────────────────────────────────────
+  { id: "puerto",       name: "Puerto Escondido (Zicatela)", region: "Oaxaca, Mexico", lat: 15.8597, lng: -97.0522, idealSwellDir: 225, offshoreWindDir: 0, heavy: true },
+  { id: "pavones",      name: "Pavones",            region: "Costa Rica",          lat: 8.3789, lng: -83.1411, idealSwellDir: 225, offshoreWindDir: 45 },
+
+  // ─── Brazil ──────────────────────────────────────────────────────────
+  { id: "itacare",      name: "Itacaré",            region: "Bahia, Brazil",       lat: -14.2781, lng: -38.9967, idealSwellDir: 150, offshoreWindDir: 270 },
+  { id: "saquarema",    name: "Saquarema (Itaúna)", region: "Rio, Brazil",         lat: -22.9300, lng: -42.5000, idealSwellDir: 180, offshoreWindDir: 0 },
+  { id: "floripa",      name: "Praia Mole",         region: "Florianópolis, Brazil", lat: -27.6036, lng: -48.4250, idealSwellDir: 180, offshoreWindDir: 270 },
+
+  // ─── New Zealand / Pacific ───────────────────────────────────────────
+  { id: "raglan",       name: "Raglan (Manu Bay)",  region: "Waikato, NZ",         lat: -37.8133, lng: 174.8208, idealSwellDir: 225, offshoreWindDir: 90 },
+  { id: "piha",         name: "Piha",               region: "Auckland, NZ",        lat: -36.9550, lng: 174.4672, idealSwellDir: 225, offshoreWindDir: 90 },
+  { id: "teahupoo",     name: "Teahupo'o",          region: "Tahiti",              lat: -17.8522, lng: -149.2672, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true },
+
+  // ─── South Africa / Morocco ──────────────────────────────────────────
+  { id: "jbay",         name: "Jeffreys Bay (Supertubes)", region: "Eastern Cape, South Africa", lat: -34.0500, lng: 24.9167, idealSwellDir: 225, offshoreWindDir: 315 },
+  { id: "taghazout",    name: "Anchor Point",       region: "Taghazout, Morocco",  lat: 30.5422, lng: -9.7125, idealSwellDir: 300, offshoreWindDir: 90, type: "reef" },
 ];
 
 export function findBreak(id) {

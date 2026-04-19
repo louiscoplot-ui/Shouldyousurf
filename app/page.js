@@ -452,7 +452,7 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
     if (!term) { setSearchResults([]); return; }
     setSearching(true);
     try {
-      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&country=AU&language=en&format=json`;
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&language=en&format=json`;
       const res = await fetch(url);
       const data = await res.json();
       setSearchResults(data.results || []);
