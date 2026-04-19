@@ -107,6 +107,22 @@ function surfabilityByLevel(h, spot) {
   return levels;
 }
 
+function getDayTip(levelMatrix, h, spot) {
+  if (!levelMatrix) return null;
+  const [beg, int, adv, exp] = levelMatrix.map(l => l.verdict);
+  const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
+
+  if (beg === "yes" && int === "yes" && adv === "yes" && exp === "yes") return "tip_all_levels";
+  if (beg === "no" && (int === "yes" || adv === "yes" || exp === "yes")) {
+    if (faceFt >= 4) return "tip_advanced";
+    return "tip_int_adv";
+  }
+  if (beg === "ok" && (int === "yes" || adv === "yes")) return "tip_inside_split";
+  if (beg === "yes" && int !== "yes" && adv !== "yes") return "tip_beginner";
+  if (int === "yes" && adv === "yes" && beg === "ok") return "tip_int_adv";
+  return null;
+}
+
 function getWindTypeKey(sel, spot) {
   const d = Math.abs(((sel.windDir - spot.offshoreWindDir + 540) % 360) - 180);
   if (d <= 45) return "offshore";
@@ -614,7 +630,7 @@ export default function SurfApp() {
       const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
       const pastWindUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
       const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${encodeURIComponent(tz)}&forecast_days=5`;
-      const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
+      const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
 
       const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
         fetch(pastMarineUrl).catch(() => null),
@@ -639,6 +655,7 @@ export default function SurfApp() {
         windSpeedKn: futureWind.hourly.wind_speed_10m[i],
         windDir: futureWind.hourly.wind_direction_10m[i],
         airTemp: futureWind.hourly.temperature_2m?.[i] ?? null,
+        rainProb: futureWind.hourly.precipitation_probability?.[i] ?? null,
         seaTemp: futureMarine.hourly.sea_surface_temperature?.[i] ?? null,
         currentVel: futureMarine.hourly.ocean_current_velocity?.[i] ?? null,
         currentDir: futureMarine.hourly.ocean_current_direction?.[i] ?? null,
@@ -869,6 +886,10 @@ export default function SurfApp() {
             </button>
           </div>
           <div className="verdict-sub">{t(level.subKey)}</div>
+          {(() => {
+            const tipKey = getDayTip(levelMatrix, sel, spot);
+            return tipKey ? <div className="verdict-tip">{t(tipKey)}</div> : null;
+          })()}
 
           {scoreExplainer && (
             <div className="score-explainer">
@@ -941,6 +962,12 @@ export default function SurfApp() {
                       <span>↑{sunrise}</span>
                       <span>↓{sunset}</span>
                     </div>
+                  </div>
+                )}
+                {sel.rainProb != null && (
+                  <div className="temp-item">
+                    <div className="temp-label mono">{t("rain")}</div>
+                    <div className="metric-value">{Math.round(sel.rainProb)}<span className="metric-unit">%</span></div>
                   </div>
                 )}
                 {curVel != null && curVel > 0.05 && (
@@ -1168,6 +1195,7 @@ export default function SurfApp() {
         .scale-desc { font-size: 12px; color: var(--text-mu); line-height: 1.3; }
         .scale-desc strong { color: var(--text); font-weight: 500; }
         .verdict-sub { font-size: 13px; color: var(--text-mu); margin-top: 6px; }
+        .verdict-tip { font-size: 13px; color: var(--text); margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 4px; line-height: 1.4; }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
         .levels-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 12px; }
