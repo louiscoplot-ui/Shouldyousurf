@@ -1065,8 +1065,8 @@ export default function SurfApp() {
       const sun = data.sunByDay?.[dayKey];
       const sunrise = sun?.sunrise ? new Date(sun.sunrise).getTime() : null;
       const sunset  = sun?.sunset  ? new Date(sun.sunset).getTime()  : null;
-      if (sunrise != null && t < sunrise - 3600000) continue;
-      if (sunset  != null && t > sunset  + 3600000) continue;
+      if (sunrise != null && t < sunrise - 1800000) continue;
+      if (sunset  != null && t > sunset  + 1800000) continue;
       const { score } = scoreSurf(h, spot, null);
       if (score >= 65 && (!best || score > best.score)) {
         best = { hour: h, score };
@@ -1369,8 +1369,8 @@ export default function SurfApp() {
   })();
   const bestOfDay = dayHours.reduce((b, h) => {
     const t = new Date(h.time).getTime();
-    if (bestOfDaySun.sunrise != null && t < bestOfDaySun.sunrise - 3600000) return b;
-    if (bestOfDaySun.sunset  != null && t > bestOfDaySun.sunset  + 3600000) return b;
+    if (bestOfDaySun.sunrise != null && t < bestOfDaySun.sunrise - 1800000) return b;
+    if (bestOfDaySun.sunset  != null && t > bestOfDaySun.sunset  + 1800000) return b;
     const s = scoreSurf(h, spot, selDayTideCtx).score;
     return s > (b?.score ?? -1) ? { ...h, score: s } : b;
   }, null);
