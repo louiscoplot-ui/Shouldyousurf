@@ -352,6 +352,42 @@ function FaqSheet({ onClose, t }) {
 }
 
 // ── Language picker ────────────────────────────────────────────────────
+const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediate", "advanced", "expert"];
+const USER_LEVEL_TO_MATRIX = { first_timer: 0, beginner: 0, early_int: 1, intermediate: 1, advanced: 2, expert: 3 };
+const USER_LEVEL_BIAS = { first_timer: "down", early_int: "down" };
+
+function LevelPicker({ userLevel, onPick, onClose, t }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="sheet" onClick={e => e.stopPropagation()}>
+        <div className="handle" />
+        <div className="sheet-body">
+          <div className="sheet-header">
+            <div className="sheet-title">{t("level_picker_title")}</div>
+            <button className="close-btn" onClick={onClose}>✕</button>
+          </div>
+          <p className="level-picker-sub">{t("level_picker_sub")}</p>
+          {USER_LEVELS.map(lvl => (
+            <button key={lvl} className={`lang-row ${userLevel === lvl ? "active" : ""}`}
+              onClick={() => { onPick(lvl); onClose(); }}>
+              <div style={{ flex: 1 }}>
+                <div className="break-row-title">{t("lvl_" + lvl)}</div>
+                <div className="break-row-sub">{t("lvl_" + lvl + "_sub")}</div>
+              </div>
+              {userLevel === lvl && <span style={{ color: "var(--accent)", fontSize: 14 }}>✓</span>}
+            </button>
+          ))}
+          {userLevel && (
+            <button className="lang-row" onClick={() => { onPick(null); onClose(); }}>
+              <div className="break-row-title" style={{ color: "var(--text-mu)" }}>{t("level_clear")}</div>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LangPicker({ lang, setLang, onClose, customLangs, onDeleteCustom, onAddLang }) {
   const allLangs = [...LANGUAGES, ...customLangs.map(c => ({ code: c.code, name: c.name, flag: c.flag, isCustom: true }))];
   return (
@@ -554,6 +590,8 @@ export default function SurfApp() {
   const [showPwa, setShowPwa] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
   const [pinnedHour, setPinnedHour] = useState(null);
+  const [userLevel, setUserLevel] = useState(null);
+  const [levelPickerOpen, setLevelPickerOpen] = useState(false);
   const tabsRef = useRef(null);
   const tz = spot.timezone || TZ;
   const customLangDict = customLangs.find(c => c.code === lang)?.translations;
@@ -573,6 +611,8 @@ export default function SurfApp() {
       if (savedCustomLangs) setCustomLangs(JSON.parse(savedCustomLangs));
       const savedPin = localStorage.getItem("surf-pinned-hour");
       if (savedPin !== null) setPinnedHour(parseInt(savedPin, 10));
+      const savedLvl = localStorage.getItem("surf-user-level");
+      if (savedLvl) setUserLevel(savedLvl);
     } catch {}
   }, []);
 
@@ -604,6 +644,14 @@ export default function SurfApp() {
       return next;
     });
     if (lang === code) setLang("en");
+  }
+
+  function saveUserLevel(lvl) {
+    setUserLevel(lvl);
+    try {
+      if (lvl) localStorage.setItem("surf-user-level", lvl);
+      else localStorage.removeItem("surf-user-level");
+    } catch {}
   }
 
   function dismissPwa() {
@@ -917,6 +965,20 @@ export default function SurfApp() {
 
         <div className="sticky-info">
           {(() => {
+            if (userLevel) {
+              const idx = USER_LEVEL_TO_MATRIX[userLevel];
+              const baseLvl = levelMatrix[idx];
+              if (!baseLvl) return null;
+              let verdict = baseLvl.verdict;
+              if (USER_LEVEL_BIAS[userLevel] === "down" && verdict === "yes") verdict = "ok";
+              const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
+              const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
+              return (
+                <div className="sticky-tip">
+                  <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(baseLvl.reasonKey)}
+                </div>
+              );
+            }
             const tipKey = getDayTip(levelMatrix, sel, spot);
             return tipKey ? <div className="sticky-tip">{t(tipKey)}</div> : null;
           })()}
@@ -989,18 +1051,26 @@ export default function SurfApp() {
         </div>
 
         <div className="levels">
-          <div className="levels-label mono">{t("can_you_surf")}</div>
-          {levelMatrix.map(l => (
-            <div key={l.nameKey} className="level-row">
-              <div>
-                <div className="level-name">{t(l.nameKey)}</div>
-                <div className="level-reason">{t(l.reasonKey)}</div>
+          <div className="levels-header">
+            <span className="levels-label mono">{t("can_you_surf")}</span>
+            <button className="level-pick-btn mono" onClick={() => setLevelPickerOpen(true)}>
+              👤 {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
+            </button>
+          </div>
+          {levelMatrix.map((l, idx) => {
+            const isUserRow = userLevel && USER_LEVEL_TO_MATRIX[userLevel] === idx;
+            return (
+              <div key={l.nameKey} className={`level-row ${isUserRow ? "user-level" : ""}`}>
+                <div>
+                  <div className="level-name">{t(l.nameKey)}{isUserRow && <span className="you-pill mono">{t("you")}</span>}</div>
+                  <div className="level-reason">{t(l.reasonKey)}</div>
+                </div>
+                <div className={`level-verdict ${l.verdict} mono`}>
+                  {l.verdict==="yes" ? t("go") : l.verdict==="ok" ? t("maybe") : t("skip")}
+                </div>
               </div>
-              <div className={`level-verdict ${l.verdict} mono`}>
-                {l.verdict==="yes" ? t("go") : l.verdict==="ok" ? t("maybe") : t("skip")}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="notes-label mono">{t("what_driving")}</div>
@@ -1099,6 +1169,7 @@ export default function SurfApp() {
       {pickerOpen && <BreakPicker onSelect={b => { setSpot(b); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} favorites={favorites} toggleFav={toggleFav} currentId={spot.id} t={t}/>}
       {langOpen && <LangPicker lang={lang} setLang={setLang} onClose={() => setLangOpen(false)} customLangs={customLangs} onDeleteCustom={deleteCustomLang} onAddLang={() => setShowAddLang(true)} />}
       {showAddLang && <CustomLangModal onSave={saveCustomLang} onClose={() => setShowAddLang(false)} />}
+      {levelPickerOpen && <LevelPicker userLevel={userLevel} onPick={saveUserLevel} onClose={() => setLevelPickerOpen(false)} t={t} />}
       {faqOpen && <FaqSheet onClose={() => setFaqOpen(false)} t={t} />}
       {showPwa && <PwaInstallPrompt onDismiss={dismissPwa} t={t} />}
 
@@ -1179,8 +1250,14 @@ export default function SurfApp() {
         .sticky-tip { font-size: 12px; color: var(--text); padding: 8px 10px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.35; margin: 8px 0 4px; }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
-        .levels-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 12px; }
+        .levels-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; }
+        .levels-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+        .level-pick-btn { background: var(--bg-el); border: 1px solid var(--border); border-radius: 14px; padding: 4px 10px; font-size: 10px; color: var(--text-mu); letter-spacing: 0.02em; cursor: pointer; white-space: nowrap; }
+        .level-pick-btn:hover { color: var(--text); }
         .level-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+        .level-row.user-level { background: rgba(14,165,233,0.05); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-left: 2px solid var(--accent); }
+        .you-pill { display: inline-block; background: var(--accent); color: #fff; font-size: 8px; letter-spacing: 0.1em; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+        .level-picker-sub { font-size: 12px; color: var(--text-mu); margin: 0 0 10px; line-height: 1.4; }
         .level-row:last-child { border-bottom: 1px solid var(--border); }
         .level-name { font-size: 13px; font-weight: 500; }
         .level-reason { font-size: 11px; color: var(--text-mu); margin-top: 2px; line-height: 1.3; }
