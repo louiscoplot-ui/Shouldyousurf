@@ -35,6 +35,16 @@ function scoreSurf({ swellHeight, swellPeriod, swellDir, windSpeedKn, windDir },
   else if (swellDelta <= 60) { s += 8; notes.push("n_ok_dir"); }
   else { s -= 5; notes.push("n_wrong_dir"); }
 
+  // Secondary swell rescue: if the primary swell is off-angle but a secondary
+  // swell of meaningful size is coming in at a good angle, give a small bonus.
+  if (spot && arguments[0] && arguments[0].secSwellH != null
+      && arguments[0].secSwellDir != null && arguments[0].secSwellH >= 0.5
+      && swellDelta > 60) {
+    const secDelta = Math.abs(((arguments[0].secSwellDir - spot.idealSwellDir + 540) % 360) - 180);
+    if (secDelta <= 30) { s += 10; notes.push("n_sec_helps"); }
+    else if (secDelta <= 60) { s += 4; notes.push("n_sec_helps"); }
+  }
+
   const windDelta = Math.abs(((windDir - spot.offshoreWindDir + 540) % 360) - 180);
   const isOffshore = windDelta <= 45;
   const isOnshore = windDelta >= 135;
@@ -133,6 +143,34 @@ function getDayTip(levelMatrix, h, spot) {
   if (beg === "yes" && (int === "yes" || int === "ok")) return "tip_all_levels";
   // Everyone just "worth it" — workable but unremarkable
   return "tip_marginal";
+}
+
+// Given the flat list of hours for the whole data window, find the next high
+// or low tide after the selected time. Returns { kind: "high"|"low", time, m }.
+function findNextTideEvent(hours, fromTime) {
+  if (!hours || hours.length < 3) return null;
+  const fromIdx = hours.findIndex(h => h.time === fromTime);
+  const start = fromIdx >= 0 ? fromIdx : 0;
+  for (let i = Math.max(1, start); i < hours.length - 1; i++) {
+    const prev = hours[i - 1]?.tideM;
+    const cur  = hours[i].tideM;
+    const next = hours[i + 1]?.tideM;
+    if (prev == null || cur == null || next == null) continue;
+    if (cur > prev && cur >= next) return { kind: "high", time: hours[i].time, m: cur };
+    if (cur < prev && cur <= next) return { kind: "low",  time: hours[i].time, m: cur };
+  }
+  return null;
+}
+
+function tideTrend(hours, sel) {
+  if (!hours || !sel) return null;
+  const idx = hours.findIndex(h => h.time === sel.time);
+  if (idx < 1 || sel.tideM == null) return null;
+  const prev = hours[idx - 1]?.tideM;
+  if (prev == null) return null;
+  const diff = sel.tideM - prev;
+  if (Math.abs(diff) < 0.05) return "steady";
+  return diff > 0 ? "rising" : "falling";
 }
 
 function getWindTypeKey(sel, spot) {
@@ -444,6 +482,22 @@ function getPersonalModifier(userLevel, h, spot) {
   if (dirDelta > 75) return "tip_mod_off_angle";
   // Glassy condition — call it out when truly calm
   if (wind === "clean" && knToKmh(h.windSpeedKn) < 8) return "tip_mod_glassy";
+  return null;
+}
+
+// Given the selected hour + the full hour list, compute any extra tide-based
+// context for the tip (e.g. "tide is about to turn high", "dead low").
+function getTideModifier(sel, hours) {
+  if (!sel || sel.tideM == null || !hours) return null;
+  const trend = tideTrend(hours, sel);
+  const next = findNextTideEvent(hours, sel.time);
+  if (!next) return null;
+  const hoursUntil = (new Date(next.time) - new Date(sel.time)) / 3600000;
+  if (hoursUntil >= 0 && hoursUntil <= 2) {
+    return next.kind === "high" ? "tip_mod_tide_high_soon" : "tip_mod_tide_low_soon";
+  }
+  if (trend === "rising") return "tip_mod_tide_rising";
+  if (trend === "falling") return "tip_mod_tide_falling";
   return null;
 }
 
@@ -842,12 +896,12 @@ export default function SurfApp() {
       const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
       const pastStart = offsetDate(todayStr, -3);
       const pastEnd = offsetDate(todayStr, -1);
-      const marineFields = "wave_height,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction";
+      const marineFields = "wave_height,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
 
       const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
       const pastWindUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
       const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${encodeURIComponent(tz)}&forecast_days=5`;
-      const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
+      const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
 
       const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
         fetch(pastMarineUrl).catch(() => null),
@@ -873,6 +927,11 @@ export default function SurfApp() {
         windDir: futureWind.hourly.wind_direction_10m[i],
         airTemp: futureWind.hourly.temperature_2m?.[i] ?? null,
         rainProb: futureWind.hourly.precipitation_probability?.[i] ?? null,
+        windGustKn: futureWind.hourly.wind_gusts_10m?.[i] ?? null,
+        secSwellH: futureMarine.hourly.secondary_swell_wave_height?.[i] ?? null,
+        secSwellP: futureMarine.hourly.secondary_swell_wave_period?.[i] ?? null,
+        secSwellDir: futureMarine.hourly.secondary_swell_wave_direction?.[i] ?? null,
+        tideM: futureMarine.hourly.sea_level_height_msl?.[i] ?? null,
         seaTemp: futureMarine.hourly.sea_surface_temperature?.[i] ?? null,
         currentVel: futureMarine.hourly.ocean_current_velocity?.[i] ?? null,
         currentDir: futureMarine.hourly.ocean_current_direction?.[i] ?? null,
@@ -1160,12 +1219,14 @@ export default function SurfApp() {
               const verdict = getPersonalVerdict(userLevel, sel, spot);
               const tipKey = getPersonalAdviceKey(userLevel, sel, spot);
               const modKey = getPersonalModifier(userLevel, sel, spot);
+              const tideMod = getTideModifier(sel, data.hours);
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
               return (
                 <div className="sticky-tip">
                   <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
                   {modKey && <span style={{ display: "block", marginTop: 6, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(modKey)}</span>}
+                  {tideMod && <span style={{ display: "block", marginTop: 4, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(tideMod)}</span>}
                 </div>
               );
             }
@@ -1191,7 +1252,13 @@ export default function SurfApp() {
                 {windKmh}<span className="metric-unit">km/h</span>
                 {windTrend && <span className="trend" aria-label={windTrend === "up" ? "rising" : "dropping"}>{windTrend === "up" ? "↗" : "↘"}</span>}
               </div>
-              <div className="metric-sub mono">{degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}{sel.rainProb != null ? ` · ${Math.round(sel.rainProb)}% ${t("rain").toLowerCase()}` : ""}</div>
+              <div className="metric-sub mono">
+                {degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}
+                {sel.windGustKn != null && Math.round(knToKmh(sel.windGustKn)) >= windKmh + 8 && (
+                  <> · {t("gusts")} {Math.round(knToKmh(sel.windGustKn))}</>
+                )}
+                {sel.rainProb != null ? ` · ${Math.round(sel.rainProb)}% ${t("rain").toLowerCase()}` : ""}
+              </div>
             </div>
           </div>
 
@@ -1204,7 +1271,10 @@ export default function SurfApp() {
             const fmtTime = (iso) => iso ? new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz }).toLowerCase().replace(" ", "") : null;
             const sunrise = sun ? fmtTime(sun.sunrise) : null;
             const sunset = sun ? fmtTime(sun.sunset) : null;
-            if (airTemp == null && seaTemp == null && !sunrise) return null;
+            const trend = tideTrend(data.hours, sel);
+            const nextTide = sel.tideM != null ? findNextTideEvent(data.hours, sel.time) : null;
+            const tideArrow = trend === "rising" ? "↗" : trend === "falling" ? "↘" : "";
+            if (airTemp == null && seaTemp == null && !sunrise && sel.tideM == null) return null;
             return (
               <div className="temp-strip">
                 {airTemp != null && (
@@ -1217,6 +1287,20 @@ export default function SurfApp() {
                   <div className="temp-item">
                     <div className="temp-label mono">{t("water_temp")}</div>
                     <div className="metric-value">{Math.round(seaTemp)}<span className="metric-unit">°C</span></div>
+                  </div>
+                )}
+                {sel.tideM != null && (
+                  <div className="temp-item">
+                    <div className="temp-label mono">{t("tide")}</div>
+                    <div className="metric-value">
+                      {tideArrow && <span style={{ fontSize: 14, color: "var(--text-mu)", marginRight: 2 }}>{tideArrow}</span>}
+                      {sel.tideM.toFixed(1)}<span className="metric-unit">m</span>
+                    </div>
+                    {nextTide && (
+                      <div className="metric-sub mono">
+                        {nextTide.kind === "high" ? "↑" : "↓"} {fmtTime(nextTide.time)}
+                      </div>
+                    )}
                   </div>
                 )}
                 {sunrise && sunset && (
