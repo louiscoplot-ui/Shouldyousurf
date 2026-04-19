@@ -192,34 +192,74 @@ function dayTideCtx(dayHours) {
   return { min, max };
 }
 
-function TideCurve({ dayHours, selHour, tz }) {
+function TideCurve({ dayHours, selHour, tz, t }) {
   const tides = dayHours.filter(h => h.tideM != null);
   if (tides.length < 3) return null;
-  const min = Math.min(...tides.map(t => t.tideM));
-  const max = Math.max(...tides.map(t => t.tideM));
+  const min = Math.min(...tides.map(t2 => t2.tideM));
+  const max = Math.max(...tides.map(t2 => t2.tideM));
   const range = max - min || 0.1;
-  const W = 280, H = 56, padY = 6;
-  const pts = tides.map((t, i) => {
+  const W = 300, H = 70, padY = 10;
+  const pts = tides.map((t2, i) => {
     const x = (i / (tides.length - 1)) * W;
-    const y = H - padY - ((t.tideM - min) / range) * (H - padY * 2);
-    return [x, y, t];
+    const y = H - padY - ((t2.tideM - min) / range) * (H - padY * 2);
+    return [x, y, t2];
   });
   const polyline = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const areaPath = `M 0 ${H} L ${pts.map(p => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L ")} L ${W} ${H} Z`;
-  const selIdx = tides.findIndex(t => t.time === selHour?.time);
+  const selIdx = tides.findIndex(t2 => t2.time === selHour?.time);
   const sel = selIdx >= 0 ? pts[selIdx] : null;
-  const fmtTime = (iso) => new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", hour12: true, timeZone: tz }).toLowerCase().replace(" ", "");
+  const fmtShort = (iso) => new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", hour12: true, timeZone: tz }).toLowerCase().replace(" ", "");
+
+  // Find each local high / low on the day to annotate
+  const extremes = [];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i - 1][2].tideM;
+    const cur  = pts[i][2].tideM;
+    const next = pts[i + 1][2].tideM;
+    if (cur > prev && cur >= next) extremes.push({ kind: "H", p: pts[i] });
+    else if (cur < prev && cur <= next) extremes.push({ kind: "L", p: pts[i] });
+  }
+
+  // Bottom-axis time markers: 6am / 12pm / 6pm if we have hours that close
+  const markerHours = [6, 12, 18];
+  const axisMarks = markerHours.map(target => {
+    const idx = pts.findIndex(p => {
+      const hour = parseInt(new Date(p[2].time).toLocaleTimeString("en-AU", { hour: "2-digit", hour12: false, timeZone: tz }), 10);
+      return hour === target;
+    });
+    if (idx < 0) return null;
+    return { x: pts[idx][0], label: fmtShort(pts[idx][2].time) };
+  }).filter(Boolean);
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: 48, display: "block" }}>
-      <path d={areaPath} fill="rgba(14,165,233,0.12)"/>
-      <polyline points={polyline} fill="none" stroke="var(--accent)" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-      {sel && (
-        <g>
-          <line x1={sel[0]} x2={sel[0]} y1={0} y2={H} stroke="var(--accent)" strokeWidth="1" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" opacity="0.4"/>
-          <circle cx={sel[0]} cy={sel[1]} r="4" fill="var(--accent)"/>
-        </g>
-      )}
-    </svg>
+    <div className="tide-curve-wrap">
+      <div className="tide-curve-label mono">{t("tide_today")}</div>
+      <svg viewBox={`0 0 ${W} ${H + 14}`} preserveAspectRatio="none" style={{ width: "100%", height: 72, display: "block", overflow: "visible" }}>
+        <path d={areaPath} fill="rgba(14,165,233,0.12)"/>
+        <polyline points={polyline} fill="none" stroke="var(--accent)" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+        {extremes.map((e, i) => (
+          <g key={i}>
+            <circle cx={e.p[0]} cy={e.p[1]} r="2.5" fill="var(--accent)" opacity="0.55"/>
+            <text x={e.p[0]} y={e.p[1] + (e.kind === "H" ? -6 : 10)} textAnchor="middle"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fill: "var(--text-mu)" }}>
+              {e.kind} {fmtShort(e.p[2].time)}
+            </text>
+          </g>
+        ))}
+        {sel && (
+          <g>
+            <line x1={sel[0]} x2={sel[0]} y1={0} y2={H} stroke="var(--accent)" strokeWidth="1" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" opacity="0.5"/>
+            <circle cx={sel[0]} cy={sel[1]} r="4" fill="var(--accent)"/>
+          </g>
+        )}
+        {axisMarks.map((m, i) => (
+          <text key={i} x={m.x} y={H + 12} textAnchor="middle"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fill: "var(--text-dim)" }}>
+            {m.label}
+          </text>
+        ))}
+      </svg>
+    </div>
   );
 }
 
@@ -922,6 +962,7 @@ export default function SurfApp() {
   const [userLevel, setUserLevel] = useState(null);
   const [levelPickerOpen, setLevelPickerOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [scrolledPast, setScrolledPast] = useState(false);
   const [country, setCountry] = useState("AU");
   const [sharedDay, setSharedDay] = useState(null);
   const tabsRef = useRef(null);
@@ -979,6 +1020,14 @@ export default function SurfApp() {
     if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
+  }, []);
+
+  // Compact the sticky panel once the user has scrolled past its natural slot
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => setScrolledPast(window.scrollY > 240);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   function saveCustomLang(cl) {
@@ -1419,7 +1468,7 @@ export default function SurfApp() {
           )}
         </div>
 
-        <div className="sticky-info">
+        <div className={`sticky-info${scrolledPast ? " compact" : ""}`}>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
               {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
@@ -1465,7 +1514,6 @@ export default function SurfApp() {
             <div className="face-label mono">{t("expected_face")}</div>
             <div className="face-value serif">{faceFtLow}–{faceFtHigh} ft</div>
             <div className="face-sub mono">{faceM.toFixed(1)} m · {sel.swellHeight?.toFixed(1)}m @ {sel.swellPeriod?.toFixed(0)}s</div>
-            <div className="face-hint">{t(describeFaceHeightKey(faceFtHigh))}</div>
           </div>
 
           <div className="metrics">
@@ -1550,12 +1598,15 @@ export default function SurfApp() {
               </div>
             );
           })()}
-          {dayHours.some(h => h.tideM != null) && (
-            <div className="tide-curve-row">
-              <TideCurve dayHours={dayHours} selHour={sel} tz={tz}/>
-            </div>
-          )}
         </div>
+
+        <div className="face-hint-standalone">{t(describeFaceHeightKey(faceFtHigh))}</div>
+
+        {dayHours.some(h => h.tideM != null) && (
+          <div className="tide-curve-row">
+            <TideCurve dayHours={dayHours} selHour={sel} tz={tz} t={t}/>
+          </div>
+        )}
 
         <div className="notes-label mono">{t("what_driving")}</div>
         <div className="notes">{notes.map((n, i) => <span key={i} className="note mono">{t(n)}</span>)}</div>
@@ -1603,7 +1654,8 @@ export default function SurfApp() {
             const idx = data.hours.indexOf(h);
             const { score: s } = scoreSurf(h, spot, selDayTideCtx);
             const lv = getLevel(s, h, spot);
-            const isSel = sel === h;
+            const isSel = selected !== null && data.hours[selected] === h;
+            const isPanelHour = sel === h;
             const dawn = isDawn(h.time, tz);
             const face = estimateFaceHeight(h.swellHeight, h.swellPeriod);
             const faceLow = Math.max(1, Math.floor(mToFt(face) - 0.5));
@@ -1786,7 +1838,26 @@ export default function SurfApp() {
         .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
-        .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
+        .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); transition: padding 0.15s ease; }
+        .sticky-info.compact .sticky-tip,
+        .sticky-info.compact .sticky-level-btn,
+        .sticky-info.compact .share-btn,
+        .sticky-info.compact .face-label,
+        .sticky-info.compact .face-sub,
+        .sticky-info.compact .metric-label,
+        .sticky-info.compact .metric-sub,
+        .sticky-info.compact .temp-label,
+        .sticky-info.compact .sun-times,
+        .sticky-info.compact .temp-item .metric-sub { display: none; }
+        .sticky-info.compact .face-height { padding: 4px 0; }
+        .sticky-info.compact .face-value { font-size: 22px; }
+        .sticky-info.compact .metrics { padding: 4px 0; border-bottom: none; }
+        .sticky-info.compact .metric { padding: 2px 0; }
+        .sticky-info.compact .metric-value { font-size: 15px; }
+        .sticky-info.compact .temp-strip { padding: 2px 0; }
+        .sticky-info.compact .temp-item { padding: 4px 0; }
+        .sticky-info.compact .temp-item .metric-value { font-size: 13px; }
+        .face-hint-standalone { font-size: 12px; color: var(--text-mu); margin: 10px auto 4px; line-height: 1.35; max-width: 340px; text-align: center; font-style: italic; padding: 0 10px; }
         .face-height { padding: 10px 0 8px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
         .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
         .face-value { font-weight: 500; font-size: 32px; line-height: 1; letter-spacing: -0.03em; }
