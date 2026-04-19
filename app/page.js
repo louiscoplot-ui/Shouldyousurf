@@ -381,9 +381,10 @@ function classifyConditions(userLevel, h, spot) {
   else size = "too_big";
 
   let wind;
+  // Mirrors the "blown out" rule used for the hour label so a hour can't read
+  // "BLOWN OUT" overall while the personal tip still treats it as just bumpy.
   if ((isOffshore && kmh < 30) || kmh < 10) wind = "clean";
-  else if (isOnshore && kmh >= 30) wind = "blown";
-  else if (kmh >= 45) wind = "blown";
+  else if ((!isOffshore && kmh >= 25) || kmh >= 40) wind = "blown";
   else wind = "bumpy";
 
   const reefTooMuch = (spot.heavy || spot.type === "reef") && (userLevel === "first_timer" || userLevel === "beginner");
@@ -405,10 +406,9 @@ function getPersonalVerdict(userLevel, h, spot) {
   if (reefTooMuch) return "no";
   if (size === "too_small" || size === "too_big") return "no";
   if (wind === "blown") return size === "sweet" ? "ok" : "no";
-  if (size === "sweet" && wind === "clean") return "yes";
-  if (size === "sweet") return "ok";
-  if (size === "small") return wind === "clean" ? "ok" : "no";
-  if (size === "upper") return wind === "clean" ? "ok" : "no";
+  if (size === "sweet") return wind === "clean" ? "yes" : "ok";
+  if (size === "upper") return wind === "clean" ? "yes" : "ok";
+  // "small" — surfable but not the sweet size
   return "ok";
 }
 
