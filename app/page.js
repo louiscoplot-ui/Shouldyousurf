@@ -1878,7 +1878,9 @@ export default function SurfApp() {
 
         .temp-strip { display: flex; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
         .temp-item { flex: 1; min-width: 0; padding: 8px 0; border-right: 1px solid var(--border); overflow: hidden; }
-        .tide-curve-row { padding: 4px 0 6px; border-bottom: 1px solid var(--border); }
+        .tide-curve-row { padding: 8px 0 14px; }
+        .tide-curve-wrap { padding: 4px 0; }
+        .tide-curve-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; text-align: center; }
         .temp-item:last-child { border-right: none; padding-left: 14px; }
         .temp-item:not(:first-child) { padding-left: 14px; }
         .temp-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
