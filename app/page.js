@@ -413,6 +413,29 @@ function getPersonalAdviceKey(userLevel, h, spot) {
   return "tip_" + userLevel + "_" + size + "_" + wind;
 }
 
+// Expert-level context added after the main tip — highlights the factor most
+// likely to surprise the surfer (period = real power, direction = closeouts).
+function getPersonalModifier(userLevel, h, spot) {
+  const { size, wind, reefTooMuch } = classifyConditions(userLevel, h, spot);
+  if (reefTooMuch) return null;
+  if (size === "too_small" || size === "too_big") return null;
+  if (wind === "blown") return null;
+
+  const period = h.swellPeriod || 0;
+  const dirDelta = Math.abs(((h.swellDir - spot.idealSwellDir + 540) % 360) - 180);
+  const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
+
+  // Long-period swell carries much more punch than the size suggests.
+  if (period >= 14 && (size === "sweet" || size === "upper")) return "tip_mod_long_period";
+  // Short-period mushy swell is forgiving — good to reassure learners.
+  if (period > 0 && period < 8 && isLearner && (size === "sweet" || size === "small")) return "tip_mod_short_period";
+  // Off-angle swell usually closes out — worth flagging at any level.
+  if (dirDelta > 75) return "tip_mod_off_angle";
+  // Glassy condition — call it out when truly calm
+  if (wind === "clean" && knToKmh(h.windSpeedKn) < 8) return "tip_mod_glassy";
+  return null;
+}
+
 function getPersonalVerdict(userLevel, h, spot) {
   const { size, wind, reefTooMuch, faceFt } = classifyConditions(userLevel, h, spot);
   // SKIP is reserved for genuinely unsurfable or unsafe situations.
@@ -1121,11 +1144,13 @@ export default function SurfApp() {
             if (userLevel) {
               const verdict = getPersonalVerdict(userLevel, sel, spot);
               const tipKey = getPersonalAdviceKey(userLevel, sel, spot);
+              const modKey = getPersonalModifier(userLevel, sel, spot);
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
               return (
                 <div className="sticky-tip">
                   <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
+                  {modKey && <span style={{ display: "block", marginTop: 6, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(modKey)}</span>}
                 </div>
               );
             }
