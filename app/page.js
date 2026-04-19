@@ -939,7 +939,7 @@ export default function SurfApp() {
                 {windKmh}<span className="metric-unit">km/h</span>
                 {windTrend && <span className="trend" aria-label={windTrend === "up" ? "rising" : "dropping"}>{windTrend === "up" ? "↗" : "↘"}</span>}
               </div>
-              <div className="metric-sub mono">{degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}</div>
+              <div className="metric-sub mono">{degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}{sel.rainProb != null ? ` · ${Math.round(sel.rainProb)}% ${t("rain").toLowerCase()}` : ""}</div>
             </div>
           </div>
 
@@ -974,12 +974,6 @@ export default function SurfApp() {
                       <span>↑{sunrise}</span>
                       <span>↓{sunset}</span>
                     </div>
-                  </div>
-                )}
-                {sel.rainProb != null && (
-                  <div className="temp-item">
-                    <div className="temp-label mono">{t("rain")}</div>
-                    <div className="metric-value">{Math.round(sel.rainProb)}<span className="metric-unit">%</span></div>
                   </div>
                 )}
                 {curVel != null && curVel > 0.05 && (
@@ -1200,18 +1194,18 @@ export default function SurfApp() {
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
         .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
-        .face-height { padding: 14px 0 10px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
-        .face-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-        .face-value { font-weight: 500; font-size: 40px; line-height: 1; letter-spacing: -0.03em; }
-        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 6px; letter-spacing: 0.03em; }
-        .face-hint { font-size: 12px; color: var(--text-mu); margin-top: 8px; line-height: 1.35; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
+        .face-height { padding: 10px 0 8px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
+        .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
+        .face-value { font-weight: 500; font-size: 32px; line-height: 1; letter-spacing: -0.03em; }
+        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; letter-spacing: 0.03em; }
+        .face-hint { font-size: 11px; color: var(--text-mu); margin-top: 6px; line-height: 1.3; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
 
         .metrics { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .metric { padding: 12px 0; }
+        .metric { padding: 9px 0; }
         .metric:first-child { padding-right: 16px; border-right: 1px solid var(--border); }
         .metric:last-child { padding-left: 16px; }
         .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-        .metric-value { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; display: flex; align-items: baseline; gap: 4px; }
+        .metric-value { font-size: 19px; font-weight: 500; letter-spacing: -0.015em; display: flex; align-items: baseline; gap: 4px; }
         .metric-unit { font-size: 12px; color: var(--text-mu); font-weight: 400; }
         .trend { font-size: 14px; color: var(--text-dim); margin-left: 6px; line-height: 1; }
         .sun-times { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text); line-height: 1.3; }
@@ -1219,7 +1213,7 @@ export default function SurfApp() {
         .metric-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
         .temp-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .temp-item { padding: 11px 0; border-right: 1px solid var(--border); }
+        .temp-item { padding: 8px 0; border-right: 1px solid var(--border); }
         .temp-item:last-child { border-right: none; padding-left: 16px; }
         .temp-item:not(:first-child) { padding-left: 16px; }
         .temp-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
