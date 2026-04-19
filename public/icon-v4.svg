@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="v4circle">
+      <circle cx="512" cy="512" r="380"/>
+    </clipPath>
+    <linearGradient id="v4sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#03060f"/>
+      <stop offset="0.55" stop-color="#0a112a"/>
+      <stop offset="1" stop-color="#0e1a3f"/>
+    </linearGradient>
+    <linearGradient id="v4w1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b2d70"/>
+      <stop offset="1" stop-color="#0d3a8a"/>
+    </linearGradient>
+    <linearGradient id="v4w2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1558b5"/>
+      <stop offset="1" stop-color="#1a66cc"/>
+    </linearGradient>
+    <linearGradient id="v4w3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2382de"/>
+      <stop offset="1" stop-color="#2e96ef"/>
+    </linearGradient>
+    <linearGradient id="v4w4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3ea8f5"/>
+      <stop offset="1" stop-color="#55b8ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- White rounded square base (iOS app icon style) -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="#ffffff"/>
+
+  <g clip-path="url(#v4circle)">
+    <!-- Sky / night half -->
+    <rect x="132" y="132" width="760" height="760" fill="url(#v4sky)"/>
+
+    <!-- Wave 1 — deepest water, highest layer, gentle horizontal ripple -->
+    <path d="M 130 540
+             C 260 512, 360 558, 460 534
+             C 560 512, 640 554, 740 534
+             C 820 518, 870 536, 900 528
+             L 900 900 L 130 900 Z"
+          fill="url(#v4w1)"/>
+
+    <!-- Wave 2 -->
+    <path d="M 130 610
+             C 270 586, 400 620, 520 594
+             C 640 568, 720 614, 820 598
+             C 860 592, 890 600, 900 598
+             L 900 900 L 130 900 Z"
+          fill="url(#v4w2)"/>
+
+    <!-- Wave 3 -->
+    <path d="M 130 690
+             C 280 666, 420 700, 560 680
+             C 680 664, 760 702, 860 690
+             L 900 690 L 900 900 L 130 900 Z"
+          fill="url(#v4w3)"/>
+
+    <!-- Wave 4 — brightest foreground layer -->
+    <path d="M 130 780
+             C 300 758, 470 792, 600 776
+             C 720 762, 800 790, 900 784
+             L 900 900 L 130 900 Z"
+          fill="url(#v4w4)"/>
+  </g>
+</svg>
