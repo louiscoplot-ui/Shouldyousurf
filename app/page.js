@@ -827,10 +827,11 @@ export default function SurfApp() {
   }, [spot.id]);
 
   if (loading) return (
-    <div className="page">
+    <div className="page load-page">
       <div className="load-wrap">
+        <div className="load-brand serif">{t("brand")}</div>
         <div className="load-dots">{[0,1,2].map(i => <div key={i} className="dot" style={{ animationDelay: `${i*0.2}s` }}/>)}</div>
-        <p className="load-text">{t("loading")}</p>
+        <p className="load-text mono">{t("loading")}</p>
       </div>
     </div>
   );
@@ -1239,10 +1240,13 @@ export default function SurfApp() {
         .page { min-height: 100vh; background: var(--bg); background-image: linear-gradient(180deg, #eef4f8 0%, #e6eff5 100%); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
         .wrap { max-width: 440px; margin: 0 auto; padding: 36px 20px 100px; }
 
-        .load-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 16px; }
-        .load-dots { display: flex; gap: 6px; }
+        .load-page { min-height: 100dvh; background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%); }
+        .load-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 18px; padding: 0 24px; text-align: center; animation: loadFade 0.4s ease both; }
+        .load-brand { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); margin-bottom: 4px; }
+        .load-dots { display: flex; gap: 7px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: dotBounce 1.2s infinite ease-in-out; }
-        .load-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+        .load-text { font-size: 11px; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; }
+        @keyframes loadFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
         .primary-btn { display: block; width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 14px; font-weight: 600; font-size: 14px; cursor: pointer; margin-bottom: 10px; }
         .secondary-btn { display: block; width: 100%; background: transparent; color: var(--text-mu); border: 1px solid var(--border-str); border-radius: 10px; padding: 14px; font-weight: 500; font-size: 13px; cursor: pointer; }
