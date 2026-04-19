@@ -415,14 +415,34 @@ function getPersonalAdviceKey(userLevel, h, spot) {
 
 function getPersonalVerdict(userLevel, h, spot) {
   const { size, wind, reefTooMuch, faceFt } = classifyConditions(userLevel, h, spot);
-  if (reefTooMuch) return "no";
+  // SKIP is reserved for genuinely unsurfable or unsafe situations.
+  // Anything borderline defaults to WORTH IT — let the surfer judge at the beach.
+
+  if (reefTooMuch) return "no"; // safety: reef/heavy spot + beginner-ish level
   if (size === "too_big" && hasInsideReform(userLevel, faceFt, spot) && wind !== "blown") return "ok";
-  if (size === "too_small" || size === "too_big") return "no";
-  if (wind === "blown") return size === "sweet" ? "ok" : "no";
+
+  if (wind === "blown") {
+    // Upper + blown is a genuine hazard
+    if (size === "upper") return "no";
+    // Small/sweet + blown: chop, not worth for beginners; worth a check for others
+    if (size === "too_small") return "no";
+    return "ok";
+  }
+
+  if (size === "too_small") {
+    // Beginners can't catch anything, others can still longboard / mess around
+    if (userLevel === "first_timer" || userLevel === "beginner") return "no";
+    return "ok";
+  }
+  if (size === "too_big") {
+    // Unsafe for lower levels, advanced+ can judge themselves
+    if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
+    return "ok";
+  }
+
   if (size === "sweet") return wind === "clean" ? "yes" : "ok";
   if (size === "upper") return wind === "clean" ? "yes" : "ok";
-  // "small" — surfable but not the sweet size
-  return "ok";
+  return "ok"; // "small" — surfable but not prime
 }
 
 function LevelPicker({ userLevel, onPick, onClose, t }) {
