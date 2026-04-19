@@ -1661,7 +1661,7 @@ export default function SurfApp() {
                 onClick={() => setSelected(prev => prev === idx ? null : idx)}>
                 <div className={`hour-time mono ${dawn?"dawn":""}`}>{fmtHour(h.time, tz)}</div>
                 <div className="hour-bar"><div className="hour-bar-fill" style={{ width:`${s}%`, background:lv.color }}/></div>
-                <div className="hour-label mono" style={{ color:lv.color }}>{t(lv.labelKey).toUpperCase()}</div>
+                <div className="hour-label mono" style={{ color:lv.color }}>{s} {t(lv.labelKey).toUpperCase()}</div>
                 <div className="hour-stats mono">
                   {faceLow}–{faceHigh}ft · {Math.round(knToKmh(h.windSpeedKn))}km/h
                 </div>
