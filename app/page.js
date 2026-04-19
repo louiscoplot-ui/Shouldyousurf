@@ -1025,7 +1025,7 @@ export default function SurfApp() {
   // Compact the sticky panel once the user has scrolled past its natural slot
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onScroll = () => setScrolledPast(window.scrollY > 240);
+    const onScroll = () => setScrolledPast(window.scrollY > 420);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -1838,25 +1838,29 @@ export default function SurfApp() {
         .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
-        .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); transition: padding 0.15s ease; }
+        .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
+        .sticky-info .sticky-tip,
+        .sticky-info .face-sub,
+        .sticky-info .metric-sub,
+        .sticky-info .temp-item .metric-sub,
+        .sticky-info .sun-times { transition: opacity 0.25s ease, max-height 0.3s ease; overflow: hidden; }
         .sticky-info.compact .sticky-tip,
-        .sticky-info.compact .sticky-level-btn,
-        .sticky-info.compact .share-btn,
-        .sticky-info.compact .face-label,
         .sticky-info.compact .face-sub,
-        .sticky-info.compact .metric-label,
         .sticky-info.compact .metric-sub,
-        .sticky-info.compact .temp-label,
-        .sticky-info.compact .sun-times,
-        .sticky-info.compact .temp-item .metric-sub { display: none; }
-        .sticky-info.compact .face-height { padding: 4px 0; }
-        .sticky-info.compact .face-value { font-size: 22px; }
-        .sticky-info.compact .metrics { padding: 4px 0; border-bottom: none; }
-        .sticky-info.compact .metric { padding: 2px 0; }
-        .sticky-info.compact .metric-value { font-size: 15px; }
-        .sticky-info.compact .temp-strip { padding: 2px 0; }
-        .sticky-info.compact .temp-item { padding: 4px 0; }
-        .sticky-info.compact .temp-item .metric-value { font-size: 13px; }
+        .sticky-info.compact .temp-item .metric-sub,
+        .sticky-info.compact .sun-times { opacity: 0; max-height: 0; margin: 0; padding: 0; }
+        .sticky-info .face-value,
+        .sticky-info .metric-value,
+        .sticky-info .face-height,
+        .sticky-info .metric,
+        .sticky-info .temp-item { transition: font-size 0.25s ease, padding 0.25s ease; }
+        .sticky-info.compact .face-height { padding: 6px 0 4px; }
+        .sticky-info.compact .face-value { font-size: 26px; }
+        .sticky-info.compact .face-label { opacity: 0.6; font-size: 8px; }
+        .sticky-info.compact .metric { padding: 6px 0; }
+        .sticky-info.compact .metric-value { font-size: 16px; }
+        .sticky-info.compact .temp-item { padding: 5px 0; }
+        .sticky-info.compact .temp-item .metric-value { font-size: 14px; }
         .face-hint-standalone { font-size: 12px; color: var(--text-mu); margin: 10px auto 4px; line-height: 1.35; max-width: 340px; text-align: center; font-style: italic; padding: 0 10px; }
         .face-height { padding: 10px 0 8px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
         .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
