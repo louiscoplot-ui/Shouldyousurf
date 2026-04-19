@@ -1883,7 +1883,7 @@ export default function SurfApp() {
         .hour-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
         .hour-label { font-size: 9px; text-align: right; letter-spacing: 0.06em; font-weight: 600; white-space: nowrap; }
         .hour-score { font-weight: 700; margin-right: 2px; }
-        .hour-stats { font-size: 9px; color: var(--text-dim); text-align: right; line-height: 1.4; }
+        .hour-stats { font-size: 9px; color: var(--text-mu); font-weight: 500; text-align: right; line-height: 1.4; }
         .hour-btn.sel .hour-stats { color: var(--text-mu); }
         .hour-btn.hour-sub { border-top: 1px solid rgba(14,165,233,0.15); background: rgba(14,165,233,0.03); }
         .expand-chev { font-size: 7px; color: var(--accent); opacity: 0.5; margin-left: 2px; }
