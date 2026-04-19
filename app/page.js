@@ -109,18 +109,30 @@ function surfabilityByLevel(h, spot) {
 
 function getDayTip(levelMatrix, h, spot) {
   if (!levelMatrix) return null;
-  const [beg, int, adv, exp] = levelMatrix.map(l => l.verdict);
+  const v = levelMatrix.map(l => l.verdict);
+  const [beg, int, adv, exp] = v;
   const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
+  const yesCount = v.filter(x => x === "yes").length;
+  const noCount = v.filter(x => x === "no").length;
 
-  if (beg === "yes" && int === "yes" && adv === "yes" && exp === "yes") return "tip_all_levels";
-  if (beg === "no" && (int === "yes" || adv === "yes" || exp === "yes")) {
-    if (faceFt >= 4) return "tip_advanced";
-    return "tip_int_adv";
+  // Nothing rideable for anyone
+  if (noCount >= 3) return "tip_skip_all";
+  // Every level scores
+  if (yesCount === 4) return "tip_all_levels";
+  // Beginners locked out but advanced/expert can score → genuinely big
+  if (beg === "no" && (adv === "yes" || exp === "yes")) {
+    return faceFt >= 4 ? "tip_advanced" : "tip_int_adv";
   }
+  // Big at the peak but inside reform works for beginners
   if (beg === "ok" && (int === "yes" || adv === "yes")) return "tip_inside_split";
+  // Only beginners thrive — small clean day
   if (beg === "yes" && int !== "yes" && adv !== "yes") return "tip_beginner";
-  if (int === "yes" && adv === "yes" && beg === "ok") return "tip_int_adv";
-  return null;
+  // Intermediate+ pumping but beginners shouldn't bother
+  if (int === "yes" && beg !== "yes") return "tip_int_adv";
+  // Beginners can go, intermediate+ also fine
+  if (beg === "yes" && (int === "yes" || int === "ok")) return "tip_all_levels";
+  // Everyone just "worth it" — workable but unremarkable
+  return "tip_marginal";
 }
 
 function getWindTypeKey(sel, spot) {
@@ -1051,7 +1063,7 @@ export default function SurfApp() {
             return [
               <button key={h.time}
                 className={`hour-btn ${isSel?"sel":""}`}
-                onClick={() => setSelected(idx)}>
+                onClick={() => setSelected(prev => prev === idx ? null : idx)}>
                 <div className={`hour-time mono ${dawn?"dawn":""}`}>{fmtHour(h.time, tz)}</div>
                 <div className="hour-bar"><div className="hour-bar-fill" style={{ width:`${s}%`, background:lv.color }}/></div>
                 <div className="hour-label mono" style={{ color:lv.color }}>{t(lv.labelKey).toUpperCase()}</div>
