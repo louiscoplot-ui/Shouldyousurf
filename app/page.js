@@ -355,6 +355,8 @@ function FaqSheet({ onClose, t }) {
 const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediate", "advanced", "expert"];
 const USER_LEVEL_TO_MATRIX = { first_timer: 0, beginner: 0, early_int: 1, intermediate: 1, advanced: 2, expert: 3 };
 const USER_LEVEL_BIAS = { first_timer: "down", early_int: "down" };
+// Face-ft threshold above which the conditions feel "upper end" for the given user level.
+const USER_LEVEL_UPPER_FT = { first_timer: 1.5, beginner: 2.5, early_int: 3.5, intermediate: 5, advanced: 7, expert: 10 };
 
 function LevelPicker({ userLevel, onPick, onClose, t }) {
   return (
@@ -977,7 +979,11 @@ export default function SurfApp() {
               let tipKey;
               if (biased) tipKey = "tip_" + userLevel + "_upper";
               else if (verdict === "yes") tipKey = "tip_" + userLevel + "_go";
-              else if (verdict === "ok") tipKey = "tip_" + userLevel + "_ok";
+              else if (verdict === "ok") {
+                const fFt = mToFt(estimateFaceHeight(sel.swellHeight, sel.swellPeriod));
+                const upperFt = USER_LEVEL_UPPER_FT[userLevel];
+                tipKey = (upperFt && fFt >= upperFt) ? "tip_" + userLevel + "_upper" : "tip_" + userLevel + "_ok";
+              }
               else tipKey = "tip_" + userLevel + "_skip";
               return (
                 <div className="sticky-tip">
