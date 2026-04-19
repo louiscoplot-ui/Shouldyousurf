@@ -969,13 +969,19 @@ export default function SurfApp() {
               const idx = USER_LEVEL_TO_MATRIX[userLevel];
               const baseLvl = levelMatrix[idx];
               if (!baseLvl) return null;
-              let verdict = baseLvl.verdict;
-              if (USER_LEVEL_BIAS[userLevel] === "down" && verdict === "yes") verdict = "ok";
+              const rawVerdict = baseLvl.verdict;
+              const biased = USER_LEVEL_BIAS[userLevel] === "down" && rawVerdict === "yes";
+              const verdict = biased ? "ok" : rawVerdict;
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
+              let tipKey;
+              if (biased) tipKey = "tip_" + userLevel + "_upper";
+              else if (verdict === "yes") tipKey = "tip_" + userLevel + "_go";
+              else if (verdict === "ok") tipKey = "tip_" + userLevel + "_ok";
+              else tipKey = "tip_" + userLevel + "_skip";
               return (
                 <div className="sticky-tip">
-                  <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(baseLvl.reasonKey)}
+                  <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
                 </div>
               );
             }
