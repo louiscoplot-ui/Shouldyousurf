@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.55" r="0.75">
+      <stop offset="0" stop-color="#1a3566"/>
+      <stop offset="0.7" stop-color="#0c1e3f"/>
+      <stop offset="1" stop-color="#061128"/>
+    </radialGradient>
+    <clipPath id="ring">
+      <circle cx="512" cy="512" r="330"/>
+    </clipPath>
+  </defs>
+
+  <!-- Dark navy rounded background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+
+  <!-- White thin circle ring -->
+  <circle cx="512" cy="512" r="330" fill="none" stroke="#ffffff" stroke-width="14"/>
+
+  <!-- Wave + question mark composition, clipped to the circle -->
+  <g clip-path="url(#ring)">
+    <!-- Wave body: white filled shape occupying bottom-left of the circle,
+         cresting up-and-over toward the centre to form the question-mark curve. -->
+    <path d="M 170 520
+             C 170 400, 260 320, 380 310
+             C 490 302, 560 370, 590 440
+             C 612 492, 604 544, 572 580
+             C 540 616, 488 628, 444 612
+             C 486 642, 538 658, 588 648
+             C 520 720, 420 752, 320 738
+             C 250 728, 190 690, 170 640 Z"
+          fill="#ffffff"/>
+
+    <!-- Question mark curve (stroke), mirroring the wave crest and rising to the top-right -->
+    <path d="M 470 412
+             C 470 332, 542 284, 620 304
+             C 710 326, 748 410, 702 478
+             C 668 528, 608 548, 588 600
+             C 580 622, 580 642, 590 662"
+          fill="none"
+          stroke="#ffffff"
+          stroke-width="46"
+          stroke-linecap="round"/>
+
+    <!-- Dot of the question mark -->
+    <circle cx="590" cy="732" r="26" fill="#ffffff"/>
+  </g>
+</svg>
