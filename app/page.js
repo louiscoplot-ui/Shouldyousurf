@@ -1661,7 +1661,9 @@ export default function SurfApp() {
                 onClick={() => setSelected(prev => prev === idx ? null : idx)}>
                 <div className={`hour-time mono ${dawn?"dawn":""}`}>{fmtHour(h.time, tz)}</div>
                 <div className="hour-bar"><div className="hour-bar-fill" style={{ width:`${s}%`, background:lv.color }}/></div>
-                <div className="hour-label mono" style={{ color:lv.color }}>{s} {t(lv.labelKey).toUpperCase()}</div>
+                <div className="hour-label mono" style={{ color:lv.color }}>
+                  <span className="hour-score">{s}</span> {t(lv.labelKey).toUpperCase()}
+                </div>
                 <div className="hour-stats mono">
                   {faceLow}–{faceHigh}ft · {Math.round(knToKmh(h.windSpeedKn))}km/h
                 </div>
@@ -1871,14 +1873,15 @@ export default function SurfApp() {
 
         .section-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin: 32px 0 4px; }
         .hours { animation: rise 0.5s 0.3s ease both; }
-        .hour-btn { display: grid; grid-template-columns: 52px 1fr 62px 86px; align-items: center; gap: 10px; background: none; border: none; border-top: 1px solid var(--border); padding: 10px 0; cursor: pointer; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); }
+        .hour-btn { display: grid; grid-template-columns: 52px 1fr 96px 86px; align-items: center; gap: 10px; background: none; border: none; border-top: 1px solid var(--border); padding: 10px 0; cursor: pointer; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); }
         .hour-btn:last-child { border-bottom: 1px solid var(--border); }
         .hour-btn.sel { background: rgba(14,165,233,0.08); margin: 0 -20px; padding-left: 16px; padding-right: 20px; width: calc(100% + 40px); border-left: 3px solid var(--accent); border-top-color: transparent; }
         .hour-btn.sel .hour-time { color: var(--text); font-weight: 600; }
         .hour-time { font-size: 11px; color: var(--text-mu); }
         .hour-bar { height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
         .hour-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-        .hour-label { font-size: 9px; text-align: right; letter-spacing: 0.06em; font-weight: 600; }
+        .hour-label { font-size: 9px; text-align: right; letter-spacing: 0.06em; font-weight: 600; white-space: nowrap; }
+        .hour-score { font-weight: 700; margin-right: 2px; }
         .hour-stats { font-size: 9px; color: var(--text-dim); text-align: right; line-height: 1.4; }
         .hour-btn.sel .hour-stats { color: var(--text-mu); }
         .hour-btn.hour-sub { border-top: 1px solid rgba(14,165,233,0.15); background: rgba(14,165,233,0.03); }
