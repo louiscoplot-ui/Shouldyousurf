@@ -355,8 +355,62 @@ function FaqSheet({ onClose, t }) {
 const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediate", "advanced", "expert"];
 const USER_LEVEL_TO_MATRIX = { first_timer: 0, beginner: 0, early_int: 1, intermediate: 1, advanced: 2, expert: 3 };
 const USER_LEVEL_BIAS = { first_timer: "down", early_int: "down" };
-// Face-ft threshold above which the conditions feel "upper end" for the given user level.
-const USER_LEVEL_UPPER_FT = { first_timer: 1.5, beginner: 2.5, early_int: 3.5, intermediate: 5, advanced: 7, expert: 10 };
+// Size comfort zones per user level, in feet of face height.
+const USER_LEVEL_ZONES = {
+  first_timer:  { min: 0.5, sweetLo: 0.8, sweetHi: 1.3, upperMax: 1.8 },
+  beginner:     { min: 0.8, sweetLo: 1.2, sweetHi: 2,   upperMax: 2.8 },
+  early_int:    { min: 1.2, sweetLo: 1.8, sweetHi: 3,   upperMax: 4 },
+  intermediate: { min: 1.5, sweetLo: 2.5, sweetHi: 4.5, upperMax: 6 },
+  advanced:     { min: 2,   sweetLo: 3,   sweetHi: 7,   upperMax: 10 },
+  expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
+};
+
+function classifyConditions(userLevel, h, spot) {
+  const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
+  const kmh = knToKmh(h.windSpeedKn);
+  const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
+  const isOffshore = windDelta <= 45;
+  const isOnshore = windDelta >= 90;
+
+  const z = USER_LEVEL_ZONES[userLevel] || USER_LEVEL_ZONES.intermediate;
+  let size;
+  if (faceFt < z.min) size = "too_small";
+  else if (faceFt < z.sweetLo) size = "small";
+  else if (faceFt <= z.sweetHi) size = "sweet";
+  else if (faceFt <= z.upperMax) size = "upper";
+  else size = "too_big";
+
+  let wind;
+  if ((isOffshore && kmh < 30) || kmh < 10) wind = "clean";
+  else if (isOnshore && kmh >= 30) wind = "blown";
+  else if (kmh >= 45) wind = "blown";
+  else wind = "bumpy";
+
+  const reefTooMuch = (spot.heavy || spot.type === "reef") && (userLevel === "first_timer" || userLevel === "beginner");
+
+  return { size, wind, reefTooMuch, faceFt };
+}
+
+function getPersonalAdviceKey(userLevel, h, spot) {
+  const { size, wind, reefTooMuch } = classifyConditions(userLevel, h, spot);
+  if (reefTooMuch) return "tip_" + userLevel + "_reef";
+  if (size === "too_small") return "tip_" + userLevel + "_too_small";
+  if (size === "too_big")   return "tip_" + userLevel + "_too_big";
+  if (wind === "blown")     return "tip_" + userLevel + "_blown_" + size;
+  return "tip_" + userLevel + "_" + size + "_" + wind;
+}
+
+function getPersonalVerdict(userLevel, h, spot) {
+  const { size, wind, reefTooMuch } = classifyConditions(userLevel, h, spot);
+  if (reefTooMuch) return "no";
+  if (size === "too_small" || size === "too_big") return "no";
+  if (wind === "blown") return size === "sweet" ? "ok" : "no";
+  if (size === "sweet" && wind === "clean") return "yes";
+  if (size === "sweet") return "ok";
+  if (size === "small") return wind === "clean" ? "ok" : "no";
+  if (size === "upper") return wind === "clean" ? "ok" : "no";
+  return "ok";
+}
 
 function LevelPicker({ userLevel, onPick, onClose, t }) {
   return (
@@ -1032,23 +1086,10 @@ export default function SurfApp() {
           </button>
           {(() => {
             if (userLevel) {
-              const idx = USER_LEVEL_TO_MATRIX[userLevel];
-              const baseLvl = levelMatrix[idx];
-              if (!baseLvl) return null;
-              const rawVerdict = baseLvl.verdict;
-              const biased = USER_LEVEL_BIAS[userLevel] === "down" && rawVerdict === "yes";
-              const verdict = biased ? "ok" : rawVerdict;
+              const verdict = getPersonalVerdict(userLevel, sel, spot);
+              const tipKey = getPersonalAdviceKey(userLevel, sel, spot);
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
-              let tipKey;
-              if (biased) tipKey = "tip_" + userLevel + "_upper";
-              else if (verdict === "yes") tipKey = "tip_" + userLevel + "_go";
-              else if (verdict === "ok") {
-                const fFt = mToFt(estimateFaceHeight(sel.swellHeight, sel.swellPeriod));
-                const upperFt = USER_LEVEL_UPPER_FT[userLevel];
-                tipKey = (upperFt && fFt >= upperFt) ? "tip_" + userLevel + "_upper" : "tip_" + userLevel + "_ok";
-              }
-              else tipKey = "tip_" + userLevel + "_skip";
               return (
                 <div className="sticky-tip">
                   <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
