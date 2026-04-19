@@ -1090,32 +1090,6 @@ export default function SurfApp() {
         <div className="footer-text mono">{t("footer")}</div>
       </div>
 
-      <div className="sticky-bar">
-        <div className="sb-time mono">{fmtHour(sel.time, tz)}</div>
-        <div className="sb-score serif" style={{ color: level.color }}>{score}</div>
-        <div className="sb-divider"/>
-        <div className="sb-col mono">
-          <span className="sb-lbl">{t("swell")}</span>
-          <span className="sb-val">{sel.swellHeight?.toFixed(1)}m {sel.swellPeriod?.toFixed(0)}s</span>
-        </div>
-        <div className="sb-col mono">
-          <span className="sb-lbl">{t("wind")}</span>
-          <span className="sb-val">{Math.round(knToKmh(sel.windSpeedKn))}km/h {degToCompass(sel.windDir)}</span>
-        </div>
-        {sel.airTemp != null && (
-          <div className="sb-col mono">
-            <span className="sb-lbl">{t("air_temp")}</span>
-            <span className="sb-val">{Math.round(sel.airTemp)}°C</span>
-          </div>
-        )}
-        {(() => { const st = dayHours.find(h => h.seaTemp != null)?.seaTemp; return st != null ? (
-          <div className="sb-col mono">
-            <span className="sb-lbl">{t("water_temp")}</span>
-            <span className="sb-val">{Math.round(st)}°C</span>
-          </div>
-        ) : null; })()}
-      </div>
-
       {pickerOpen && <BreakPicker onSelect={b => { setSpot(b); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} favorites={favorites} toggleFav={toggleFav} currentId={spot.id} t={t}/>}
       {langOpen && <LangPicker lang={lang} setLang={setLang} onClose={() => setLangOpen(false)} customLangs={customLangs} onDeleteCustom={deleteCustomLang} onAddLang={() => setShowAddLang(true)} />}
       {showAddLang && <CustomLangModal onSave={saveCustomLang} onClose={() => setShowAddLang(false)} />}
