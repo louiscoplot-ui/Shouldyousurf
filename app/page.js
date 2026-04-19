@@ -302,8 +302,9 @@ function getLevel(s, h, spot) {
     }
   }
 
-  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#15803d" };
-  if (s >= 55) return { labelKey: "score_55_74",  subKey: "score_55_74_sub",  color: "#16a34a" };
+  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#0b6e2e" };
+  if (s >= 65) return { labelKey: "score_65_74",  subKey: "score_65_74_sub",  color: "#15803d" };
+  if (s >= 55) return { labelKey: "score_55_64",  subKey: "score_55_64_sub",  color: "#16a34a" };
   if (s >= 45) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#65a30d" };
   if (s >= 35) return { labelKey: "score_35_44",  subKey: "score_35_44_sub",  color: "#84cc16" };
   if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#ea580c" };
