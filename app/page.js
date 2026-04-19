@@ -392,9 +392,21 @@ function classifyConditions(userLevel, h, spot) {
   return { size, wind, reefTooMuch, faceFt };
 }
 
+// For first-timers / beginners on beach breaks: even when the main peak is too
+// big, there's usually a smaller inside reform close to shore they can surf.
+function hasInsideReform(userLevel, faceFt, spot) {
+  return (userLevel === "first_timer" || userLevel === "beginner")
+    && spot.type === "beach"
+    && !spot.heavy
+    && faceFt <= 8;
+}
+
 function getPersonalAdviceKey(userLevel, h, spot) {
-  const { size, wind, reefTooMuch } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, faceFt } = classifyConditions(userLevel, h, spot);
   if (reefTooMuch) return "tip_" + userLevel + "_reef";
+  if (size === "too_big" && hasInsideReform(userLevel, faceFt, spot) && wind !== "blown") {
+    return "tip_" + userLevel + "_inside";
+  }
   if (size === "too_small") return "tip_" + userLevel + "_too_small";
   if (size === "too_big")   return "tip_" + userLevel + "_too_big";
   if (wind === "blown")     return "tip_" + userLevel + "_blown_" + size;
@@ -402,8 +414,9 @@ function getPersonalAdviceKey(userLevel, h, spot) {
 }
 
 function getPersonalVerdict(userLevel, h, spot) {
-  const { size, wind, reefTooMuch } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, faceFt } = classifyConditions(userLevel, h, spot);
   if (reefTooMuch) return "no";
+  if (size === "too_big" && hasInsideReform(userLevel, faceFt, spot) && wind !== "blown") return "ok";
   if (size === "too_small" || size === "too_big") return "no";
   if (wind === "blown") return size === "sweet" ? "ok" : "no";
   if (size === "sweet") return wind === "clean" ? "yes" : "ok";
