@@ -63,7 +63,7 @@ const T = {
     tip_first_timer_blown_small: "Wind is ruining the little we have — not worth it today.",
     tip_first_timer_blown_sweet: "Wind is trashing the waves — stay out, come back on a calmer morning.",
     tip_first_timer_blown_upper: "Blown out and way over your head — definitely not today.",
-    tip_first_timer_inside: "Main peak is too big for a first session, but beach breaks usually reform closer to shore. Stay in the whitewash near the sand — plenty of little rollers to play on.",
+    tip_first_timer_inside: "Main peak isn't for you yet, but beach breaks reform close to shore. Grab a foamie and stay in the whitewash near the sand — plenty of little rollers to practise standing up.",
 
     tip_beginner_too_small: "Not enough wave to catch anything clean. Maybe a foamie playground in the shallows at best.",
     tip_beginner_too_big: "Out of your comfort zone today. Wait for a smaller day.",
@@ -77,7 +77,7 @@ const T = {
     tip_beginner_blown_small: "Wind's ruining the tiny swell. Skip.",
     tip_beginner_blown_sweet: "There's swell but the wind is killing it. Not worth paddling out.",
     tip_beginner_blown_upper: "Blown out and too big — stay out.",
-    tip_beginner_inside: "Main peak is too big for you, but there should still be smaller reform waves closer to shore. Head for the inside and take what comes through — it's fine practice.",
+    tip_beginner_inside: "Outside isn't ideal for you — too big, windy or messy — but the inside reform should still be rideable on a foamie. Stay close to shore, pick the smaller ones, you'll get waves.",
 
     tip_early_int_too_small: "Nothing much to ride — save your energy for a better day.",
     tip_early_int_too_big: "Too heavy for where you're at — watch and learn.",
@@ -308,7 +308,7 @@ const T = {
     tip_first_timer_blown_small: "Le vent détruit le peu qu'il y a — pas la peine.",
     tip_first_timer_blown_sweet: "Le vent démolit les vagues — reste au sec, reviens un matin plus calme.",
     tip_first_timer_blown_upper: "Démonté et bien au-dessus de ta tête — vraiment pas aujourd'hui.",
-    tip_first_timer_inside: "Le pic principal est trop gros pour un premier essai, mais les beach breaks ont presque toujours de la reform près du bord. Reste dans la mousse côté plage — plein de petits rouleaux pour t'amuser.",
+    tip_first_timer_inside: "Le pic principal est pas encore pour toi, mais les beach breaks ont de la reform près du bord. Prends une mousse 8 pieds, reste dans la mousse côté plage — plein de petits rouleaux pour apprendre à te lever.",
 
     tip_beginner_too_small: "Pas assez de vague pour catcher quelque chose de propre. Au mieux un jeu de mousse dans les bas-fonds.",
     tip_beginner_too_big: "Hors de ta zone de confort aujourd'hui. Attends un jour plus petit.",
@@ -322,7 +322,7 @@ const T = {
     tip_beginner_blown_small: "Le vent gâche le peu de houle. Passe.",
     tip_beginner_blown_sweet: "Il y a de la houle mais le vent la démolit. Ça vaut pas le paddle.",
     tip_beginner_blown_upper: "Démonté et trop gros — reste au sec.",
-    tip_beginner_inside: "Le pic principal est trop gros pour toi, mais il devrait y avoir des rouleaux plus petits près du bord. Va à l'inside et prends ce qui passe — bonne pratique.",
+    tip_beginner_inside: "Dehors c'est pas ton truc aujourd'hui — trop gros, venteux ou brouillon — mais la reform à l'inside reste surfable en mousse. Reste près du bord, vise les plus petites, tu choperas des vagues.",
 
     tip_early_int_too_small: "Rien à surfer — garde l'énergie pour un meilleur jour.",
     tip_early_int_too_big: "Trop lourd pour ton niveau — observe et apprends.",

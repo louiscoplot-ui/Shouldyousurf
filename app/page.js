@@ -357,8 +357,8 @@ const USER_LEVEL_TO_MATRIX = { first_timer: 0, beginner: 0, early_int: 1, interm
 const USER_LEVEL_BIAS = { first_timer: "down", early_int: "down" };
 // Size comfort zones per user level, in feet of face height.
 const USER_LEVEL_ZONES = {
-  first_timer:  { min: 0.5, sweetLo: 0.8, sweetHi: 1.3, upperMax: 1.8 },
-  beginner:     { min: 0.8, sweetLo: 1.2, sweetHi: 2,   upperMax: 2.8 },
+  first_timer:  { min: 0.3, sweetLo: 0.6, sweetHi: 1.5, upperMax: 2.2 },
+  beginner:     { min: 0.3, sweetLo: 1,   sweetHi: 2,   upperMax: 3 },
   early_int:    { min: 1.2, sweetLo: 1.8, sweetHi: 3,   upperMax: 4 },
   intermediate: { min: 1.5, sweetLo: 2.5, sweetHi: 4.5, upperMax: 6 },
   advanced:     { min: 2,   sweetLo: 3,   sweetHi: 7,   upperMax: 10 },
@@ -392,20 +392,29 @@ function classifyConditions(userLevel, h, spot) {
   return { size, wind, reefTooMuch, faceFt };
 }
 
-// For first-timers / beginners on beach breaks: even when the main peak is too
-// big, there's usually a smaller inside reform close to shore they can surf.
-function hasInsideReform(userLevel, faceFt, spot) {
+// Foamie-friendly: beginner/first-timer on a beach break can usually find
+// something to surf on the inside reform — whitewash close to shore — almost
+// any day there's any swell at all. Only ruled out if the spot is heavy/reef
+// or the shore pound is genuinely dangerous.
+function isFoamieFriendly(userLevel, spot) {
   return (userLevel === "first_timer" || userLevel === "beginner")
-    && spot.type === "beach"
-    && !spot.heavy
-    && faceFt <= 8;
+    && spot.type === "beach" && !spot.heavy;
+}
+function hasInsideReform(userLevel, faceFt, spot) {
+  return isFoamieFriendly(userLevel, spot) && faceFt <= 10;
 }
 
 function getPersonalAdviceKey(userLevel, h, spot) {
   const { size, wind, reefTooMuch, faceFt } = classifyConditions(userLevel, h, spot);
   if (reefTooMuch) return "tip_" + userLevel + "_reef";
-  if (size === "too_big" && hasInsideReform(userLevel, faceFt, spot) && wind !== "blown") {
-    return "tip_" + userLevel + "_inside";
+  const foamie = hasInsideReform(userLevel, faceFt, spot);
+  // Foamie mode: whenever the peak itself is out of range (too big, blown, or
+  // in the upper part of their comfort zone) send them inside instead.
+  if (foamie) {
+    if (faceFt < 0.3) return "tip_" + userLevel + "_too_small";
+    if (size === "too_big")               return "tip_" + userLevel + "_inside";
+    if (wind === "blown")                 return "tip_" + userLevel + "_inside";
+    if (size === "upper")                 return "tip_" + userLevel + "_inside";
   }
   if (size === "too_small") return "tip_" + userLevel + "_too_small";
   if (size === "too_big")   return "tip_" + userLevel + "_too_big";
@@ -441,31 +450,35 @@ function getPersonalVerdict(userLevel, h, spot) {
   // SKIP is reserved for genuinely unsurfable or unsafe situations.
   // Anything borderline defaults to WORTH IT — let the surfer judge at the beach.
 
-  if (reefTooMuch) return "no"; // safety: reef/heavy spot + beginner-ish level
-  if (size === "too_big" && hasInsideReform(userLevel, faceFt, spot) && wind !== "blown") return "ok";
+  if (reefTooMuch) return "no";
+
+  // Foamie mode: beginner/first-timer on a beach break can almost always find
+  // something inside. Only ruled out if truly flat or shore pound is huge.
+  if (isFoamieFriendly(userLevel, spot)) {
+    if (faceFt < 0.3) return "no";   // nothing at all to catch
+    if (faceFt > 10) return "no";    // dangerous shore pound
+    if (size === "sweet" && wind === "clean") return "yes";
+    return "ok";
+  }
 
   if (wind === "blown") {
-    // Upper + blown is a genuine hazard
     if (size === "upper") return "no";
-    // Small/sweet + blown: chop, not worth for beginners; worth a check for others
     if (size === "too_small") return "no";
     return "ok";
   }
 
   if (size === "too_small") {
-    // Beginners can't catch anything, others can still longboard / mess around
     if (userLevel === "first_timer" || userLevel === "beginner") return "no";
     return "ok";
   }
   if (size === "too_big") {
-    // Unsafe for lower levels, advanced+ can judge themselves
     if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
     return "ok";
   }
 
   if (size === "sweet") return wind === "clean" ? "yes" : "ok";
   if (size === "upper") return wind === "clean" ? "yes" : "ok";
-  return "ok"; // "small" — surfable but not prime
+  return "ok";
 }
 
 function LevelPicker({ userLevel, onPick, onClose, t }) {
