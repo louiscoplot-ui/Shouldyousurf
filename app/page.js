@@ -1240,8 +1240,8 @@ export default function SurfApp() {
         .page { min-height: 100vh; background: var(--bg); background-image: linear-gradient(180deg, #eef4f8 0%, #e6eff5 100%); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
         .wrap { max-width: 440px; margin: 0 auto; padding: 36px 20px 100px; }
 
-        .load-page { min-height: 100dvh; background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%); }
-        .load-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 18px; padding: 0 24px; text-align: center; animation: loadFade 0.4s ease both; }
+        .load-page { min-height: 100vh; background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%); }
+        .load-wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 0 24px; text-align: center; background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%); animation: loadFade 0.4s ease both; z-index: 1; }
         .load-brand { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); margin-bottom: 4px; }
         .load-dots { display: flex; gap: 7px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: dotBounce 1.2s infinite ease-in-out; }
