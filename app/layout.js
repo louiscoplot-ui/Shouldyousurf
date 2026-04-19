@@ -24,7 +24,11 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="apple-touch-icon" href="/icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <style>{`
+          html, body { background: #eef4f8; }
+          body { margin: 0; }
+        `}</style>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-77RCEQZ2YS"></script>
         <script dangerouslySetInnerHTML={{ __html: `
           window.dataLayer = window.dataLayer || [];
@@ -33,7 +37,7 @@ export default function RootLayout({ children }) {
           gtag('config', 'G-77RCEQZ2YS');
         `}} />
       </head>
-      <body style={{ margin: 0, background: "#060d12" }}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
