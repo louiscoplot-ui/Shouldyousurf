@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="v1bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1628"/>
+      <stop offset="1" stop-color="#0f4c5c"/>
+    </linearGradient>
+    <filter id="v1glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#v1bg)"/>
+
+  <!-- Wave curve: one bold clean arc from lower-left to mid-right, cresting -->
+  <path d="M 120 700
+           C 280 660, 360 520, 520 520
+           C 660 520, 720 620, 820 560"
+        stroke="#ffffff"
+        stroke-width="72"
+        stroke-linecap="round"
+        fill="none"/>
+
+  <!-- Score dot: small amber circle, upper right — reads as a sun or rating indicator -->
+  <circle cx="780" cy="320" r="56" fill="#fbbf24"/>
+</svg>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="v2bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1628"/>
+      <stop offset="1" stop-color="#112f4a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#v2bg)"/>
+
+  <!-- Horizon line subtle -->
+  <line x1="96" y1="512" x2="928" y2="512" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+
+  <!-- Stylized S-wave: a single bold shape that reads as both the letter S and a breaking wave -->
+  <path d="M 240 340
+           C 240 260, 320 220, 440 240
+           C 560 260, 640 360, 600 440
+           C 560 520, 440 500, 360 540
+           C 280 580, 260 660, 340 720
+           C 420 780, 560 780, 720 720
+           C 860 660, 880 580, 840 520"
+        stroke="#ffffff"
+        stroke-width="76"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+
+  <!-- Accent droplet at the top of the crest -->
+  <circle cx="240" cy="340" r="30" fill="#14b8a6"/>
+</svg>

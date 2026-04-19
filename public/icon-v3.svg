@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="v3bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0ea5b7"/>
+      <stop offset="0.55" stop-color="#0f3d52"/>
+      <stop offset="1" stop-color="#0a1628"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#v3bg)"/>
+
+  <!-- Question mark, where the top curl reads as a cresting wave.
+       Built with a single open path + a separate dot. -->
+  <path d="M 360 390
+           C 360 280, 440 220, 540 220
+           C 660 220, 730 300, 720 400
+           C 712 480, 640 520, 580 560
+           C 540 588, 520 630, 520 680"
+        stroke="#ffffff"
+        stroke-width="76"
+        stroke-linecap="round"
+        fill="none"/>
+
+  <!-- Dot of the question mark — in amber for a sharp accent -->
+  <circle cx="520" cy="820" r="54" fill="#fbbf24"/>
+</svg>
