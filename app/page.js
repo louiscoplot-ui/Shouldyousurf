@@ -886,10 +886,6 @@ export default function SurfApp() {
             </button>
           </div>
           <div className="verdict-sub">{t(level.subKey)}</div>
-          {(() => {
-            const tipKey = getDayTip(levelMatrix, sel, spot);
-            return tipKey ? <div className="verdict-tip">{t(tipKey)}</div> : null;
-          })()}
 
           {scoreExplainer && (
             <div className="score-explainer">
@@ -908,6 +904,10 @@ export default function SurfApp() {
         </div>
 
         <div className="sticky-info">
+          {(() => {
+            const tipKey = getDayTip(levelMatrix, sel, spot);
+            return tipKey ? <div className="sticky-tip">{t(tipKey)}</div> : null;
+          })()}
           <div className="face-height">
             <div className="face-label mono">{t("expected_face")}</div>
             <div className="face-value serif">{faceFtLow}–{faceFtHigh} ft</div>
@@ -1196,6 +1196,7 @@ export default function SurfApp() {
         .scale-desc strong { color: var(--text); font-weight: 500; }
         .verdict-sub { font-size: 13px; color: var(--text-mu); margin-top: 6px; }
         .verdict-tip { font-size: 13px; color: var(--text); margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 4px; line-height: 1.4; }
+        .sticky-tip { font-size: 12px; color: var(--text); padding: 8px 10px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.35; margin: 8px 0 4px; }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
         .levels-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 12px; }
