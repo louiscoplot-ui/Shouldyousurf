@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { BREAKS, findBreak } from "./breaks";
+import { BREAKS, COUNTRIES, findBreak } from "./breaks";
 import { LANGUAGES, getT, EN_TEMPLATE } from "./i18n";
 
 const TZ = "Australia/Perth";
@@ -429,35 +429,41 @@ function LangPicker({ lang, setLang, onClose, customLangs, onDeleteCustom, onAdd
 }
 
 // ── Break picker ───────────────────────────────────────────────────────
-function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) {
+function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, country, setCountry }) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [countryOpen, setCountryOpen] = useState(false);
+
+  const countryBreaks = useMemo(() => BREAKS.filter(b => b.country === country), [country]);
 
   const grouped = useMemo(() => {
     const filtered = query.trim()
-      ? BREAKS.filter(b => (b.name + " " + b.region).toLowerCase().includes(query.toLowerCase()))
-      : BREAKS;
+      ? countryBreaks.filter(b => (b.name + " " + b.region).toLowerCase().includes(query.toLowerCase()))
+      : countryBreaks;
     const out = {};
+    const order = [];
     filtered.forEach(b => {
       const r = b.region.split(",").slice(-1)[0].trim();
-      if (!out[r]) out[r] = [];
+      if (!out[r]) { out[r] = []; order.push(r); }
       out[r].push(b);
     });
-    return out;
-  }, [query]);
+    return { out, order };
+  }, [query, countryBreaks]);
 
   async function geoSearch(q) {
     const term = (q ?? query).trim();
     if (!term) { setSearchResults([]); return; }
     setSearching(true);
     try {
-      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&language=en&format=json`;
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&country=${country}&language=en&format=json`;
       const res = await fetch(url);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch {} finally { setSearching(false); }
   }
+
+  const currentCountry = COUNTRIES.find(c => c.code === country) || COUNTRIES[0];
 
   // Debounced auto-search as the user types — covers beaches worldwide.
   useEffect(() => {
@@ -485,6 +491,22 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
             <div className="sheet-title">{t("choose_break")}</div>
             <button className="close-btn" onClick={onClose}>✕</button>
           </div>
+          <button className="country-btn" onClick={() => setCountryOpen(v => !v)}>
+            <span>{currentCountry.flag} {currentCountry.name}</span>
+            <span style={{ color: "var(--text-mu)" }}>▾</span>
+          </button>
+          {countryOpen && (
+            <div className="country-list">
+              {COUNTRIES.map(c => (
+                <button key={c.code}
+                  className={`country-row ${c.code === country ? "active" : ""}`}
+                  onClick={() => { setCountry(c.code); setCountryOpen(false); setQuery(""); setSearchResults([]); }}>
+                  <span>{c.flag} {c.name}</span>
+                  {c.code === country && <span style={{ color: "var(--accent)" }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 6 }}>
             <input className="search-input" value={query}
               onChange={e => setQuery(e.target.value)}
@@ -531,7 +553,7 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
             </>
           )}
 
-          {!isSearching && favorites.length > 0 && (
+          {favorites.length > 0 && (
             <>
               <div className="region-header">{t("favourites")}</div>
               {favorites.map(id => {
@@ -542,10 +564,10 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t }) 
             </>
           )}
 
-          {!isSearching && Object.entries(grouped).map(([region, breaks]) => (
+          {!isSearching && grouped.order.map(region => (
             <div key={region}>
               <div className="region-header">{region}</div>
-              {breaks.map(b => (
+              {grouped.out[region].map(b => (
                 <BreakRow key={b.id} b={b} onSelect={onSelect} toggleFav={toggleFav} isFav={favorites.includes(b.id)} current={currentId===b.id} t={t}/>
               ))}
             </div>
@@ -594,6 +616,7 @@ export default function SurfApp() {
   const [pinnedHour, setPinnedHour] = useState(null);
   const [userLevel, setUserLevel] = useState(null);
   const [levelPickerOpen, setLevelPickerOpen] = useState(false);
+  const [country, setCountry] = useState("AU");
   const tabsRef = useRef(null);
   const tz = spot.timezone || TZ;
   const customLangDict = customLangs.find(c => c.code === lang)?.translations;
@@ -615,6 +638,8 @@ export default function SurfApp() {
       if (savedPin !== null) setPinnedHour(parseInt(savedPin, 10));
       const savedLvl = localStorage.getItem("surf-user-level");
       if (savedLvl) setUserLevel(savedLvl);
+      const savedCountry = localStorage.getItem("surf-country");
+      if (savedCountry) setCountry(savedCountry);
     } catch {}
   }, []);
 
@@ -646,6 +671,11 @@ export default function SurfApp() {
       return next;
     });
     if (lang === code) setLang("en");
+  }
+
+  function saveCountry(code) {
+    setCountry(code);
+    try { localStorage.setItem("surf-country", code); } catch {}
   }
 
   function saveUserLevel(lvl) {
@@ -815,7 +845,7 @@ export default function SurfApp() {
         <button onClick={fetchAllDays} className="primary-btn">{t("retry")}</button>
         <button onClick={() => setPickerOpen(true)} className="secondary-btn">{t("change_spot")}</button>
       </div>
-      {pickerOpen && <BreakPicker onSelect={b => { setSpot(b); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} favorites={favorites} toggleFav={toggleFav} currentId={spot.id} t={t}/>}
+      {pickerOpen && <BreakPicker onSelect={b => { setSpot(b); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} favorites={favorites} toggleFav={toggleFav} currentId={spot.id} t={t} country={country} setCountry={saveCountry}/>}
     </div>
   );
 
@@ -1181,7 +1211,7 @@ export default function SurfApp() {
         <div className="footer-text mono">{t("footer")}</div>
       </div>
 
-      {pickerOpen && <BreakPicker onSelect={b => { setSpot(b); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} favorites={favorites} toggleFav={toggleFav} currentId={spot.id} t={t}/>}
+      {pickerOpen && <BreakPicker onSelect={b => { setSpot(b); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} favorites={favorites} toggleFav={toggleFav} currentId={spot.id} t={t} country={country} setCountry={saveCountry}/>}
       {langOpen && <LangPicker lang={lang} setLang={setLang} onClose={() => setLangOpen(false)} customLangs={customLangs} onDeleteCustom={deleteCustomLang} onAddLang={() => setShowAddLang(true)} />}
       {showAddLang && <CustomLangModal onSave={saveCustomLang} onClose={() => setShowAddLang(false)} />}
       {levelPickerOpen && <LevelPicker userLevel={userLevel} onPick={saveUserLevel} onClose={() => setLevelPickerOpen(false)} t={t} />}
@@ -1398,6 +1428,12 @@ export default function SurfApp() {
         .break-row-fav.active { color: var(--warn); }
         .break-row-flag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); font-weight: 400; margin-left: 4px; }
         .break-empty { font-size: 11px; color: var(--text-mu); padding: 12px 0; text-align: center; letter-spacing: 0.04em; }
+        .country-btn { width: 100%; background: var(--bg-el); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 500; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .country-list { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; max-height: 260px; overflow-y: auto; background: var(--bg); }
+        .country-row { width: 100%; background: none; border: none; border-bottom: 1px solid var(--border); padding: 10px 14px; font-size: 13px; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .country-row:last-child { border-bottom: none; }
+        .country-row.active { background: rgba(14,165,233,0.06); }
+        .country-row:hover { background: rgba(0,0,0,0.03); }
 
         .lang-row { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; border-top: 1px solid var(--border); padding: 14px 0; cursor: pointer; color: var(--text); text-align: left; }
         .lang-row.active { color: var(--accent); }
