@@ -78,7 +78,7 @@ function surfabilityByLevel(h, spot) {
 
   if (faceFt < 1) { levels[0].verdict = "no"; levels[0].reasonKey = "r_too_flat"; }
   else if (faceFt > 6) { levels[0].verdict = "no"; levels[0].reasonKey = "r_too_big"; }
-  else if (faceFt > 4 && spot.type === "beach" && !spot.heavy) { levels[0].verdict = "ok"; levels[0].reasonKey = "r_beg_inside"; }
+  else if (faceFt > 4 && spot.type !== "reef" && !spot.heavy) { levels[0].verdict = "ok"; levels[0].reasonKey = "r_beg_inside"; }
   else if (faceFt > 4) { levels[0].verdict = "no"; levels[0].reasonKey = "r_too_big"; }
   else if (isOnshore && kmh > 20) { levels[0].verdict = "no"; levels[0].reasonKey = "r_on_strong"; }
   else if (spot.heavy || spot.type === "reef") { levels[0].verdict = "no"; levels[0].reasonKey = "r_reef_beg"; }
@@ -397,8 +397,10 @@ function classifyConditions(userLevel, h, spot) {
 // any day there's any swell at all. Only ruled out if the spot is heavy/reef
 // or the shore pound is genuinely dangerous.
 function isFoamieFriendly(userLevel, spot) {
+  // Anything that isn't explicitly flagged as reef/heavy is treated as a beach
+  // break — that's the default when curated breaks don't set a type.
   return (userLevel === "first_timer" || userLevel === "beginner")
-    && spot.type === "beach" && !spot.heavy;
+    && spot.type !== "reef" && !spot.heavy;
 }
 function hasInsideReform(userLevel, faceFt, spot) {
   return isFoamieFriendly(userLevel, spot) && faceFt <= 10;
