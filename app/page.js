@@ -1873,7 +1873,7 @@ export default function SurfApp() {
 
         .section-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin: 32px 0 4px; }
         .hours { animation: rise 0.5s 0.3s ease both; }
-        .hour-btn { display: grid; grid-template-columns: 52px 1fr 96px 86px; align-items: center; gap: 10px; background: none; border: none; border-top: 1px solid var(--border); padding: 10px 0; cursor: pointer; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); }
+        .hour-btn { display: grid; grid-template-columns: 50px 1fr 116px 82px; align-items: center; gap: 8px; background: none; border: none; border-top: 1px solid var(--border); padding: 10px 0; cursor: pointer; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); }
         .hour-btn:last-child { border-bottom: 1px solid var(--border); }
         .hour-btn.sel { background: rgba(14,165,233,0.08); margin: 0 -20px; padding-left: 16px; padding-right: 20px; width: calc(100% + 40px); border-left: 3px solid var(--accent); border-top-color: transparent; }
         .hour-btn.sel .hour-time { color: var(--text); font-weight: 600; }
