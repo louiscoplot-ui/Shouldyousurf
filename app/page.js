@@ -16,7 +16,11 @@ function estimateFaceHeight(swellHeight, swellPeriod) {
 }
 
 // ── Scoring — returns translation keys for notes ───────────────────────
-function scoreSurf({ swellHeight, swellPeriod, swellDir, windSpeedKn, windDir }, spot) {
+// idealTide string → normalized 0..1 (0 = low, 1 = high)
+const TIDE_TARGETS = { "low": 0.1, "mid-low": 0.3, "mid": 0.5, "mid-high": 0.7, "high": 0.9 };
+
+function scoreSurf(h, spot, tideCtx) {
+  const { swellHeight, swellPeriod, swellDir, windSpeedKn, windDir } = h;
   let s = 0;
   const notes = [];
 
@@ -35,12 +39,8 @@ function scoreSurf({ swellHeight, swellPeriod, swellDir, windSpeedKn, windDir },
   else if (swellDelta <= 60) { s += 8; notes.push("n_ok_dir"); }
   else { s -= 5; notes.push("n_wrong_dir"); }
 
-  // Secondary swell rescue: if the primary swell is off-angle but a secondary
-  // swell of meaningful size is coming in at a good angle, give a small bonus.
-  if (spot && arguments[0] && arguments[0].secSwellH != null
-      && arguments[0].secSwellDir != null && arguments[0].secSwellH >= 0.5
-      && swellDelta > 60) {
-    const secDelta = Math.abs(((arguments[0].secSwellDir - spot.idealSwellDir + 540) % 360) - 180);
+  if (h.secSwellH != null && h.secSwellDir != null && h.secSwellH >= 0.5 && swellDelta > 60) {
+    const secDelta = Math.abs(((h.secSwellDir - spot.idealSwellDir + 540) % 360) - 180);
     if (secDelta <= 30) { s += 10; notes.push("n_sec_helps"); }
     else if (secDelta <= 60) { s += 4; notes.push("n_sec_helps"); }
   }
@@ -64,6 +64,23 @@ function scoreSurf({ swellHeight, swellPeriod, swellDir, windSpeedKn, windDir },
     if (kmh < 10) { s += 5; notes.push("n_light_x"); }
     else if (kmh < 25) { s -= 3; notes.push("n_x_texture"); }
     else { s -= 12; notes.push("n_strong_x"); }
+  }
+
+  // Tide match: reward being close to the spot's preferred tide window, penalise
+  // when we're on the opposite side. Needs a tide context (day min/max) to know
+  // what counts as "high" today.
+  if (tideCtx && spot.idealTide && spot.idealTide !== "any" && h.tideM != null) {
+    const range = tideCtx.max - tideCtx.min;
+    if (range > 0.15) {
+      const norm = (h.tideM - tideCtx.min) / range;
+      const target = TIDE_TARGETS[spot.idealTide];
+      if (target != null) {
+        const delta = Math.abs(norm - target);
+        if (delta < 0.15) { s += 6; notes.push("n_tide_prime"); }
+        else if (delta < 0.3) { s += 2; notes.push("n_tide_ok"); }
+        else if (delta > 0.6) { s -= 6; notes.push("n_tide_wrong"); }
+      }
+    }
   }
 
   return { score: Math.max(0, Math.min(100, s)), notes };
@@ -160,6 +177,19 @@ function findNextTideEvent(hours, fromTime) {
     if (cur < prev && cur <= next) return { kind: "low",  time: hours[i].time, m: cur };
   }
   return null;
+}
+
+function dayTideCtx(dayHours) {
+  if (!dayHours || !dayHours.length) return null;
+  let min = Infinity, max = -Infinity, count = 0;
+  for (const h of dayHours) {
+    if (h.tideM == null) continue;
+    if (h.tideM < min) min = h.tideM;
+    if (h.tideM > max) max = h.tideM;
+    count++;
+  }
+  if (count < 2) return null;
+  return { min, max };
 }
 
 function tideTrend(hours, sel) {
@@ -537,6 +567,35 @@ function getPersonalVerdict(userLevel, h, spot) {
   return "ok";
 }
 
+function OnboardingModal({ onPick, onSkip, t }) {
+  return (
+    <div className="overlay" onClick={onSkip}>
+      <div className="sheet" onClick={e => e.stopPropagation()}>
+        <div className="handle" />
+        <div className="sheet-body">
+          <div style={{ textAlign: "center", paddingTop: 10, paddingBottom: 6 }}>
+            <div className="serif" style={{ fontSize: 30, fontWeight: 500, letterSpacing: "-0.02em", background: "linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {t("onboarding_title")}
+            </div>
+            <p style={{ fontSize: 14, color: "var(--text-mu)", margin: "8px 0 18px", lineHeight: 1.45 }}>{t("onboarding_sub")}</p>
+          </div>
+          {USER_LEVELS.map(lvl => (
+            <button key={lvl} className="level-item" onClick={() => onPick(lvl)}>
+              <div style={{ flex: 1 }}>
+                <div className="level-item-title">{t("lvl_" + lvl)}</div>
+                <div className="level-item-sub">{t("lvl_" + lvl + "_sub")}</div>
+              </div>
+            </button>
+          ))}
+          <button className="level-item level-item-clear" onClick={onSkip}>
+            <div className="level-item-title">{t("onboarding_skip")}</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LevelPicker({ userLevel, onPick, onClose, t }) {
   return (
     <div className="overlay" onClick={onClose}>
@@ -608,11 +667,44 @@ function LangPicker({ lang, setLang, onClose, customLangs, onDeleteCustom, onAdd
 }
 
 // ── Break picker ───────────────────────────────────────────────────────
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function nearestBreak(lat, lng) {
+  let best = null, bestD = Infinity;
+  for (const b of BREAKS) {
+    const d = distanceKm(lat, lng, b.lat, b.lng);
+    if (d < bestD) { bestD = d; best = b; }
+  }
+  return best ? { spot: best, distanceKm: bestD } : null;
+}
+
 function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, country, setCountry }) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  function useMyLocation() {
+    if (!navigator.geolocation) { alert(t("gps_unsupported")); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setLocating(false);
+        const r = nearestBreak(pos.coords.latitude, pos.coords.longitude);
+        if (r) onSelect(r.spot);
+      },
+      () => { setLocating(false); alert(t("gps_denied")); },
+      { timeout: 10000, maximumAge: 300000 }
+    );
+  }
 
   const countryBreaks = useMemo(() => BREAKS.filter(b => b.country === country), [country]);
 
@@ -673,6 +765,9 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, co
           <button className="country-btn" onClick={() => setCountryOpen(v => !v)}>
             <span>{currentCountry.flag} {currentCountry.name}</span>
             <span style={{ color: "var(--text-mu)" }}>▾</span>
+          </button>
+          <button className="locate-btn" onClick={useMyLocation} disabled={locating}>
+            {locating ? t("locating") : <>📍 {t("nearest_spot")}</>}
           </button>
           {countryOpen && (
             <div className="country-list">
@@ -795,7 +890,9 @@ export default function SurfApp() {
   const [pinnedHour, setPinnedHour] = useState(null);
   const [userLevel, setUserLevel] = useState(null);
   const [levelPickerOpen, setLevelPickerOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [country, setCountry] = useState("AU");
+  const [sharedDay, setSharedDay] = useState(null);
   const tabsRef = useRef(null);
   const tz = spot.timezone || TZ;
   const customLangDict = customLangs.find(c => c.code === lang)?.translations;
@@ -817,8 +914,22 @@ export default function SurfApp() {
       if (savedPin !== null) setPinnedHour(parseInt(savedPin, 10));
       const savedLvl = localStorage.getItem("surf-user-level");
       if (savedLvl) setUserLevel(savedLvl);
+      const onboarded = localStorage.getItem("surf-onboarded");
+      if (!onboarded && !savedLvl) setOnboardingOpen(true);
       const savedCountry = localStorage.getItem("surf-country");
       if (savedCountry) setCountry(savedCountry);
+      // Shared URL params — override the saved state so a shared link opens
+      // on the exact spot/day/hour that was sent.
+      const params = new URLSearchParams(window.location.search);
+      const sharedSpot = params.get("spot");
+      if (sharedSpot) {
+        const b = findBreak(sharedSpot);
+        if (b) setSpot(b);
+      }
+      const sharedHour = params.get("hour");
+      if (sharedHour !== null) setPinnedHour(parseInt(sharedHour, 10));
+      const sharedDayParam = params.get("day");
+      if (sharedDayParam) setSharedDay(sharedDayParam);
     } catch {}
   }, []);
 
@@ -863,6 +974,12 @@ export default function SurfApp() {
       if (lvl) localStorage.setItem("surf-user-level", lvl);
       else localStorage.removeItem("surf-user-level");
     } catch {}
+  }
+
+  function finishOnboarding(lvl) {
+    if (lvl) saveUserLevel(lvl);
+    setOnboardingOpen(false);
+    try { localStorage.setItem("surf-onboarded", "1"); } catch {}
   }
 
   function dismissPwa() {
@@ -988,7 +1105,12 @@ export default function SurfApp() {
 
       setData({ hours: allHoursFlat, days: orderedDays, sunByDay });
       setSelected(null);
-      const tIdx = todayIdx >= 0 ? todayIdx : 0;
+      let tIdx = todayIdx >= 0 ? todayIdx : 0;
+      if (sharedDay) {
+        const sharedIdx = orderedDays.findIndex(([d]) => d === sharedDay);
+        if (sharedIdx >= 0) tIdx = sharedIdx;
+        setSharedDay(null);
+      }
       setActiveDay(tIdx);
       // Scroll tabs to today after render
       setTimeout(() => {
@@ -1086,11 +1208,12 @@ export default function SurfApp() {
 
   if (!sel) return null;
 
-  const { score, notes } = scoreSurf(sel, spot);
+  const selDayTideCtx = dayTideCtx(dayHours);
+  const { score, notes } = scoreSurf(sel, spot, selDayTideCtx);
   const level = getLevel(score, sel, spot);
   const levelMatrix = surfabilityByLevel(sel, spot);
   const bestOfDay = dayHours.reduce((b, h) => {
-    const s = scoreSurf(h, spot).score;
+    const s = scoreSurf(h, spot, selDayTideCtx).score;
     return s > (b?.score ?? -1) ? { ...h, score: s } : b;
   }, null);
   const isFav = favorites.includes(spot.id);
@@ -1152,8 +1275,9 @@ export default function SurfApp() {
         <div className="tabs" ref={tabsRef}>
           {dayEntries.map(([day], di) => {
             const { label, date } = unifiedTabLabel(day, tz, t);
+            const tabTideCtx = dayTideCtx(dayEntries[di][1]);
             const bestHour = dayEntries[di][1].reduce((b, h) => {
-              const s = scoreSurf(h, spot).score;
+              const s = scoreSurf(h, spot, tabTideCtx).score;
               return s > (b?.score ?? -1) ? { h, score: s } : b;
             }, null);
             const bestScore = bestHour?.score ?? 0;
@@ -1211,9 +1335,25 @@ export default function SurfApp() {
         </div>
 
         <div className="sticky-info">
-          <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
-            {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
-          </button>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
+              {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
+            </button>
+            <button className="share-btn mono" onClick={() => {
+              const day = sel.time.split("T")[0];
+              const hour = sel.time.split("T")[1].slice(0, 2);
+              const url = `${window.location.origin}/?spot=${encodeURIComponent(spot.id)}&day=${day}&hour=${hour}`;
+              const title = `${spot.name} · ${t("brand")}`;
+              const text = `${spot.name} · ${fmtLongDay(day, tz, t)} ${fmtHour(sel.time, tz)} · ${score}/100 ${t(level.labelKey)}`;
+              if (navigator.share) {
+                navigator.share({ title, text, url }).catch(() => {});
+              } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => alert(t("share_copied"))).catch(() => {});
+              }
+            }}>
+              ↗ {t("share")}
+            </button>
+          </div>
           {(() => {
             if (userLevel) {
               const verdict = getPersonalVerdict(userLevel, sel, spot);
@@ -1391,7 +1531,7 @@ export default function SurfApp() {
         <div className="hours">
           {dayHours.map((h, i) => {
             const idx = data.hours.indexOf(h);
-            const { score: s } = scoreSurf(h, spot);
+            const { score: s } = scoreSurf(h, spot, selDayTideCtx);
             const lv = getLevel(s, h, spot);
             const isSel = sel === h;
             const dawn = isDawn(h.time, tz);
@@ -1444,6 +1584,7 @@ export default function SurfApp() {
       {langOpen && <LangPicker lang={lang} setLang={setLang} onClose={() => setLangOpen(false)} customLangs={customLangs} onDeleteCustom={deleteCustomLang} onAddLang={() => setShowAddLang(true)} />}
       {showAddLang && <CustomLangModal onSave={saveCustomLang} onClose={() => setShowAddLang(false)} />}
       {levelPickerOpen && <LevelPicker userLevel={userLevel} onPick={saveUserLevel} onClose={() => setLevelPickerOpen(false)} t={t} />}
+      {onboardingOpen && <OnboardingModal onPick={finishOnboarding} onSkip={() => finishOnboarding(null)} t={t} />}
       {faqOpen && <FaqSheet onClose={() => setFaqOpen(false)} t={t} />}
       {showPwa && <PwaInstallPrompt onDismiss={dismissPwa} t={t} />}
 
@@ -1521,6 +1662,8 @@ export default function SurfApp() {
         .sticky-tip { font-size: 12px; color: var(--text); padding: 8px 10px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.35; margin: 4px 0 4px; }
         .sticky-level-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 0.03em; padding: 6px 12px; border-radius: 16px; cursor: pointer; margin: 4px 0 6px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
         .sticky-level-btn:hover { filter: brightness(1.08); }
+        .share-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 6px 10px; border-radius: 16px; cursor: pointer; margin: 4px 0 6px; }
+        .share-btn:hover { color: var(--text); }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
         .levels-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; }
@@ -1662,6 +1805,8 @@ export default function SurfApp() {
         .break-row-flag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); font-weight: 400; margin-left: 4px; }
         .break-empty { font-size: 11px; color: var(--text-mu); padding: 12px 0; text-align: center; letter-spacing: 0.04em; }
         .country-btn { width: 100%; background: var(--bg-el); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 500; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .locate-btn { width: 100%; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 500; color: var(--accent); cursor: pointer; margin-bottom: 8px; }
+        .locate-btn:disabled { opacity: 0.6; cursor: default; }
         .country-list { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; max-height: 260px; overflow-y: auto; background: var(--bg); }
         .country-row { width: 100%; background: none; border: none; border-bottom: 1px solid var(--border); padding: 10px 14px; font-size: 13px; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-align: left; }
         .country-row:last-child { border-bottom: none; }
