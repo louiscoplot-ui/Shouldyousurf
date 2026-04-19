@@ -1752,10 +1752,10 @@ export default function SurfApp() {
 
         .history-badge { display: inline-block; font-size: 9px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2); border-radius: 4px; padding: 3px 8px; margin-bottom: 10px; }
 
-        .sticky-tabs { position: sticky; top: 0; z-index: 21; background: var(--bg); margin: 0 -20px 14px; padding: 6px 20px 8px; }
+        .sticky-tabs { position: sticky; top: 0; z-index: 21; background: var(--bg); margin: 0 -20px 10px; padding: 4px 20px 6px; }
         .tabs { display: flex; gap: 2px; margin-bottom: 0; background: var(--bg-el); padding: 3px; border-radius: 8px; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; animation: rise 0.5s 0.1s ease both; }
         .tabs::-webkit-scrollbar { display: none; }
-        .tab { flex: 0 0 auto; width: 56px; background: none; border: none; padding: 8px 2px; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-mu); touch-action: manipulation; }
+        .tab { flex: 0 0 auto; width: 54px; background: none; border: none; padding: 6px 2px; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-mu); touch-action: manipulation; }
         .tab.active { background: var(--bg-hi); }
         .tab.past-tab { opacity: 0.6; }
         .tab-day { font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px; text-align: center; }
@@ -1782,10 +1782,10 @@ export default function SurfApp() {
         .scale-desc strong { color: var(--text); font-weight: 500; }
         .verdict-sub { font-size: 13px; color: var(--text-mu); margin-top: 6px; }
         .verdict-tip { font-size: 13px; color: var(--text); margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 4px; line-height: 1.4; }
-        .sticky-tip { font-size: 12px; color: var(--text); padding: 8px 10px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.35; margin: 4px 0 4px; }
-        .sticky-level-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 0.03em; padding: 6px 12px; border-radius: 16px; cursor: pointer; margin: 4px 0 6px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
+        .sticky-tip { font-size: 12px; color: var(--text); padding: 6px 9px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.3; margin: 2px 0 2px; }
+        .sticky-level-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 0.03em; padding: 5px 11px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
         .sticky-level-btn:hover { filter: brightness(1.08); }
-        .share-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 6px 10px; border-radius: 16px; cursor: pointer; margin: 4px 0 6px; }
+        .share-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 4px 9px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; }
         .share-btn:hover { color: var(--text); }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
@@ -1816,19 +1816,19 @@ export default function SurfApp() {
         .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
-        .sticky-info { position: sticky; top: 68px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
-        .face-height { padding: 10px 0 8px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
-        .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
-        .face-value { font-weight: 500; font-size: 32px; line-height: 1; letter-spacing: -0.03em; }
-        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; letter-spacing: 0.03em; }
-        .face-hint { font-size: 11px; color: var(--text-mu); margin-top: 6px; line-height: 1.3; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
+        .sticky-info { position: sticky; top: 58px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
+        .face-height { padding: 7px 0 6px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
+        .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
+        .face-value { font-weight: 500; font-size: 28px; line-height: 1; letter-spacing: -0.03em; }
+        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 3px; letter-spacing: 0.03em; }
+        .face-hint { font-size: 10px; color: var(--text-mu); margin-top: 4px; line-height: 1.3; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
 
         .metrics { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .metric { padding: 9px 0; }
+        .metric { padding: 7px 0; }
         .metric:first-child { padding-right: 16px; border-right: 1px solid var(--border); }
         .metric:last-child { padding-left: 16px; }
         .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-        .metric-value { font-size: 19px; font-weight: 500; letter-spacing: -0.015em; display: flex; align-items: baseline; gap: 4px; }
+        .metric-value { font-size: 17px; font-weight: 500; letter-spacing: -0.015em; display: flex; align-items: baseline; gap: 4px; }
         .metric-unit { font-size: 12px; color: var(--text-mu); font-weight: 400; }
         .trend { font-size: 14px; color: var(--text-dim); margin-left: 6px; line-height: 1; }
         .sun-times { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text); line-height: 1.3; }
@@ -1836,7 +1836,7 @@ export default function SurfApp() {
         .metric-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
         .temp-strip { display: flex; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .temp-item { flex: 1; min-width: 0; padding: 8px 0; border-right: 1px solid var(--border); overflow: hidden; }
+        .temp-item { flex: 1; min-width: 0; padding: 6px 0; border-right: 1px solid var(--border); overflow: hidden; }
         .tide-curve-row { padding: 8px 0 14px; }
         .tide-curve-wrap { padding: 4px 0; }
         .tide-curve-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; text-align: center; }
