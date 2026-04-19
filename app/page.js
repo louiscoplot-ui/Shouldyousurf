@@ -966,6 +966,9 @@ export default function SurfApp() {
         </div>
 
         <div className="sticky-info">
+          <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
+            👤 {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
+          </button>
           {(() => {
             if (userLevel) {
               const idx = USER_LEVEL_TO_MATRIX[userLevel];
@@ -1259,13 +1262,15 @@ export default function SurfApp() {
         .scale-desc strong { color: var(--text); font-weight: 500; }
         .verdict-sub { font-size: 13px; color: var(--text-mu); margin-top: 6px; }
         .verdict-tip { font-size: 13px; color: var(--text); margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 4px; line-height: 1.4; }
-        .sticky-tip { font-size: 12px; color: var(--text); padding: 8px 10px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.35; margin: 8px 0 4px; }
+        .sticky-tip { font-size: 12px; color: var(--text); padding: 8px 10px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.35; margin: 4px 0 4px; }
+        .sticky-level-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 0.03em; padding: 6px 12px; border-radius: 16px; cursor: pointer; margin: 4px 0 6px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
+        .sticky-level-btn:hover { filter: brightness(1.08); }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
         .levels-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; }
         .levels-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
-        .level-pick-btn { background: var(--bg-el); border: 1px solid var(--border); border-radius: 14px; padding: 4px 10px; font-size: 10px; color: var(--text-mu); letter-spacing: 0.02em; cursor: pointer; white-space: nowrap; }
-        .level-pick-btn:hover { color: var(--text); }
+        .level-pick-btn { background: var(--accent); border: 1px solid var(--accent); border-radius: 16px; padding: 6px 12px; font-size: 11px; color: #fff; font-weight: 600; letter-spacing: 0.03em; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
+        .level-pick-btn:hover { filter: brightness(1.08); }
         .level-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
         .level-row.user-level { background: rgba(14,165,233,0.05); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-left: 2px solid var(--accent); }
         .you-pill { display: inline-block; background: var(--accent); color: #fff; font-size: 8px; letter-spacing: 0.1em; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
