@@ -1212,10 +1212,10 @@ export default function SurfApp() {
         .sun-times span { white-space: nowrap; }
         .metric-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
-        .temp-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
-        .temp-item { padding: 8px 0; border-right: 1px solid var(--border); }
-        .temp-item:last-child { border-right: none; padding-left: 16px; }
-        .temp-item:not(:first-child) { padding-left: 16px; }
+        .temp-strip { display: flex; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
+        .temp-item { flex: 1; min-width: 0; padding: 8px 0; border-right: 1px solid var(--border); overflow: hidden; }
+        .temp-item:last-child { border-right: none; padding-left: 14px; }
+        .temp-item:not(:first-child) { padding-left: 14px; }
         .temp-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
 
         .best { margin-top: 20px; padding: 14px 16px; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.25); border-radius: 8px; animation: rise 0.5s 0.25s ease both; }
