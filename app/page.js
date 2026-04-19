@@ -1466,20 +1466,6 @@ export default function SurfApp() {
             <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
               {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
             </button>
-            <button className="share-btn mono" onClick={() => {
-              const day = sel.time.split("T")[0];
-              const hour = sel.time.split("T")[1].slice(0, 2);
-              const url = `${window.location.origin}/?spot=${encodeURIComponent(spot.id)}&day=${day}&hour=${hour}`;
-              const title = `${spot.name} · ${t("brand")}`;
-              const text = `${spot.name} · ${fmtLongDay(day, tz, t)} ${fmtHour(sel.time, tz)} · ${score}/100 ${t(level.labelKey)}`;
-              if (navigator.share) {
-                navigator.share({ title, text, url }).catch(() => {});
-              } else if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => alert(t("share_copied"))).catch(() => {});
-              }
-            }}>
-              ↗ {t("share")}
-            </button>
             <button className="share-btn mono" onClick={enableNotifications} title={t("notify_me")}>
               🔔
             </button>
