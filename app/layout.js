@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
         <style>{`
           html, body { background: #f5efe5; margin: 0; font-family: 'Inter', system-ui, sans-serif; color: #141a24; }
           .load-wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 0 24px; text-align: center; background: radial-gradient(ellipse at top, #f5efe5 0%, #ece4d3 100%); z-index: 1; }
-          .load-brand { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; font-size: 52px; line-height: 1; letter-spacing: -0.035em; color: #141a24; }
+          .load-brand { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; font-size: clamp(30px, 9vw, 44px); line-height: 1.05; letter-spacing: -0.03em; color: #141a24; max-width: 90vw; }
           .load-brand em { font-style: italic; color: #c7422a; }
           .load-text { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; color: #c7422a; letter-spacing: 0.32em; text-transform: uppercase; font-weight: 500; margin: 0; }
           .load-dots { display: flex; gap: 6px; }

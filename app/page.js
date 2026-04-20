@@ -291,24 +291,24 @@ function getLevel(s, h, spot) {
     const isOffshore = windDelta <= 45;
 
     if (faceFt < 1) {
-      return { labelKey: "score_flat", subKey: "score_flat_sub", color: "#dc2626" };
+      return { labelKey: "score_flat", subKey: "score_flat_sub", color: "#a84d34" };
     }
 
     // Wind ruins the wave: non-offshore ≥25 km/h, or any direction ≥40 km/h.
     // Offshore stays surfable until it gets truly gale-force.
     const blownOut = (!isOffshore && kmh >= 25) || kmh >= 40 || (isOffshore && kmh >= 55);
     if (blownOut && s < 75) {
-      return { labelKey: "score_blown", subKey: "score_blown_sub", color: "#dc2626" };
+      return { labelKey: "score_blown", subKey: "score_blown_sub", color: "#a84d34" };
     }
   }
 
-  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#0b6e2e" };
-  if (s >= 65) return { labelKey: "score_65_74",  subKey: "score_65_74_sub",  color: "#15803d" };
-  if (s >= 55) return { labelKey: "score_55_64",  subKey: "score_55_64_sub",  color: "#16a34a" };
-  if (s >= 45) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#65a30d" };
-  if (s >= 35) return { labelKey: "score_35_44",  subKey: "score_35_44_sub",  color: "#84cc16" };
-  if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#ea580c" };
-  return       { labelKey: "score_0_14",   subKey: "score_0_14_sub",   color: "#dc2626" };
+  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#1f6b4a" };
+  if (s >= 65) return { labelKey: "score_65_74",  subKey: "score_65_74_sub",  color: "#2e8260" };
+  if (s >= 55) return { labelKey: "score_55_64",  subKey: "score_55_64_sub",  color: "#4a9972" };
+  if (s >= 45) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#7ba56a" };
+  if (s >= 35) return { labelKey: "score_35_44",  subKey: "score_35_44_sub",  color: "#a5b05a" };
+  if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#c9826a" };
+  return       { labelKey: "score_0_14",   subKey: "score_0_14_sub",   color: "#a84d34" };
 }
 
 function degToCompass(deg) {
@@ -1891,7 +1891,7 @@ export default function SurfApp() {
         {hoursGuide && (
           <div className="hours-guide">
             <div className="guide-color-row">
-              {[["#15803d","Pumping"],["#16a34a","Great"],["#65a30d","Good"],["#84cc16","Fun"],["#ea580c","Small"],["#dc2626","Flat"]].map(([c,l]) => (
+              {[["#1f6b4a","Perfect"],["#2e8260","Excellent"],["#4a9972","Great"],["#7ba56a","Good"],["#a5b05a","Fun"],["#c9826a","Small"],["#a84d34","Flat"]].map(([c,l]) => (
                 <div key={l} style={{ textAlign:"center" }}>
                   <div style={{ width:8, height:8, borderRadius:"50%", background:c, margin:"0 auto 3px" }}/>
                   <div style={{ fontSize:8, color:c, fontFamily:"JetBrains Mono,monospace", fontWeight:500, letterSpacing:"0.04em" }}>{l}</div>
@@ -2011,7 +2011,7 @@ export default function SurfApp() {
           --text: #141a24; --text-mu: rgba(20,26,36,0.64); --text-dim: rgba(20,26,36,0.42);
           --accent: #c7422a; --accent-soft: rgba(199,66,42,0.12);
           --ocean: #2d5a6b; --sand: #c9a876;
-          --warn: #b06a1c; --bad: #9b2d20;
+          --warn: #b06a1c; --bad: #a84d34;
         }
 
         html, body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01'; letter-spacing: -0.005em; }
@@ -2078,7 +2078,8 @@ export default function SurfApp() {
         .verdict-tip { font-size: 13px; color: var(--text); margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 4px; line-height: 1.4; }
         .sticky-tip { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--text); padding: 8px 0 8px 14px; border-left: 2px solid var(--accent); line-height: 1.4; margin: 2px 0 6px; letter-spacing: -0.005em; }
         .sticky-tip strong { font-style: normal; font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
-        .sticky-level-btn { font-family: 'Inter', system-ui, sans-serif; display: inline-flex; align-items: center; gap: 4px; background: var(--text); border: none; color: #f5efe5; font-weight: 600; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 12px; border-radius: 0; cursor: pointer; margin: 2px 0 4px; }
+        .sticky-level-btn { font-family: 'Inter', system-ui, sans-serif; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--text); color: var(--text); font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 6px 12px; border-radius: 0; cursor: pointer; margin: 2px 0 4px; transition: all 0.15s; }
+        .sticky-level-btn:hover { background: var(--text); color: var(--bg); }
         .sticky-level-btn:hover { filter: brightness(1.08); }
         .share-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 4px 9px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; }
         .notif-btn { font-family: 'Inter', system-ui, sans-serif; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border-str); color: var(--text-mu); font-weight: 600; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 10px; border-radius: 0; cursor: pointer; margin: 2px 0 4px; transition: all 0.15s; }
@@ -2143,18 +2144,17 @@ export default function SurfApp() {
         .temp-item:not(:first-child) { padding-left: 14px; }
         .temp-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.28em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
 
-        .best { margin-top: 24px; padding: 18px 18px 16px; background: var(--text); color: #f5efe5; border: none; border-radius: 0; animation: rise 0.5s 0.25s ease both; position: relative; }
-        .best::before { content: ""; position: absolute; top: 0; left: 0; width: 40px; height: 2px; background: var(--accent); }
-        .best-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.32em; color: var(--sand); text-transform: uppercase; margin-bottom: 8px; }
-        .best-text { font-family: 'Fraunces', serif; font-style: italic; font-size: 20px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: #f5efe5; }
-        .best-sub { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; color: rgba(245,239,229,0.6); margin-top: 6px; letter-spacing: 0.06em; }
+        .best { margin-top: 24px; padding: 16px 18px 14px; background: rgba(255,255,255,0.5); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 2px; animation: rise 0.5s 0.25s ease both; }
+        .best-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+        .best-text { font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; color: var(--text); }
+        .best-sub { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; color: var(--text-mu); margin-top: 5px; letter-spacing: 0.06em; }
         .best-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
         .section-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin: 32px 0 4px; }
         .hours { animation: rise 0.5s 0.3s ease both; }
         .hour-btn { display: grid; grid-template-columns: 50px 1fr 116px 82px; align-items: center; gap: 8px; background: none; border: none; border-top: 1px solid var(--border); padding: 10px 0; cursor: pointer; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); }
         .hour-btn:last-child { border-bottom: 1px solid var(--border); }
-        .hour-btn.sel { background: var(--accent-soft); margin: 0 -20px; padding-left: 17px; padding-right: 20px; width: calc(100% + 40px); border-left: 3px solid var(--accent); border-top-color: transparent; }
+        .hour-btn.sel { background: rgba(199,66,42,0.06); margin: 0 -20px; padding-left: 18px; padding-right: 20px; width: calc(100% + 40px); border-left: 2px solid rgba(199,66,42,0.55); border-top-color: transparent; }
         .hour-btn.sel .hour-time { color: var(--text); font-weight: 600; }
         .hour-time { font-size: 11px; color: var(--text-mu); }
         .hour-bar { height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
