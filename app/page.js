@@ -671,6 +671,141 @@ function OnboardingModal({ onPick, onSkip, t }) {
   );
 }
 
+function loadLeaflet() {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  if (window.L) return Promise.resolve(window.L);
+  return new Promise((resolve) => {
+    if (!document.querySelector('link[data-leaflet]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      link.setAttribute("data-leaflet", "1");
+      document.head.appendChild(link);
+    }
+    if (window.__leafletLoading) {
+      window.__leafletLoading.then(() => resolve(window.L));
+      return;
+    }
+    window.__leafletLoading = new Promise((done) => {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.async = true;
+      script.onload = () => done();
+      document.body.appendChild(script);
+    });
+    window.__leafletLoading.then(() => resolve(window.L));
+  });
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&accept-language=en`);
+    const data = await res.json();
+    const addr = data.address || {};
+    const name =
+      addr.beach ||
+      addr.natural ||
+      addr.suburb ||
+      addr.village ||
+      addr.town ||
+      addr.city ||
+      addr.county ||
+      (data.display_name || "").split(",")[0] ||
+      `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    const regionBits = [addr.suburb || addr.village || addr.town || addr.city, addr.state, addr.country].filter(Boolean);
+    return { name: name.trim(), region: regionBits.join(", ") };
+  } catch {
+    return { name: `${lat.toFixed(3)}, ${lng.toFixed(3)}`, region: "" };
+  }
+}
+
+function MapPicker({ onSelect, onClose, t, initialCenter }) {
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const [pickedLatLng, setPickedLatLng] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadLeaflet().then((L) => {
+      if (cancelled || !L || !mapContainerRef.current || mapRef.current) return;
+      const center = initialCenter || [-31.88, 115.75];
+      const map = L.map(mapContainerRef.current, { zoomControl: true }).setView(center, initialCenter ? 11 : 4);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      map.on("click", (e) => {
+        if (markerRef.current) map.removeLayer(markerRef.current);
+        markerRef.current = L.marker(e.latlng).addTo(map);
+        setPickedLatLng(e.latlng);
+      });
+      mapRef.current = map;
+      setTimeout(() => { try { map.invalidateSize(); } catch {} }, 80);
+    });
+    return () => {
+      cancelled = true;
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function useMe() {
+    if (!navigator.geolocation || !mapRef.current) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        mapRef.current.setView(latlng, 12);
+        if (markerRef.current) mapRef.current.removeLayer(markerRef.current);
+        const L = window.L;
+        if (L) { markerRef.current = L.marker(latlng).addTo(mapRef.current); setPickedLatLng(latlng); }
+      },
+      () => {}
+    );
+  }
+
+  async function confirm() {
+    if (!pickedLatLng) return;
+    setConfirming(true);
+    const { name, region } = await reverseGeocode(pickedLatLng.lat, pickedLatLng.lng);
+    onSelect({
+      id: `custom-${pickedLatLng.lat.toFixed(4)}-${pickedLatLng.lng.toFixed(4)}`,
+      name: name || `${pickedLatLng.lat.toFixed(3)}, ${pickedLatLng.lng.toFixed(3)}`,
+      region,
+      lat: pickedLatLng.lat,
+      lng: pickedLatLng.lng,
+      type: "beach",
+    });
+  }
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="sheet" style={{ maxHeight: "92vh" }} onClick={e => e.stopPropagation()}>
+        <div className="handle" />
+        <div className="sheet-body">
+          <div className="sheet-header">
+            <div className="sheet-title">{t("map_picker_title")}</div>
+            <button className="close-btn" onClick={onClose}>✕</button>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--text-mu)", margin: "0 0 10px", lineHeight: 1.4 }}>{t("map_picker_hint")}</p>
+          <div ref={mapContainerRef} style={{ height: "50vh", minHeight: 320, borderRadius: 10, overflow: "hidden", background: "#d7e3ec" }}></div>
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button className="locate-btn" style={{ flex: "0 0 auto", width: "auto", margin: 0, padding: "10px 14px" }} onClick={useMe}>📍</button>
+            <button
+              className="primary-btn"
+              style={{ margin: 0, flex: 1, opacity: pickedLatLng ? 1 : 0.55 }}
+              disabled={!pickedLatLng || confirming}
+              onClick={confirm}>
+              {confirming ? "…" : pickedLatLng ? t("map_picker_use") : t("map_picker_tap_hint")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LevelPicker({ userLevel, onPick, onClose, t }) {
   return (
     <div className="overlay" onClick={onClose}>
@@ -785,6 +920,7 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, co
   const [searching, setSearching] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   function useMyLocation() {
     if (!navigator.geolocation) { alert(t("gps_unsupported")); return; }
@@ -860,9 +996,14 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, co
             <span>{currentCountry.flag} {currentCountry.name}</span>
             <span style={{ color: "var(--text-mu)" }}>▾</span>
           </button>
-          <button className="locate-btn" onClick={useMyLocation} disabled={locating}>
-            {locating ? t("locating") : <>📍 {t("nearest_spot")}</>}
-          </button>
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            <button className="locate-btn" style={{ flex: 1, margin: 0 }} onClick={useMyLocation} disabled={locating}>
+              {locating ? t("locating") : <>📍 {t("nearest_spot")}</>}
+            </button>
+            <button className="locate-btn" style={{ flex: 1, margin: 0 }} onClick={() => setMapOpen(true)}>
+              🗺️ {t("pick_on_map")}
+            </button>
+          </div>
           {countryOpen && (
             <div className="country-list">
               {COUNTRIES.map(c => (
@@ -942,6 +1083,13 @@ function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, co
           ))}
         </div>
       </div>
+      {mapOpen && (
+        <MapPicker
+          t={t}
+          onClose={() => setMapOpen(false)}
+          onSelect={(spot) => { onSelect(spot); setMapOpen(false); }}
+        />
+      )}
     </div>
   );
 }
