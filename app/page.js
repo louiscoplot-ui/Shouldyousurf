@@ -649,7 +649,10 @@ function OnboardingModal({ onPick, onSkip, t }) {
             <div className="serif" style={{ fontSize: 30, fontWeight: 500, letterSpacing: "-0.02em", background: "linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               {t("onboarding_title")}
             </div>
-            <p style={{ fontSize: 14, color: "var(--text-mu)", margin: "8px 0 18px", lineHeight: 1.45 }}>{t("onboarding_sub")}</p>
+            <p style={{ fontSize: 14, color: "var(--text-mu)", margin: "8px 0 14px", lineHeight: 1.45 }}>{t("onboarding_sub")}</p>
+          </div>
+          <div style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.25)", borderRadius: 8, padding: "10px 12px", margin: "0 0 16px", fontSize: 13, color: "var(--text)", lineHeight: 1.45 }}>
+            {t("onboarding_spot_hint")}
           </div>
           {USER_LEVELS.map(lvl => (
             <button key={lvl} className="level-item" onClick={() => onPick(lvl)}>
