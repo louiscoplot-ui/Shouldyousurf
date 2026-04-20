@@ -1453,7 +1453,11 @@ export default function SurfApp() {
           </div>
           <button className="spot-btn" onClick={() => setPickerOpen(true)}>
             <span className="spot-name serif">{spot.name}</span>
-            <span className="chev">▾</span>
+            <span className="chev-pill" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
           </button>
           <div className="spot-region">{spot.region} · {t(spot.type || "beach")}{spot.heavy ? ` · ${t("heavy")}` : ""}</div>
         </div>
@@ -1808,9 +1812,11 @@ export default function SurfApp() {
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .brand { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--text-dim); text-transform: uppercase; }
         .now-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s infinite; vertical-align: middle; }
-        .spot-btn { background: none; border: none; text-align: left; cursor: pointer; padding: 0; display: flex; align-items: baseline; gap: 8px; color: var(--text); }
+        .spot-btn { background: none; border: none; text-align: left; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 12px; color: var(--text); }
         .spot-name { font-weight: 500; font-size: 40px; line-height: 1; letter-spacing: -0.025em; }
-        .chev { color: var(--text-dim); font-size: 14px; transform: translateY(-8px); }
+        .chev-pill { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: var(--accent); color: #fff; flex-shrink: 0; box-shadow: 0 3px 10px rgba(14,165,233,0.4); transition: transform 0.15s ease, box-shadow 0.15s ease; animation: chevPulse 2.4s ease-in-out infinite; }
+        .spot-btn:hover .chev-pill, .spot-btn:active .chev-pill { transform: scale(1.08); box-shadow: 0 4px 14px rgba(14,165,233,0.55); }
+        @keyframes chevPulse { 0%,100% { box-shadow: 0 3px 10px rgba(14,165,233,0.4); } 50% { box-shadow: 0 3px 16px rgba(14,165,233,0.65); } }
         .spot-region { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-top: 8px; }
         .fav-btn { background: none; border: 1px solid var(--border); border-radius: 999px; width: 34px; height: 34px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: var(--text-mu); }
         .fav-btn.active { border-color: var(--warn); color: var(--warn); background: rgba(217,119,6,0.08); }
