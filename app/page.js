@@ -753,6 +753,24 @@ function MapPicker({ onSelect, onClose, t, initialCenter }) {
       const map = L.map(mapContainerRef.current, { zoomControl: true }).setView(center, initialCenter ? 13 : 4);
       const t0 = MAP_TILES[tileKey];
       tileRef.current = L.tileLayer(t0.url, { attribution: t0.attr, maxZoom: t0.maxZoom }).addTo(map);
+
+      // Drop a pin for every curated break so users can see known spots visually
+      const spotIcon = L.divIcon({
+        className: "spot-pin",
+        html: '<div style="width:14px;height:14px;border-radius:50%;background:#f59e0b;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+      BREAKS.forEach(b => {
+        const m = L.marker([b.lat, b.lng], { icon: spotIcon })
+          .addTo(map)
+          .bindTooltip(b.name, { direction: "top", offset: [0, -8], className: "spot-pin-tip" });
+        m.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          onSelect(b);
+        });
+      });
+
       map.on("click", async (e) => {
         if (markerRef.current) map.removeLayer(markerRef.current);
         markerRef.current = L.marker(e.latlng).addTo(map);

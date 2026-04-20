@@ -7,17 +7,27 @@
 export const COUNTRIES = [
   { code: "AU", name: "Australia",        flag: "🇦🇺" },
   { code: "ID", name: "Indonesia",        flag: "🇮🇩" },
+  { code: "LK", name: "Sri Lanka",        flag: "🇱🇰" },
+  { code: "MV", name: "Maldives",         flag: "🇲🇻" },
   { code: "FR", name: "France",           flag: "🇫🇷" },
   { code: "PT", name: "Portugal",         flag: "🇵🇹" },
   { code: "ES", name: "Spain",            flag: "🇪🇸" },
+  { code: "IE", name: "Ireland",          flag: "🇮🇪" },
+  { code: "GB", name: "United Kingdom",   flag: "🇬🇧" },
   { code: "US", name: "United States",    flag: "🇺🇸" },
   { code: "MX", name: "Mexico",           flag: "🇲🇽" },
   { code: "CR", name: "Costa Rica",       flag: "🇨🇷" },
+  { code: "NI", name: "Nicaragua",        flag: "🇳🇮" },
+  { code: "PE", name: "Peru",             flag: "🇵🇪" },
+  { code: "EC", name: "Ecuador",          flag: "🇪🇨" },
   { code: "BR", name: "Brazil",           flag: "🇧🇷" },
   { code: "NZ", name: "New Zealand",      flag: "🇳🇿" },
   { code: "PF", name: "French Polynesia", flag: "🇵🇫" },
+  { code: "FJ", name: "Fiji",             flag: "🇫🇯" },
   { code: "ZA", name: "South Africa",     flag: "🇿🇦" },
   { code: "MA", name: "Morocco",          flag: "🇲🇦" },
+  { code: "PH", name: "Philippines",      flag: "🇵🇭" },
+  { code: "JP", name: "Japan",            flag: "🇯🇵" },
 ];
 
 export const BREAKS = [
@@ -113,6 +123,96 @@ export const BREAKS = [
 
   // ─── Morocco ─────────────────────────────────────────────────────────
   { id: "taghazout",    country: "MA", name: "Anchor Point",       region: "Taghazout",           lat: 30.5422, lng: -9.7125, idealSwellDir: 300, offshoreWindDir: 90, type: "reef", idealTide: "mid" },
+  { id: "imsouane",     country: "MA", name: "Imsouane (The Bay)", region: "Imsouane",            lat: 30.8404, lng: -9.8171, idealSwellDir: 290, offshoreWindDir: 90, idealTide: "mid" },
+  { id: "boilers",      country: "MA", name: "Boilers",            region: "Taghazout",           lat: 30.5833, lng: -9.7361, idealSwellDir: 300, offshoreWindDir: 90, type: "reef", heavy: true, idealTide: "mid-high" },
+
+  // ─── Sri Lanka ───────────────────────────────────────────────────────
+  { id: "arugam",       country: "LK", name: "Arugam Bay Main Point", region: "Arugam Bay",       lat: 6.8406, lng: 81.8363, idealSwellDir: 180, offshoreWindDir: 270, idealTide: "mid" },
+  { id: "peanut-farm",  country: "LK", name: "Peanut Farm",        region: "Arugam Bay",          lat: 6.7861, lng: 81.8386, idealSwellDir: 180, offshoreWindDir: 270, idealTide: "mid" },
+  { id: "whiskey",      country: "LK", name: "Whiskey Point",      region: "Arugam Bay",          lat: 6.8889, lng: 81.8319, idealSwellDir: 180, offshoreWindDir: 270, idealTide: "mid" },
+  { id: "hikkaduwa",    country: "LK", name: "Hikkaduwa Main Reef",region: "Southern Province",   lat: 6.1378, lng: 80.1019, idealSwellDir: 210, offshoreWindDir: 45, type: "reef", idealTide: "mid" },
+  { id: "weligama",     country: "LK", name: "Weligama Bay",       region: "Southern Province",   lat: 5.9744, lng: 80.4197, idealSwellDir: 180, offshoreWindDir: 0, idealTide: "mid" },
+  { id: "midigama",     country: "LK", name: "Midigama (Ram's)",   region: "Southern Province",   lat: 5.9681, lng: 80.4553, idealSwellDir: 195, offshoreWindDir: 0, type: "reef", idealTide: "mid" },
+  { id: "mirissa",      country: "LK", name: "Mirissa",            region: "Southern Province",   lat: 5.9450, lng: 80.4564, idealSwellDir: 180, offshoreWindDir: 0, idealTide: "mid" },
+
+  // ─── Maldives ────────────────────────────────────────────────────────
+  { id: "cokes",        country: "MV", name: "Cokes",              region: "North Malé Atoll",    lat: 4.2094, lng: 73.4658, idealSwellDir: 180, offshoreWindDir: 0, type: "reef", idealTide: "mid-high" },
+  { id: "chickens",     country: "MV", name: "Chickens",           region: "North Malé Atoll",    lat: 4.2097, lng: 73.4561, idealSwellDir: 180, offshoreWindDir: 90, type: "reef", idealTide: "mid-high" },
+  { id: "pasta-point",  country: "MV", name: "Pasta Point",        region: "North Malé Atoll",    lat: 4.1747, lng: 73.5456, idealSwellDir: 180, offshoreWindDir: 0, type: "reef", idealTide: "mid" },
+  { id: "sultans",      country: "MV", name: "Sultans",            region: "North Malé Atoll",    lat: 4.1772, lng: 73.5503, idealSwellDir: 180, offshoreWindDir: 0, type: "reef", idealTide: "mid" },
+
+  // ─── France (additions) ──────────────────────────────────────────────
+  { id: "seignosse",    country: "FR", name: "Les Bourdaines",     region: "Seignosse",           lat: 43.7063, lng: -1.4169, idealSwellDir: 295, offshoreWindDir: 90, idealTide: "mid" },
+  { id: "guethary",     country: "FR", name: "Parlementia",        region: "Guéthary",            lat: 43.4272, lng: -1.6077, idealSwellDir: 295, offshoreWindDir: 90, type: "reef", idealTide: "mid" },
+  { id: "anglet",       country: "FR", name: "Anglet (Sables d'Or)",region: "Anglet",             lat: 43.5083, lng: -1.5403, idealSwellDir: 295, offshoreWindDir: 135, idealTide: "mid" },
+  { id: "capbreton",    country: "FR", name: "La Piste",           region: "Capbreton",           lat: 43.6436, lng: -1.4483, idealSwellDir: 295, offshoreWindDir: 90, idealTide: "mid" },
+  { id: "st-girons",    country: "FR", name: "Saint-Girons",       region: "Landes",              lat: 43.9553, lng: -1.3542, idealSwellDir: 280, offshoreWindDir: 90, idealTide: "mid" },
+
+  // ─── Portugal (additions) ────────────────────────────────────────────
+  { id: "coxos",        country: "PT", name: "Coxos",              region: "Ericeira",            lat: 38.9872, lng: -9.4231, idealSwellDir: 310, offshoreWindDir: 90, type: "reef", idealTide: "mid-low" },
+  { id: "cave-pt",      country: "PT", name: "The Cave",           region: "Ericeira",            lat: 38.9756, lng: -9.4211, idealSwellDir: 290, offshoreWindDir: 45, type: "reef", heavy: true, idealTide: "mid-low" },
+
+  // ─── Spain (additions) ───────────────────────────────────────────────
+  { id: "zarautz",      country: "ES", name: "Zarautz",            region: "Basque Country",      lat: 43.2850, lng: -2.1706, idealSwellDir: 315, offshoreWindDir: 180, idealTide: "mid" },
+  { id: "pantin",       country: "ES", name: "Pantín",             region: "Galicia",             lat: 43.6125, lng: -8.0775, idealSwellDir: 295, offshoreWindDir: 180, idealTide: "mid" },
+  { id: "sopelana",     country: "ES", name: "Sopelana",           region: "Basque Country",      lat: 43.3867, lng: -2.9861, idealSwellDir: 315, offshoreWindDir: 180, idealTide: "mid" },
+
+  // ─── Ireland ─────────────────────────────────────────────────────────
+  { id: "mullaghmore",  country: "IE", name: "Mullaghmore Head",   region: "Sligo",               lat: 54.4661, lng: -8.4547, idealSwellDir: 290, offshoreWindDir: 135, type: "reef", heavy: true, idealTide: "mid" },
+  { id: "bundoran",     country: "IE", name: "Bundoran (The Peak)",region: "Donegal",             lat: 54.4811, lng: -8.2856, idealSwellDir: 290, offshoreWindDir: 135, type: "reef", idealTide: "mid-low" },
+  { id: "lahinch",      country: "IE", name: "Lahinch",            region: "Clare",               lat: 52.9300, lng: -9.3461, idealSwellDir: 290, offshoreWindDir: 90, idealTide: "mid" },
+
+  // ─── UK ──────────────────────────────────────────────────────────────
+  { id: "fistral",      country: "GB", name: "Fistral Beach",      region: "Newquay, Cornwall",   lat: 50.4175, lng: -5.1003, idealSwellDir: 290, offshoreWindDir: 90, idealTide: "mid" },
+  { id: "thurso",       country: "GB", name: "Thurso East",        region: "Caithness, Scotland", lat: 58.5950, lng: -3.5106, idealSwellDir: 300, offshoreWindDir: 180, type: "reef", idealTide: "mid-low" },
+  { id: "porthleven",   country: "GB", name: "Porthleven",         region: "Cornwall",            lat: 50.0825, lng: -5.3169, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true, idealTide: "mid-low" },
+
+  // ─── USA (additions) ─────────────────────────────────────────────────
+  { id: "mavericks",    country: "US", name: "Mavericks",          region: "California",          lat: 37.4958, lng: -122.5014, idealSwellDir: 290, offshoreWindDir: 90, type: "reef", heavy: true, idealTide: "mid-low" },
+  { id: "steamer",      country: "US", name: "Steamer Lane",       region: "Santa Cruz, California", lat: 36.9514, lng: -122.0261, idealSwellDir: 270, offshoreWindDir: 45, type: "reef", idealTide: "mid" },
+  { id: "huntington",   country: "US", name: "Huntington Pier",    region: "California",          lat: 33.6550, lng: -117.9994, idealSwellDir: 225, offshoreWindDir: 45, idealTide: "mid" },
+  { id: "rockaway",     country: "US", name: "Rockaway Beach",     region: "New York",            lat: 40.5864, lng: -73.8153, idealSwellDir: 140, offshoreWindDir: 315, idealTide: "mid" },
+  { id: "montauk",      country: "US", name: "Ditch Plains",       region: "Montauk, NY",         lat: 41.0350, lng: -71.9350, idealSwellDir: 160, offshoreWindDir: 315, idealTide: "mid" },
+  { id: "cape-hatteras",country: "US", name: "Cape Hatteras",      region: "North Carolina",      lat: 35.2236, lng: -75.6306, idealSwellDir: 135, offshoreWindDir: 270, idealTide: "mid" },
+
+  // ─── Mexico (additions) ──────────────────────────────────────────────
+  { id: "sayulita",     country: "MX", name: "Sayulita",           region: "Nayarit",             lat: 20.8700, lng: -105.4389, idealSwellDir: 225, offshoreWindDir: 45, idealTide: "mid" },
+  { id: "barra",        country: "MX", name: "Barra de la Cruz",   region: "Oaxaca",              lat: 15.8283, lng: -95.8019, idealSwellDir: 225, offshoreWindDir: 0, type: "reef", idealTide: "mid" },
+  { id: "salina-cruz",  country: "MX", name: "Salina Cruz",        region: "Oaxaca",              lat: 16.1736, lng: -95.1956, idealSwellDir: 225, offshoreWindDir: 0, idealTide: "mid" },
+
+  // ─── Costa Rica (additions) ──────────────────────────────────────────
+  { id: "playa-hermosa",country: "CR", name: "Playa Hermosa",      region: "Guanacaste",          lat: 9.5847, lng: -84.6064, idealSwellDir: 225, offshoreWindDir: 45, idealTide: "mid" },
+  { id: "santa-teresa", country: "CR", name: "Santa Teresa",       region: "Nicoya",              lat: 9.6436, lng: -85.1697, idealSwellDir: 225, offshoreWindDir: 45, idealTide: "mid" },
+  { id: "tamarindo",    country: "CR", name: "Tamarindo",          region: "Guanacaste",          lat: 10.3028, lng: -85.8431, idealSwellDir: 225, offshoreWindDir: 45, idealTide: "mid" },
+
+  // ─── Nicaragua ───────────────────────────────────────────────────────
+  { id: "popoyo",       country: "NI", name: "Popoyo",             region: "Rivas",               lat: 11.5458, lng: -86.1886, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", idealTide: "mid-low" },
+  { id: "lance-left",   country: "NI", name: "Lance's Left",       region: "Rivas",               lat: 11.5575, lng: -86.1861, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", idealTide: "mid" },
+
+  // ─── Peru ────────────────────────────────────────────────────────────
+  { id: "chicama",      country: "PE", name: "Chicama",            region: "La Libertad",         lat: -7.9333, lng: -79.3333, idealSwellDir: 225, offshoreWindDir: 90, idealTide: "mid" },
+  { id: "cabo-blanco",  country: "PE", name: "Cabo Blanco",        region: "Piura",               lat: -4.2500, lng: -81.2333, idealSwellDir: 200, offshoreWindDir: 90, type: "reef", idealTide: "mid" },
+  { id: "mancora",      country: "PE", name: "Máncora",            region: "Piura",               lat: -4.1058, lng: -81.0500, idealSwellDir: 200, offshoreWindDir: 90, idealTide: "mid" },
+
+  // ─── Ecuador ─────────────────────────────────────────────────────────
+  { id: "montanita",    country: "EC", name: "Montañita",          region: "Santa Elena",         lat: -1.8264, lng: -80.7533, idealSwellDir: 225, offshoreWindDir: 90, idealTide: "mid" },
+
+  // ─── Brazil (additions) ──────────────────────────────────────────────
+  { id: "maresias",     country: "BR", name: "Maresias",           region: "São Paulo",           lat: -23.7958, lng: -45.5469, idealSwellDir: 180, offshoreWindDir: 0, idealTide: "mid" },
+  { id: "noronha",      country: "BR", name: "Cacimba do Padre",   region: "Fernando de Noronha", lat: -3.8472, lng: -32.4467, idealSwellDir: 315, offshoreWindDir: 135, idealTide: "mid-low" },
+
+  // ─── New Zealand (additions) ─────────────────────────────────────────
+  { id: "whangamata",   country: "NZ", name: "Whangamata",         region: "Coromandel",          lat: -37.2108, lng: 175.8697, idealSwellDir: 90, offshoreWindDir: 270, idealTide: "mid" },
+
+  // ─── Fiji ────────────────────────────────────────────────────────────
+  { id: "cloudbreak",   country: "FJ", name: "Cloudbreak",         region: "Mamanuca Islands",    lat: -17.8733, lng: 177.1942, idealSwellDir: 195, offshoreWindDir: 45, type: "reef", heavy: true, idealTide: "mid" },
+  { id: "restaurants",  country: "FJ", name: "Restaurants",        region: "Tavarua",             lat: -17.8581, lng: 177.1847, idealSwellDir: 195, offshoreWindDir: 45, type: "reef", idealTide: "mid" },
+
+  // ─── Philippines ─────────────────────────────────────────────────────
+  { id: "cloud9",       country: "PH", name: "Cloud 9",            region: "Siargao",             lat: 9.8136, lng: 126.1700, idealSwellDir: 90, offshoreWindDir: 270, type: "reef", heavy: true, idealTide: "mid" },
+
+  // ─── Japan ───────────────────────────────────────────────────────────
+  { id: "chiba",        country: "JP", name: "Ichinomiya",         region: "Chiba",               lat: 35.3686, lng: 140.4100, idealSwellDir: 140, offshoreWindDir: 270, idealTide: "mid" },
 ];
 
 export function findBreak(id) {
