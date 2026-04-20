@@ -1746,15 +1746,11 @@ export default function SurfApp() {
               {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
             </button>
             <button
-              className={`notif-btn${notifOptIn ? " on" : ""}`}
+              className={`notif-btn mono${notifOptIn ? " on" : ""}`}
               onClick={toggleNotifications}
               title={notifOptIn ? t("notify_off") : t("notify_me")}
               aria-pressed={notifOptIn}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "-2px" }}>
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-              </svg>
-              {notifOptIn && <span style={{ marginLeft: 6 }}>{t("notify_on_short")}</span>}
+              {notifOptIn ? "🔔 " + t("notify_on_short") : "🔕"}
             </button>
           </div>
           {(() => {
@@ -2006,22 +2002,19 @@ export default function SurfApp() {
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
         :root {
-          --bg: #f5efe5; --bg-el: #ece4d3; --bg-hi: #e0d5be;
-          --border: rgba(26,31,46,0.10); --border-str: rgba(26,31,46,0.20);
-          --text: #141a24; --text-mu: rgba(20,26,36,0.64); --text-dim: rgba(20,26,36,0.42);
-          --accent: #c7422a; --accent-soft: rgba(199,66,42,0.12);
-          --ocean: #2d5a6b; --sand: #c9a876;
-          --warn: #b06a1c; --bad: #9b2d20;
+          --bg: #eef4f8; --bg-el: #e1ebf2; --bg-hi: #d5e2eb;
+          --border: rgba(30,58,90,0.08); --border-str: rgba(30,58,90,0.16);
+          --text: #1e2a35; --text-mu: rgba(30,42,53,0.62); --text-dim: rgba(30,42,53,0.38);
+          --accent: #0ea5e9; --warn: #d97706; --bad: #dc2626;
         }
 
         html, body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01'; letter-spacing: -0.005em; }
         ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: rgba(30,58,90,0.15); }
         button, input { font-family: inherit; color: inherit; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .serif { font-family: 'Fraunces', serif; font-optical-sizing: auto; font-variation-settings: "SOFT" 80; }
-        .serif-italic { font-family: 'Fraunces', serif; font-style: italic; font-optical-sizing: auto; }
+        .serif { font-family: 'Fraunces', serif; font-optical-sizing: auto; font-variation-settings: "SOFT" 50; }
 
-        .page { min-height: 100vh; background: var(--bg); background-image: radial-gradient(ellipse at top, #f5efe5 0%, #ece4d3 65%, #e3d8c0 100%); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+        .page { min-height: 100vh; background: var(--bg); background-image: linear-gradient(180deg, #eef4f8 0%, #e6eff5 100%); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
         .wrap { max-width: 440px; margin: 0 auto; padding: 36px 20px 100px; }
 
         .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: dotBounce 1.2s infinite ease-in-out; }
@@ -2031,14 +2024,14 @@ export default function SurfApp() {
 
         .header { margin-bottom: 24px; animation: rise 0.5s ease both; }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .brand { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 15px; letter-spacing: -0.01em; color: var(--text-mu); text-transform: none; }
+        .brand { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--text-dim); text-transform: uppercase; }
         .now-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s infinite; vertical-align: middle; }
         .spot-btn { background: none; border: none; text-align: left; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 12px; color: var(--text); }
-        .spot-name { font-style: italic; font-weight: 500; font-size: 44px; line-height: 0.98; letter-spacing: -0.035em; }
-        .chev-pill { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 999px; background: var(--accent); color: #fff; flex-shrink: 0; box-shadow: 0 2px 8px rgba(199,66,42,0.35); transition: transform 0.18s ease, box-shadow 0.18s ease; animation: chevPulse 2.6s ease-in-out infinite; }
-        .spot-btn:hover .chev-pill, .spot-btn:active .chev-pill { transform: scale(1.08); box-shadow: 0 4px 14px rgba(199,66,42,0.5); }
-        @keyframes chevPulse { 0%,100% { box-shadow: 0 2px 8px rgba(199,66,42,0.35); } 50% { box-shadow: 0 2px 14px rgba(199,66,42,0.6); } }
-        .spot-region { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.28em; color: var(--text-dim); text-transform: uppercase; margin-top: 10px; }
+        .spot-name { font-weight: 500; font-size: 40px; line-height: 1; letter-spacing: -0.025em; }
+        .chev-pill { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: var(--accent); color: #fff; flex-shrink: 0; box-shadow: 0 3px 10px rgba(14,165,233,0.4); transition: transform 0.15s ease, box-shadow 0.15s ease; animation: chevPulse 2.4s ease-in-out infinite; }
+        .spot-btn:hover .chev-pill, .spot-btn:active .chev-pill { transform: scale(1.08); box-shadow: 0 4px 14px rgba(14,165,233,0.55); }
+        @keyframes chevPulse { 0%,100% { box-shadow: 0 3px 10px rgba(14,165,233,0.4); } 50% { box-shadow: 0 3px 16px rgba(14,165,233,0.65); } }
+        .spot-region { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-top: 8px; }
         .fav-btn { background: none; border: 1px solid var(--border); border-radius: 999px; width: 34px; height: 34px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: var(--text-mu); }
         .fav-btn.active { border-color: var(--warn); color: var(--warn); background: rgba(217,119,6,0.08); }
         .lang-btn { background: var(--bg-el); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; color: var(--text-mu); letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px; transition: all 0.15s; }
@@ -2047,10 +2040,10 @@ export default function SurfApp() {
         .history-badge { display: inline-block; font-size: 9px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2); border-radius: 4px; padding: 3px 8px; margin-bottom: 10px; }
 
         .sticky-tabs { position: sticky; top: 0; z-index: 21; background: var(--bg); margin: 0 -20px 10px; padding: 4px 20px 6px; }
-        .tabs { display: flex; gap: 0; margin-bottom: 0; background: transparent; padding: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; animation: rise 0.5s 0.1s ease both; }
+        .tabs { display: flex; gap: 2px; margin-bottom: 0; background: var(--bg-el); padding: 3px; border-radius: 8px; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; animation: rise 0.5s 0.1s ease both; }
         .tabs::-webkit-scrollbar { display: none; }
         .tab { flex: 0 0 auto; width: 54px; background: none; border: none; padding: 6px 2px; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-mu); touch-action: manipulation; }
-        .tab.active { background: transparent; box-shadow: inset 0 -3px 0 var(--accent); }
+        .tab.active { background: var(--bg-hi); }
         .tab.past-tab { opacity: 0.6; }
         .tab-day { font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px; text-align: center; }
         .tab.active .tab-day { color: var(--text); }
@@ -2061,9 +2054,9 @@ export default function SurfApp() {
         .verdict { padding: 20px 0 22px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); animation: rise 0.5s 0.15s ease both; }
         .verdict-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; }
         .verdict-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-        .verdict-main { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 64px; line-height: 0.95; letter-spacing: -0.04em; font-variation-settings: "SOFT" 100; }
-        .verdict-score { background: none; border: none; font-family: 'Inter', system-ui, sans-serif; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-dim); padding-top: 10px; cursor: pointer; display: flex; align-items: baseline; gap: 8px; font-weight: 600; }
-        .verdict-score strong { font-family: 'Fraunces', serif; font-weight: 400; font-size: 48px; letter-spacing: -0.04em; line-height: 1; text-transform: none; }
+        .verdict-main { font-weight: 500; font-size: 58px; line-height: 1; letter-spacing: -0.03em; font-variation-settings: "SOFT" 100; }
+        .verdict-score { background: none; border: none; font-size: 12px; color: var(--text-mu); padding-top: 6px; cursor: pointer; display: flex; align-items: baseline; gap: 6px; }
+        .verdict-score strong { color: var(--text); font-weight: 600; font-size: 42px; letter-spacing: -0.03em; line-height: 1; }
         .score-chev { font-size: 8px; color: var(--text-dim); }
         .score-explainer { margin-top: 16px; padding: 14px 16px; background: var(--bg-el); border: 1px solid var(--border); border-radius: 8px; animation: rise 0.25s ease both; }
         .score-explainer-title { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; }
@@ -2076,14 +2069,13 @@ export default function SurfApp() {
         .scale-desc strong { color: var(--text); font-weight: 500; }
         .verdict-sub { font-size: 13px; color: var(--text-mu); margin-top: 6px; }
         .verdict-tip { font-size: 13px; color: var(--text); margin-top: 10px; padding: 10px 12px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 4px; line-height: 1.4; }
-        .sticky-tip { font-family: 'Fraunces', serif; font-style: italic; font-size: 13px; color: var(--text); padding: 8px 0 8px 14px; border-left: 2px solid var(--accent); line-height: 1.4; margin: 2px 0 6px; letter-spacing: -0.005em; }
-        .sticky-tip strong { font-style: normal; font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
-        .sticky-level-btn { font-family: 'Inter', system-ui, sans-serif; display: inline-flex; align-items: center; gap: 4px; background: var(--text); border: none; color: #f5efe5; font-weight: 600; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 12px; border-radius: 0; cursor: pointer; margin: 2px 0 4px; }
+        .sticky-tip { font-size: 12px; color: var(--text); padding: 6px 9px; background: rgba(14,165,233,0.06); border-left: 2px solid var(--accent); border-radius: 3px; line-height: 1.3; margin: 2px 0 2px; }
+        .sticky-level-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); border: none; color: #fff; font-weight: 600; font-size: 11px; letter-spacing: 0.03em; padding: 5px 11px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; box-shadow: 0 2px 6px rgba(14,165,233,0.25); }
         .sticky-level-btn:hover { filter: brightness(1.08); }
         .share-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 4px 9px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; }
-        .notif-btn { font-family: 'Inter', system-ui, sans-serif; display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border-str); color: var(--text-mu); font-weight: 600; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 10px; border-radius: 0; cursor: pointer; margin: 2px 0 4px; transition: all 0.15s; }
-        .notif-btn:hover { color: var(--text); border-color: var(--text); }
-        .notif-btn.on { background: var(--accent); border-color: var(--accent); color: #f5efe5; }
+        .notif-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-el); border: 1px solid var(--border); color: var(--text-mu); font-weight: 500; font-size: 11px; letter-spacing: 0.03em; padding: 4px 9px; border-radius: 14px; cursor: pointer; margin: 2px 0 4px; transition: all 0.15s; }
+        .notif-btn:hover { color: var(--text); }
+        .notif-btn.on { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.35); color: var(--accent); }
         .share-btn:hover { color: var(--text); }
 
         .levels { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
@@ -2111,23 +2103,22 @@ export default function SurfApp() {
         .level-verdict.no { background: rgba(220,38,38,0.1); color: var(--bad); border: 1px solid rgba(220,38,38,0.25); }
 
         .notes { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
-        .notes-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase; margin-top: 24px; }
-        .note { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; background: transparent; border: 1px solid var(--border-str); border-radius: 999px; padding: 3px 10px; color: var(--text-mu); }
+        .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
+        .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
         .sticky-info { position: sticky; top: 58px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
         .face-height { padding: 7px 0 6px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
-        .face-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.28em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
-        .face-value { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 34px; line-height: 0.95; letter-spacing: -0.04em; }
-        .face-sub { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; color: var(--text-mu); margin-top: 4px; letter-spacing: 0.04em; }
-        .face-hint { font-family: 'Fraunces', serif; font-style: italic; font-size: 11px; color: var(--text-mu); margin-top: 6px; line-height: 1.35; max-width: 340px; margin-left: auto; margin-right: auto; }
+        .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
+        .face-value { font-weight: 500; font-size: 28px; line-height: 1; letter-spacing: -0.03em; }
+        .face-sub { font-size: 10px; color: var(--text-mu); margin-top: 3px; letter-spacing: 0.03em; }
+        .face-hint { font-size: 10px; color: var(--text-mu); margin-top: 4px; line-height: 1.3; max-width: 340px; margin-left: auto; margin-right: auto; font-style: italic; }
 
         .metrics { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.22s ease both; }
         .metric { padding: 7px 0; }
         .metric:first-child { padding-right: 16px; border-right: 1px solid var(--border); }
         .metric:last-child { padding-left: 16px; }
-        .metric-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.28em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-        .metric-value { font-family: 'Fraunces', serif; font-style: italic; font-size: 20px; font-weight: 400; letter-spacing: -0.025em; display: flex; align-items: baseline; gap: 4px; }
-        .metric-value .metric-unit { font-family: 'Inter', system-ui, sans-serif; font-style: normal; }
+        .metric-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+        .metric-value { font-size: 17px; font-weight: 500; letter-spacing: -0.015em; display: flex; align-items: baseline; gap: 4px; }
         .metric-unit { font-size: 12px; color: var(--text-mu); font-weight: 400; }
         .trend { font-size: 14px; color: var(--text-dim); margin-left: 6px; line-height: 1; }
         .sun-times { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text); line-height: 1.3; }
@@ -2141,20 +2132,18 @@ export default function SurfApp() {
         .tide-curve-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; text-align: center; }
         .temp-item:last-child { border-right: none; padding-left: 14px; }
         .temp-item:not(:first-child) { padding-left: 14px; }
-        .temp-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.28em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+        .temp-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
 
-        .best { margin-top: 24px; padding: 18px 18px 16px; background: var(--text); color: #f5efe5; border: none; border-radius: 0; animation: rise 0.5s 0.25s ease both; position: relative; }
-        .best::before { content: ""; position: absolute; top: 0; left: 0; width: 40px; height: 2px; background: var(--accent); }
-        .best-label { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.32em; color: var(--sand); text-transform: uppercase; margin-bottom: 8px; }
-        .best-text { font-family: 'Fraunces', serif; font-style: italic; font-size: 20px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: #f5efe5; }
-        .best-sub { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; color: rgba(245,239,229,0.6); margin-top: 6px; letter-spacing: 0.06em; }
+        .best { margin-top: 20px; padding: 14px 16px; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.25); border-radius: 8px; animation: rise 0.5s 0.25s ease both; }
+        .best-label { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+        .best-text { font-size: 15px; font-weight: 500; }
         .best-sub { font-size: 10px; color: var(--text-mu); margin-top: 4px; }
 
         .section-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin: 32px 0 4px; }
         .hours { animation: rise 0.5s 0.3s ease both; }
         .hour-btn { display: grid; grid-template-columns: 50px 1fr 116px 82px; align-items: center; gap: 8px; background: none; border: none; border-top: 1px solid var(--border); padding: 10px 0; cursor: pointer; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); }
         .hour-btn:last-child { border-bottom: 1px solid var(--border); }
-        .hour-btn.sel { background: var(--accent-soft); margin: 0 -20px; padding-left: 17px; padding-right: 20px; width: calc(100% + 40px); border-left: 3px solid var(--accent); border-top-color: transparent; }
+        .hour-btn.sel { background: rgba(14,165,233,0.08); margin: 0 -20px; padding-left: 16px; padding-right: 20px; width: calc(100% + 40px); border-left: 3px solid var(--accent); border-top-color: transparent; }
         .hour-btn.sel .hour-time { color: var(--text); font-weight: 600; }
         .hour-time { font-size: 11px; color: var(--text-mu); }
         .hour-bar { height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
