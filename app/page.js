@@ -1944,12 +1944,12 @@ export default function SurfApp() {
         .guide-color-row { display: flex; justify-content: space-around; padding-bottom: 6px; border-bottom: 1px solid rgba(14,165,233,0.15); margin-bottom: 2px; }
         .guide-item { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-mu); }
 
-        .pwa-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; background: var(--bg-el); border-top: 1px solid var(--border-str); padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease both; box-shadow: 0 -4px 24px rgba(0,0,0,0.12); }
+        .pwa-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; background: var(--bg-el); border-top: 1px solid var(--border-str); padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease both; box-shadow: 0 -4px 24px rgba(0,0,0,0.12); font-family: 'Inter', system-ui, sans-serif; }
         .pwa-icon { font-size: 28px; flex-shrink: 0; }
         .pwa-content { flex: 1; min-width: 0; }
-        .pwa-title { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 3px; }
-        .pwa-instructions { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); line-height: 1.4; }
-        .pwa-close { background: none; border: 1px solid var(--border); border-radius: 999px; width: 28px; height: 28px; flex-shrink: 0; cursor: pointer; font-size: 11px; color: var(--text-mu); display: flex; align-items: center; justify-content: center; }
+        .pwa-title { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 17px; line-height: 1.2; letter-spacing: -0.01em; color: var(--text); margin-bottom: 4px; }
+        .pwa-instructions { font-size: 13px; color: var(--text-mu); line-height: 1.45; }
+        .pwa-close { background: none; border: 1px solid var(--border); border-radius: 999px; width: 30px; height: 30px; flex-shrink: 0; cursor: pointer; font-size: 13px; color: var(--text-mu); display: flex; align-items: center; justify-content: center; }
 
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
         .sheet { width: 100%; max-width: 440px; max-height: 88vh; background: var(--bg-el); border: 1px solid var(--border); border-bottom: none; border-radius: 16px 16px 0 0; overflow-y: auto; -webkit-overflow-scrolling: touch; animation: slideUp 0.3s ease; }
