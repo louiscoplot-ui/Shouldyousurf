@@ -739,6 +739,25 @@ function LangPicker({ lang, setLang, onClose, customLangs, onDeleteCustom, onAdd
 }
 
 // ── Break picker ───────────────────────────────────────────────────────
+// Infer the spot's natural swell-facing direction from the historical + forecast
+// swell direction average. The dominant swell direction at a coordinate is by
+// definition the direction the coastline opens to — so it's the "ideal" angle.
+// This lets us score any spot worldwide with the same logic, without needing
+// someone to manually curate idealSwellDir per break.
+function inferSpotProfile(allHours) {
+  if (!allHours || allHours.length < 5) return null;
+  const dirs = allHours.map(h => h.swellDir).filter(d => d != null && d >= 0);
+  if (dirs.length < 5) return null;
+  // Circular mean — handles wrap-around at 0/360 correctly
+  let sumX = 0, sumY = 0;
+  for (const d of dirs) {
+    sumX += Math.cos(d * Math.PI / 180);
+    sumY += Math.sin(d * Math.PI / 180);
+  }
+  const avg = (Math.atan2(sumY, sumX) * 180 / Math.PI + 360) % 360;
+  return { idealSwellDir: avg, offshoreWindDir: (avg + 180) % 360 };
+}
+
 function distanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const toRad = d => d * Math.PI / 180;
@@ -1055,6 +1074,8 @@ export default function SurfApp() {
 
   function findUpcomingGoodWindow(hours) {
     if (!hours || !hours.length) return null;
+    const inferred = inferSpotProfile(hours);
+    const eff = inferred ? { ...spot, ...inferred } : spot;
     const now = Date.now();
     let best = null;
     for (const h of hours) {
@@ -1067,7 +1088,7 @@ export default function SurfApp() {
       const sunset  = sun?.sunset  ? new Date(sun.sunset).getTime()  : null;
       if (sunrise != null && t < sunrise - 1800000) continue;
       if (sunset  != null && t > sunset  + 1800000) continue;
-      const { score } = scoreSurf(h, spot, null);
+      const { score } = scoreSurf(h, eff, null);
       if (score >= 65 && (!best || score > best.score)) {
         best = { hour: h, score };
       }
@@ -1353,9 +1374,14 @@ export default function SurfApp() {
   if (!sel) return null;
 
   const selDayTideCtx = dayTideCtx(dayHours);
-  const { score, notes } = scoreSurf(sel, spot, selDayTideCtx);
-  const level = getLevel(score, sel, spot);
-  const levelMatrix = surfabilityByLevel(sel, spot);
+  // Effective spot = the curated spot enriched with data-derived idealSwellDir
+  // and offshoreWindDir, so the scoring formula is uniform whether the spot
+  // was hand-tuned in breaks.js or added on the fly via the search.
+  const inferred = inferSpotProfile(data.hours);
+  const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
+  const { score, notes } = scoreSurf(sel, effectiveSpot, selDayTideCtx);
+  const level = getLevel(score, sel, effectiveSpot);
+  const levelMatrix = surfabilityByLevel(sel, effectiveSpot);
   // Best window must fall within usable daylight — from 1h before sunrise up
   // to 1h after sunset — otherwise we're recommending surf sessions in the
   // pitch black, which is pointless.
@@ -1371,7 +1397,7 @@ export default function SurfApp() {
     const t = new Date(h.time).getTime();
     if (bestOfDaySun.sunrise != null && t < bestOfDaySun.sunrise - 1800000) return b;
     if (bestOfDaySun.sunset  != null && t > bestOfDaySun.sunset  + 1800000) return b;
-    const s = scoreSurf(h, spot, selDayTideCtx).score;
+    const s = scoreSurf(h, effectiveSpot, selDayTideCtx).score;
     return s > (b?.score ?? -1) ? { ...h, score: s } : b;
   }, null);
   const isFav = favorites.includes(spot.id);
@@ -1435,11 +1461,11 @@ export default function SurfApp() {
             const { label, date } = unifiedTabLabel(day, tz, t);
             const tabTideCtx = dayTideCtx(dayEntries[di][1]);
             const bestHour = dayEntries[di][1].reduce((b, h) => {
-              const s = scoreSurf(h, spot, tabTideCtx).score;
+              const s = scoreSurf(h, effectiveSpot, tabTideCtx).score;
               return s > (b?.score ?? -1) ? { h, score: s } : b;
             }, null);
             const bestScore = bestHour?.score ?? 0;
-            const lv = getLevel(bestScore, bestHour?.h, spot);
+            const lv = getLevel(bestScore, bestHour?.h, effectiveSpot);
             const todayIdx = dayEntries.findIndex(([d]) => d === todayStr);
             const isPastTab = di < todayIdx;
             return (
@@ -1508,9 +1534,9 @@ export default function SurfApp() {
           </div>
           {(() => {
             if (userLevel) {
-              const verdict = getPersonalVerdict(userLevel, sel, spot);
-              const tipKey = getPersonalAdviceKey(userLevel, sel, spot);
-              const modKey = getPersonalModifier(userLevel, sel, spot);
+              const verdict = getPersonalVerdict(userLevel, sel, effectiveSpot);
+              const tipKey = getPersonalAdviceKey(userLevel, sel, effectiveSpot);
+              const modKey = getPersonalModifier(userLevel, sel, effectiveSpot);
               const tideMod = getTideModifier(sel, data.hours);
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
@@ -1522,7 +1548,7 @@ export default function SurfApp() {
                 </div>
               );
             }
-            const tipKey = getDayTip(levelMatrix, sel, spot);
+            const tipKey = getDayTip(levelMatrix, sel, effectiveSpot);
             return tipKey ? <div className="sticky-tip">{t(tipKey)}</div> : null;
           })()}
           <div className="face-height">
@@ -1545,7 +1571,7 @@ export default function SurfApp() {
                 {windTrend && <span className="trend" aria-label={windTrend === "up" ? "rising" : "dropping"}>{windTrend === "up" ? "↗" : "↘"}</span>}
               </div>
               <div className="metric-sub mono">
-                {degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, spot))}
+                {degToCompass(sel.windDir)} · {t(getWindTypeKey(sel, effectiveSpot))}
                 {sel.windGustKn != null && Math.round(knToKmh(sel.windGustKn)) >= windKmh + 8 && (
                   <> · {t("gusts")} {Math.round(knToKmh(sel.windGustKn))}</>
                 )}
@@ -1625,7 +1651,7 @@ export default function SurfApp() {
         <div className="notes-label mono">{t("what_driving")}</div>
         <div className="notes">{notes.map((n, i) => <span key={i} className="note mono">{t(n)}</span>)}</div>
 
-        {bestOfDay && !["score_0_14","score_flat","score_blown"].includes(getLevel(bestOfDay.score, bestOfDay, spot).labelKey) && (
+        {bestOfDay && !["score_0_14","score_flat","score_blown"].includes(getLevel(bestOfDay.score, bestOfDay, effectiveSpot).labelKey) && (
           <div className="best">
             <div className="best-label mono">{t("best_window")}</div>
             <div className="best-text">{t("around")} {fmtHour(bestOfDay.time, tz)} · {bestOfDay.score} {t("score_lbl")}</div>
@@ -1666,8 +1692,8 @@ export default function SurfApp() {
         <div className="hours">
           {dayHours.map((h, i) => {
             const idx = data.hours.indexOf(h);
-            const { score: s } = scoreSurf(h, spot, selDayTideCtx);
-            const lv = getLevel(s, h, spot);
+            const { score: s } = scoreSurf(h, effectiveSpot, selDayTideCtx);
+            const lv = getLevel(s, h, effectiveSpot);
             const isSel = selected !== null && data.hours[selected] === h;
             const isPanelHour = sel === h;
             const dawn = isDawn(h.time, tz);
