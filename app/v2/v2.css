@@ -333,9 +333,10 @@ button, input, select { font-family: inherit; color: inherit; }
   pointer-events: none;
 }
 .C.stuck .C-hero {
-  padding: 8px 90px 8px 14px;  /* right padding reserves space for the
-                                   absolutely-positioned face-val below */
-  gap: 0;
+  padding: 8px 14px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   background: rgba(228,210,178,0.80);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
@@ -377,16 +378,15 @@ button, input, select { font-family: inherit; color: inherit; }
 }
 
 /* Face height row — AT REST: left block (label + big value) + right column
-   (conv m + conv sub). STUCK: single inline row aligned right in the hero. */
+   (conv m + conv sub). STUCK: inline row with the face-val only. */
 .C-face {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
   margin-top: 4px;
   transition: margin 240ms cubic-bezier(.4,0,.2,1),
-              top 240ms cubic-bezier(.4,0,.2,1),
-              right 240ms cubic-bezier(.4,0,.2,1);
+              gap 240ms cubic-bezier(.4,0,.2,1);
 }
 .C-face-left {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
   min-width: 0;
 }
 .C-face-right {
@@ -394,7 +394,7 @@ button, input, select { font-family: inherit; color: inherit; }
   font-family: 'JetBrains Mono', monospace;
   color: var(--text); font-weight: 500;
   letter-spacing: 0.04em;
-  padding-bottom: 4px; flex-shrink: 0;
+  padding-top: 8px; flex-shrink: 0;
   opacity: 1; max-width: 120px; overflow: hidden;
   transition: opacity 180ms ease-out, max-width 240ms cubic-bezier(.4,0,.2,1);
 }
@@ -431,13 +431,11 @@ button, input, select { font-family: inherit; color: inherit; }
               margin 240ms cubic-bezier(.4,0,.2,1);
 }
 
-/* STUCK: the face block docks into the top-right corner of the hero via
-   absolute positioning. The reason occupies the left (clamped 1 line).
-   Every disappearing element fades via opacity + max-height / max-width,
-   so nothing snaps.   */
+/* STUCK: hero is flex-row (reason left / face right). Label + right-column
+   + trans all fade via opacity + max-height/max-width — never display:none. */
 .C.stuck .C-face {
-  position: absolute; top: 10px; right: 14px;
-  margin: 0; gap: 0; align-items: baseline;
+  margin: 0; gap: 0; flex-shrink: 0;
+  align-items: baseline;
 }
 .C.stuck .C-face-left { flex-direction: row; align-items: baseline; gap: 4px; }
 .C.stuck .C-face-lbl { opacity: 0; max-height: 0; }
@@ -445,6 +443,8 @@ button, input, select { font-family: inherit; color: inherit; }
 .C.stuck .C-face-val .C-unit { font-size: 11px; }
 .C.stuck .C-face-right { opacity: 0; max-width: 0; padding: 0; }
 .C.stuck .C-trans { opacity: 0; max-height: 0; margin: 0; }
+/* trans should not occupy flex width in stuck row */
+.C.stuck > .C-hero > .C-trans { flex: 0 0 0; width: 0; }
 
 /* ─── Grid block ─── */
 .C-grid {
