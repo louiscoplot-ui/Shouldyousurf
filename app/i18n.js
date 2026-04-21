@@ -18,6 +18,7 @@ const T = {
     brand: "Should You Surf?",
     loading: "Reading the ocean…",
     just_now: "now",
+    updated_prefix: "Updated",
     data_fresh_tip: "Live — tap to refresh",
     data_stale_tip: "Data is more than 15 min old — tap to refresh now",
     danger_banner: "⚠️ Dangerous conditions for your level — check on-site before paddling out",
@@ -299,6 +300,8 @@ const T = {
     faq_a8: "1–2 days ahead: generally reliable. 3–5 days: directionally useful but expect shifts. Always recheck the morning of — swell and wind can change significantly overnight.",
     faq_q9: "Where does the data come from? What shows when I select an hour?",
     faq_a9: "All data comes from Open-Meteo (open-meteo.com). Two models feed the app: Marine API (ECMWF) for swell height/period/direction, secondary swell, sea surface temperature, ocean currents and tide height — Forecast API (GFS/ICON) for wind speed/direction, wind gusts, air temperature, rain probability, sunrise/sunset. When you select an hour, everything updates live: the score, expected face height, swell, wind (with a gusts note if gusts are much higher than sustained), tide height with rising/falling arrow plus the time of the next high or low, plus air/water/daylight/rain. Current only appears if speed exceeds 0.05 m/s — below that it's irrelevant for surfing. Past days use the Archive API with real recorded values.",
+    faq_q10: "What are wind gusts?",
+    faq_a10: "The wind speed you see (e.g. 18 km/h) is the SUSTAINED wind — an average over a few minutes. Gusts are short bursts of much faster wind layered on top (e.g. gusts to 35 km/h). A day that looks calm on the average but has strong gusts actually surfs like chop — each gust pulses the wave face and breaks the rhythm. When gusts run 15+ km/h above the sustained wind we lower the score and add a 'gusts X' note next to the wind reading. Heads-up: a 15 km/h average with gusts to 35 surfs much worse than a steady 15 km/h with no gusts, even though the headline number is the same.",
   },
   fr: {
     brand: "Should You Surf?",
@@ -561,6 +564,8 @@ const T = {
     faq_a8: "1–2 jours à l'avance : généralement fiable. 3–5 jours : utile comme tendance mais attends-toi à des changements. Toujours revérifier le matin — la houle et le vent peuvent changer significativement du jour au lendemain.",
     faq_q9: "D'où viennent les données ? Que voit-on quand on sélectionne une heure ?",
     faq_a9: "Toutes les données viennent d'Open-Meteo (open-meteo.com). Deux modèles alimentent l'app : API Marine (ECMWF) pour la hauteur/période/direction de houle, la houle secondaire, la température de surface, les courants et la hauteur de marée — API Prévision (GFS/ICON) pour le vent (vitesse, direction, rafales), la température de l'air, la probabilité de pluie, le lever/coucher du soleil. Quand tu sélectionnes une heure, tout se met à jour : le score, la hauteur de face estimée, la houle, le vent (avec une note \"rafales\" si elles sont nettement plus fortes que le vent soutenu), la marée avec flèche montante/descendante et l'heure de la prochaine haute ou basse, plus air/eau/jour/pluie. Le courant n'apparaît que si sa vitesse dépasse 0.05 m/s — en dessous c'est sans impact pour le surf. Les jours passés utilisent l'API Archive avec les valeurs réellement enregistrées.",
+    faq_q10: "C'est quoi les rafales de vent ?",
+    faq_a10: "La vitesse du vent affichée (ex. 18 km/h) correspond au vent SOUTENU — la moyenne sur quelques minutes. Les rafales sont de courts coups de vent beaucoup plus forts qui se superposent (ex. rafales à 35 km/h). Une journée calme en moyenne mais avec des rafales fortes surf comme du clapot : chaque rafale pulse la face de la vague et casse le rythme. Quand les rafales dépassent de 15+ km/h le vent soutenu, on baisse le score et on ajoute une mention « rafales X » à côté du vent. À retenir : une moyenne de 15 km/h avec rafales à 35 surf beaucoup moins bien qu'un 15 km/h stable sans rafales, même si le chiffre principal est identique.",
   },
   es: {
     brand: "Should You Surf?",

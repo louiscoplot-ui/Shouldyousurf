@@ -469,6 +469,7 @@ function PwaInstallPrompt({ onDismiss, t }) {
 const FAQ_KEYS = [
   { q: "faq_q1", a: "faq_a1" },
   { q: "faq_q2", a: "faq_a2" },
+  { q: "faq_q10", a: "faq_a10" }, // gusts — inserted right after the wind question
   { q: "faq_q3", a: "faq_a3" },
   { q: "faq_q4", a: null, parts: ["faq_a4_ios", "faq_a4_android"] },
   { q: "faq_q5", a: "faq_a5" },
@@ -1913,7 +1914,7 @@ export default function SurfApp() {
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {lastFetchedAt && (() => {
                 const diff = Math.max(0, Math.floor((nowTick - lastFetchedAt) / 60000));
-                const label = diff === 0 ? t("just_now") : diff < 60 ? `${diff}m` : `${Math.floor(diff/60)}h`;
+                const age = diff === 0 ? t("just_now") : diff < 60 ? `${diff}m` : `${Math.floor(diff/60)}h`;
                 const stale = diff >= 15;
                 return (
                   <button
@@ -1922,7 +1923,8 @@ export default function SurfApp() {
                     title={stale ? t("data_stale_tip") : t("data_fresh_tip")}
                     aria-label="Refresh forecast">
                     <span className="freshness-dot"/>
-                    {label}
+                    <span className="freshness-prefix">{t("updated_prefix")}</span>
+                    <span>{age}</span>
                   </button>
                 );
               })()}
@@ -2205,12 +2207,12 @@ export default function SurfApp() {
               <button key={h.time}
                 className={`hour-btn ${isSel?"sel":""}`}
                 onClick={() => setSelected(prev => prev === idx ? null : idx)}>
-                <div className={`hour-time mono ${dawn?"dawn":""}`}>{fmtHour(h.time, tz)}</div>
+                <div className={`hour-time ${dawn?"dawn":""}`}>{fmtHour(h.time, tz)}</div>
                 <div className="hour-bar"><div className="hour-bar-fill" style={{ width:`${s}%`, background:lv.color }}/></div>
-                <div className="hour-label mono" style={{ color:lv.color }}>
+                <div className="hour-label" style={{ color:lv.color }}>
                   <span className="hour-score">{s}</span> {t(lv.labelKey).toUpperCase()}
                 </div>
-                <div className="hour-stats mono">
+                <div className="hour-stats">
                   {faceLow}–{faceHigh}ft · {Math.round(knToKmh(h.windSpeedKn))}km/h
                 </div>
               </button>,
@@ -2220,7 +2222,7 @@ export default function SurfApp() {
                     <span className="hd-num serif" style={{color:level.color}}>{score}</span>
                     <span className="hd-lbl" style={{color:level.color}}>{t(level.labelKey)}</span>
                     <span className="hd-sep">·</span>
-                    <span className="hd-sub mono">{t(level.subKey)}</span>
+                    <span className="hd-sub">{t(level.subKey)}</span>
                   </div>
                   <div className="hd-notes">
                     {notes.map((n,ni) => <span key={ni} className="note mono">{t(n)}</span>)}
@@ -2349,6 +2351,7 @@ export default function SurfApp() {
           font-size: 10px; font-weight: 500; letter-spacing: 0.05em;
           transition: all 0.15s;
         }
+        .freshness-prefix { font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.78; }
         .freshness-btn:hover { border-color: var(--border-str); color: var(--text); }
         .freshness-dot {
           width: 6px; height: 6px; border-radius: 50%;
@@ -2632,12 +2635,12 @@ export default function SurfApp() {
         .hour-btn:last-child { border-bottom: 1px solid var(--border); }
         .hour-btn.sel { background: rgba(14,165,233,0.08); margin: 0 -20px; padding-left: 16px; padding-right: 20px; width: calc(100% + 40px); border-left: 3px solid var(--accent); border-top-color: transparent; }
         .hour-btn.sel .hour-time { color: var(--text); font-weight: 600; }
-        .hour-time { font-size: 11px; color: var(--text-mu); }
+        .hour-time { font-size: 12px; color: var(--text-mu); font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -0.005em; }
         .hour-bar { height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
         .hour-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-        .hour-label { font-size: 9px; text-align: right; letter-spacing: 0.06em; font-weight: 600; white-space: nowrap; }
+        .hour-label { font-size: 10px; text-align: right; letter-spacing: 0.04em; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
         .hour-score { font-weight: 700; margin-right: 2px; }
-        .hour-stats { font-size: 9px; color: var(--text-mu); font-weight: 500; text-align: right; line-height: 1.4; }
+        .hour-stats { font-size: 10px; color: var(--text-mu); font-weight: 500; text-align: right; line-height: 1.4; font-variant-numeric: tabular-nums; letter-spacing: -0.005em; }
         .hour-btn.sel .hour-stats { color: var(--text-mu); }
         .hour-btn.hour-sub { border-top: 1px solid rgba(14,165,233,0.15); background: rgba(14,165,233,0.03); }
         .expand-chev { font-size: 7px; color: var(--accent); opacity: 0.5; margin-left: 2px; }
@@ -2647,7 +2650,7 @@ export default function SurfApp() {
         .hd-num { font-size: 24px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; font-variation-settings: "SOFT" 100; }
         .hd-lbl { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
         .hd-sep { color: var(--text-dim); font-size: 10px; }
-        .hd-sub { font-size: 10px; color: var(--text-mu); }
+        .hd-sub { font-size: 12px; color: var(--text-mu); font-style: italic; font-weight: 400; }
         .hd-notes { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
         .hd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
         .hd-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -2709,12 +2712,12 @@ export default function SurfApp() {
         .search-input::placeholder { color: var(--text-dim); }
         .search-input:focus { border-color: var(--border-str); }
         .search-btn { background: rgba(255,255,255,0.5); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; cursor: pointer; font-size: 13px; color: var(--text); }
-        .region-header { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin: 14px 0 4px; }
+        .region-header { font-size: 10px; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; margin: 16px 0 6px; font-weight: 600; }
         .break-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
         .break-row.current { background: rgba(14,165,233,0.08); margin: 0 -20px; padding-left: 20px; padding-right: 20px; }
         .break-row-main { flex: 1; background: none; border: none; text-align: left; padding: 0; cursor: pointer; color: var(--text); }
         .break-row-title { font-size: 14px; font-weight: 500; }
-        .break-row-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); margin-top: 2px; }
+        .break-row-sub { font-size: 12px; color: var(--text-mu); margin-top: 2px; font-weight: 400; }
         .break-row-fav { background: none; border: none; cursor: pointer; font-size: 14px; padding: 6px; color: var(--text-mu); }
         .break-row-fav.active { color: var(--warn); }
         .break-row-flag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mu); font-weight: 400; margin-left: 4px; }
