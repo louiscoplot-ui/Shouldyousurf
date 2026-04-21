@@ -561,8 +561,12 @@ function Loaded({
           swapKey={swapKey}
           reasonText={personalReason}
           faceHint={faceHint}
-          sentinelRef={null}
           stuck={sibStuck}
+          allHours={day.hours}
+          sunByDay={payload.sunByDay}
+          tz={spot.timezone || "Australia/Perth"}
+          t={t}
+          effectiveSpot={effectiveSpot}
           userLevel={userLevel || userLevelQuick}
         />
 
