@@ -390,27 +390,18 @@ function Loaded({
     if (!el) return;
     const root = el.closest(".viewport");
     if (!root) return;
-    // Scroll-position based toggle with a 24px hysteresis buffer. The
-    // threshold is captured once from the sentinel's offsetTop, so the
-    // bar's size changes AFTER the toggle never feed back into the
-    // detection — no flicker, no rebound. rAF coalesces scroll events.
-    const threshold = Math.max(0, el.offsetTop - 1);
-    const BUFFER = 24;
-    let ticking = false;
-    let stuck = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const s = root.scrollTop;
-        if (!stuck && s >= threshold) { stuck = true; setSibStuck(true); }
-        else if (stuck && s < threshold - BUFFER) { stuck = false; setSibStuck(false); }
-        ticking = false;
-      });
-    };
-    root.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => root.removeEventListener("scroll", onScroll);
+    // Single IntersectionObserver on the sentinel (placed 80px above the bar)
+    // — when the sentinel exits the viewport top, stuck=true. Because the
+    // sentinel is higher than the bar, the toggle arrives BEFORE the bar
+    // docks, so the 240ms transition can play out during the scroll window.
+    // rootMargin "0 0 -100% 0" collapses the observer's effective viewport
+    // to a zero-height slit at the top — one crossing event per direction.
+    const io = new IntersectionObserver(
+      ([entry]) => setSibStuck(!entry.isIntersecting),
+      { root, rootMargin: "0px 0px -100% 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   const isFav = favorites.includes(spot.id);
@@ -515,7 +506,11 @@ function Loaded({
           </div>
         </div>
 
-        <div ref={sibSentinelRef} aria-hidden="true" style={{ height: 1, margin: "16px 0 -17px" }}/>
+        {/* Sentinel placed ~80px ABOVE the bar so the IntersectionObserver
+            fires BEFORE the bar reaches top:0 — gives the transition room to
+            play out while the bar is still scrolling, so it's already compact
+            by the time it docks. Negative margin keeps the layout flow unchanged. */}
+        <div ref={sibSentinelRef} aria-hidden="true" style={{ height: 1, marginTop: -80, marginBottom: 79, pointerEvents: "none" }}/>
 
         <StickyInfoBar
           hour={hour}

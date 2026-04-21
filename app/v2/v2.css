@@ -268,216 +268,216 @@ button, input, select { font-family: inherit; color: inherit; }
 .rise-2 { animation: riseIn 0.5s cubic-bezier(.3,.8,.3,1) 0.25s backwards; }
 .rise-3 { animation: riseIn 0.5s cubic-bezier(.3,.8,.3,1) 0.4s backwards; }
 
-/* ───────────── Sticky Info Bar ─────────────
-   Persistent summary (reason + face height + 6 metrics).
-   Sits in document flow by default. When the sentinel at its top scrolls off,
-   `.stuck` switches it to position:sticky so it stays pinned.
-   The bar sits inside .viewport and sticks under the 50px status-bar area. */
-.sib {
-  /* Inline margin + equal left/right padding keep the bar width identical
-     in both states, so only vertical geometry transitions. The JS uses
-     scrollTop-based hysteresis (not the sentinel) to toggle .stuck, so the
-     size change doesn't feed back into the toggle and cause a rebound. */
-  margin: 16px -22px 0;
-  padding: 14px 22px 12px;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-left: none;
-  border-right: none;
+/* ───────────── Sticky Info Bar — VARIANT C (Two-tier hero) ─────────────
+   Two blocks: .C-hero (reason + face height) on top, .C-grid (6 metrics).
+   At rest: warm sand gradient hero + paper grid, 14px radius, soft shadow.
+   Stuck: full-bleed, blurred translucent paper, compact single-line hero,
+   metric subs hidden. Transition is LINEAR-SOFT (cubic-bezier .4 0 .2 1),
+   no bounce, no scale on the whole bar. All disappearing content uses
+   opacity + max-height (never display:none) so nothing snaps. */
+.C {
+  margin: 14px -14px 0;
   border-radius: 14px;
-  box-shadow: 0 1px 0 rgba(31,58,58,0.04);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px -6px rgba(31,58,58,0.12);
   position: sticky;
   top: 0;
   z-index: 80;
   animation: riseIn 0.5s cubic-bezier(.3,.8,.3,1) 0.45s backwards;
-  transition: padding 0.32s cubic-bezier(.22,.9,.32,1),
-              border-radius 0.32s cubic-bezier(.22,.9,.32,1),
-              background 0.32s cubic-bezier(.22,.9,.32,1),
-              box-shadow 0.32s cubic-bezier(.22,.9,.32,1);
+  transition: margin 240ms cubic-bezier(.4,0,.2,1),
+              border-radius 240ms cubic-bezier(.4,0,.2,1),
+              box-shadow 200ms ease-out;
 }
-.sib > * {
-  transition: opacity 0.28s cubic-bezier(.22,.9,.32,1),
-              max-height 0.32s cubic-bezier(.22,.9,.32,1),
-              transform 0.32s cubic-bezier(.22,.9,.32,1);
-}
-.sib.stuck {
-  padding: 8px 22px 8px;
+.C.stuck {
+  margin: 0 -28px;
   border-radius: 0;
-  border-top: none;
-  background: rgba(251,245,234,0.96);
+  border-left: none;
+  border-right: none;
   box-shadow: 0 6px 16px -8px rgba(31,58,58,0.22);
 }
-/* When compact: keep the reason visible, fade/shrink the heavy rows below
-   so the bar visually becomes a slim summary. */
-.sib.stuck .sib-face,
-.sib.stuck .sib-grid-4 {
-  max-height: 0; opacity: 0;
-  margin: 0; padding: 0;
-  overflow: hidden; pointer-events: none;
-}
-.sib.stuck .sib-grid-2 {
-  transform: scale(0.92);
-  transform-origin: left center;
-  margin-top: 4px;
-}
 
-/* Reason — the blue-ish intro line in your reference, warmed to the palette */
-.sib-reason {
-  font-family:'Fraunces',serif;
-  font-variation-settings:"SOFT" 100,"opsz" 14;
-  font-weight: 400;
-  font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--text);
-  padding: 10px 12px;
-  background: var(--accent-soft);
-  border-left: 3px solid var(--accent);
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-.sib.stuck .sib-reason {
-  font-size: 12px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  line-height: 1.35;
-  max-height: 2.7em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* Face height block (matches the reference: centered label, big number, conv + trans) */
-.sib-face {
-  text-align: center;
-  padding: 6px 0 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 10px;
-}
-.sib-face-lbl {
-  font-family:'JetBrains Mono',monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.22em;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.sib-face-val {
-  font-family:'Fraunces',serif;
-  font-size: 38px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.035em;
-  font-variation-settings:"SOFT" 100,"opsz" 144;
-  color: var(--text);
-}
-.sib-face-val .unit { font-family:'Inter',sans-serif; font-size: 14px; color: var(--text); opacity: 0.72; font-weight: 500; font-variation-settings: normal; margin-left: 3px; }
-.sib-face-conv {
-  font-family:'JetBrains Mono',monospace;
-  font-size: 11px;
-  color: var(--text);
-  opacity: 0.76;
-  margin-top: 5px;
-  letter-spacing: 0.06em;
-  font-weight: 500;
-}
-.sib-face-trans {
-  font-size: 12px;
-  color: var(--text);
-  opacity: 0.8;
-  margin-top: 6px;
-  font-style: italic;
-  font-family:'Fraunces',serif;
-  font-variation-settings:"SOFT" 100,"opsz" 14;
-  font-weight: 400;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.45;
-}
-
-/* When stuck, the face height collapses to inline with the first row */
-.sib.stuck .sib-face {
+/* ─── Hero block ─── */
+.C-hero {
+  position: relative;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #e4d2b2 0%, #dcc8a3 100%);
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
   gap: 10px;
-  justify-content: center;
-  padding: 0 0 6px;
-  margin-bottom: 6px;
-  text-align: left;
+  transition: padding 240ms cubic-bezier(.4,0,.2,1),
+              background 200ms ease-out,
+              -webkit-backdrop-filter 240ms cubic-bezier(.4,0,.2,1),
+              backdrop-filter 240ms cubic-bezier(.4,0,.2,1);
 }
-.sib.stuck .sib-face-lbl { margin: 0; font-size: 8.5px; letter-spacing: 0.18em; }
-.sib.stuck .sib-face-val { font-size: 22px; }
-.sib.stuck .sib-face-val .unit { font-size: 11px; }
-.sib.stuck .sib-face-conv { margin: 0; font-size: 9.5px; }
-.sib.stuck .sib-face-trans { display: none; }
-
-/* Metric grids — flat, bordered, like the reference */
-.sib-grid {
-  display: grid;
-  border-top: 1px solid var(--border);
+/* hairline gradient separator between hero and grid */
+.C-hero::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(26,61,58,0.15) 22%, rgba(26,61,58,0.22) 50%, rgba(26,61,58,0.15) 78%, transparent 100%);
+  pointer-events: none;
 }
-.sib-grid-2 { grid-template-columns: 1fr 1fr; }
-.sib-grid-4 { grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); }
-.sib-grid > .sib-m { padding: 8px 10px; }
-.sib-grid-2 > .sib-m + .sib-m { border-left: 1px solid var(--border); }
-.sib-grid-4 > .sib-m + .sib-m { border-left: 1px solid var(--border); }
+.C.stuck .C-hero {
+  padding: 8px 14px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  background: rgba(228,210,178,0.80);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+/* themes override the sand hero with their own paper/ink accent */
+.v2-stage[data-theme="burgundy"]  .C-hero { background: linear-gradient(180deg, #e1cfa6 0%, #d4c090 100%); }
+.v2-stage[data-theme="burgundy"].C.stuck  .C-hero { background: rgba(225,207,166,0.80); }
+.v2-stage[data-theme="nocturnal"] .C-hero { background: linear-gradient(180deg, #1e2a30 0%, #18232a 100%); color: var(--text); }
+.v2-stage[data-theme="nocturnal"] .C.stuck .C-hero { background: rgba(30,42,48,0.72); }
+.v2-stage[data-theme="oceanic"]   .C-hero { background: linear-gradient(180deg, #dce6f1 0%, #c7d5e5 100%); }
+.v2-stage[data-theme="oceanic"]   .C.stuck .C-hero { background: rgba(220,230,241,0.80); }
+.v2-stage[data-theme="forest"]    .C-hero { background: linear-gradient(180deg, #e1ddbe 0%, #d2cda4 100%); }
+.v2-stage[data-theme="forest"]    .C.stuck .C-hero { background: rgba(225,221,190,0.80); }
 
-.sib-m-lbl {
-  font-family:'JetBrains Mono',monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
+/* Reason line — Fraunces italic, semibold key words via <b>. */
+.C-reason {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-variation-settings: "SOFT" 100, "opsz" 14;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--text);
-  opacity: 0.78;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  opacity: 1;
+  max-height: 80px;
+  overflow: hidden;
+  transition: font-size 240ms cubic-bezier(.4,0,.2,1),
+              max-height 240ms cubic-bezier(.4,0,.2,1),
+              opacity 180ms ease-out;
+}
+.C-reason b { font-weight: 600; font-style: italic; }
+.C.stuck .C-reason {
+  font-size: 11.5px;
+  max-height: 1.5em;
+  flex: 1; min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Face height block inside hero */
+.C-face {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: gap 240ms cubic-bezier(.4,0,.2,1);
+}
+.C.stuck .C-face {
+  flex-direction: row; align-items: baseline; gap: 6px;
+  flex-shrink: 0;
+}
+.C-face-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.22em;
+  color: var(--text-dim); text-transform: uppercase;
   font-weight: 600;
+  opacity: 1; max-height: 20px; overflow: hidden;
+  transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1);
 }
-.sib-m-val {
-  font-family:'Fraunces',serif;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  font-variation-settings:"SOFT" 100,"opsz" 144;
+.C.stuck .C-face-lbl { opacity: 0; max-height: 0; }
+.C-face-val {
+  font-family: 'Fraunces', serif;
+  font-size: 52px; font-weight: 500; line-height: 1;
+  letter-spacing: -0.04em;
+  font-variation-settings: "SOFT" 100, "opsz" 144;
   color: var(--text);
+  transition: font-size 240ms cubic-bezier(.4,0,.2,1);
 }
-.sib-m-val.sm { font-size: 16px; }
-.sib-m-val .unit {
-  font-family:'Inter',sans-serif;
-  font-size: 11px;
+.C.stuck .C-face-val { font-size: 22px; }
+.C-face-val .C-unit {
+  font-family: 'Inter', sans-serif; font-size: 18px;
+  font-weight: 500; color: var(--text); opacity: 0.74;
+  font-variation-settings: normal; margin-left: 4px;
+  transition: font-size 240ms cubic-bezier(.4,0,.2,1);
+}
+.C.stuck .C-face-val .C-unit { font-size: 11px; }
+.C-face-conv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px; color: var(--text); opacity: 0.72;
+  letter-spacing: 0.06em; font-weight: 500;
+  max-height: 18px; overflow: hidden;
+  transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1);
+}
+.C.stuck .C-face-conv { opacity: 0; max-height: 0; }
+.C-trans {
+  font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+  font-size: 11.5px; color: var(--text); opacity: 0.82;
+  max-width: 300px; margin: 2px auto 0; text-align: center; line-height: 1.4;
+  max-height: 40px; overflow: hidden;
+  transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1),
+              margin 240ms cubic-bezier(.4,0,.2,1);
+}
+.C.stuck .C-trans { opacity: 0; max-height: 0; margin: 0; }
+
+/* ─── Grid block ─── */
+.C-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+  background: var(--paper);
+  transition: padding 240ms cubic-bezier(.4,0,.2,1),
+              background-color 200ms ease-out,
+              -webkit-backdrop-filter 240ms cubic-bezier(.4,0,.2,1),
+              backdrop-filter 240ms cubic-bezier(.4,0,.2,1);
+}
+.C.stuck .C-grid {
+  background: rgba(251,245,234,0.78);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.C-m {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  transition: padding 240ms cubic-bezier(.4,0,.2,1);
+}
+.C-m:nth-child(1), .C-m:nth-child(2), .C-m:nth-child(3) { border-top: none; }
+.C-m:nth-child(3n+1) { border-left: none; }
+.C.stuck .C-m { padding: 4px 12px; }
+.C-m-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em;
+  color: var(--text); opacity: 0.74;
+  text-transform: uppercase; font-weight: 600;
+  margin-bottom: 3px;
+}
+.C-m-val {
+  font-family: 'Fraunces', serif;
+  font-size: 18px; font-weight: 500;
+  letter-spacing: -0.02em; line-height: 1;
+  font-variation-settings: "SOFT" 100, "opsz" 144;
   color: var(--text);
-  opacity: 0.88;
-  font-weight: 500;
-  margin-left: 2px;
-  font-variation-settings: normal;
+  transition: font-size 240ms cubic-bezier(.4,0,.2,1);
 }
-.sib-m-sub {
-  font-size: 11px;
-  color: var(--text);
-  opacity: 0.86;
-  margin-top: 3px;
-  line-height: 1.35;
-  font-weight: 500;
+.C.stuck .C-m-val { font-size: 13px; }
+.C-m-val .C-unit {
+  font-family: 'Inter', sans-serif; font-size: 10px;
+  font-weight: 500; color: var(--text); opacity: 0.78;
+  font-variation-settings: normal; margin-left: 2px;
+  transition: font-size 240ms cubic-bezier(.4,0,.2,1);
 }
-.sib-m-sub.mono { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: 0.04em; }
+.C.stuck .C-m-val .C-unit { font-size: 8.5px; }
+.C-m-sub {
+  font-size: 10.5px; color: var(--text); opacity: 0.80;
+  margin-top: 2px; line-height: 1.35; font-weight: 500;
+  max-height: 20px; overflow: hidden;
+  transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1),
+              margin 240ms cubic-bezier(.4,0,.2,1);
+}
+.C-m-sub.mono { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.04em; }
+.C.stuck .C-m-sub { opacity: 0; max-height: 0; margin: 0; }
+.C-m-daylight { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em; font-weight: 500; color: var(--text); }
+.C-m-daylight span { font-variation-settings: normal; }
+.C.stuck .C-m-daylight { flex-direction: row; gap: 6px; font-size: 9.5px; }
 
-.sib-daylight { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-family:'JetBrains Mono',monospace; letter-spacing: 0.04em; font-weight: 500; color: var(--text); }
-.sib-daylight span { font-variation-settings: normal; }
-
-/* Stuck: trim to a single dense row */
-.sib.stuck .sib-grid-2,
-.sib.stuck .sib-grid-4 { border-top: none; }
-.sib.stuck .sib-grid-2 > .sib-m,
-.sib.stuck .sib-grid-4 > .sib-m { padding: 4px 8px; }
-.sib.stuck .sib-m-lbl { font-size: 8px; margin-bottom: 2px; letter-spacing: 0.16em; }
-.sib.stuck .sib-m-val { font-size: 14px; }
-.sib.stuck .sib-m-val.sm { font-size: 13px; }
-.sib.stuck .sib-m-val .unit { font-size: 9.5px; }
-.sib.stuck .sib-m-sub { display: none; }
-.sib.stuck .sib-daylight { font-size: 9.5px; flex-direction: row; gap: 4px; }
-
-.sib-sentinel { position: absolute; top: 0; left: 0; right: 0; height: 1px; pointer-events: none; }
+/* prefers-reduced-motion — cut ALL transitions on the bar. */
+@media (prefers-reduced-motion: reduce) {
+  .C, .C *, .C::before, .C::after { transition: none !important; animation: none !important; }
+}
 
 /* ─── Score sheet (modal) ─── */
 .sheet-backdrop {
@@ -580,9 +580,9 @@ button, input, select { font-family: inherit; color: inherit; }
   opacity: 0.88 !important;
   font-weight: 500 !important;
 }
-.m-sub, .sib-m-sub { color: var(--text) !important; opacity: 0.84 !important; font-weight: 500 !important; }
-.m-val, .m-val *, .sib-m-val, .sib-m-val *,
-.fh-val, .fh-val *, .hly-ex-val, .hly-ex-val * {
+.m-sub, .sib-m-sub, .C-m-sub { color: var(--text) !important; opacity: 0.84 !important; font-weight: 500 !important; }
+.m-val, .m-val *, .sib-m-val, .sib-m-val *, .C-m-val, .C-m-val *,
+.fh-val, .fh-val *, .hly-ex-val, .hly-ex-val *, .C-face-val, .C-face-val * {
   color: var(--text) !important;
 }
 /* .score-num inherits from .score-box, which is coloured inline with the
@@ -590,10 +590,11 @@ button, input, select { font-family: inherit; color: inherit; }
    so only the big number follows the score band colour. */
 .score-num { color: inherit !important; }
 .score-den, .score-info { color: var(--text-mu) !important; }
-.m-val .unit, .sib-m-val .unit, .fh-val .unit, .hly-ex-val .unit {
+.m-val .unit, .sib-m-val .unit, .fh-val .unit, .hly-ex-val .unit,
+.C-face-val .C-unit, .C-m-val .C-unit {
   opacity: 0.82 !important;
 }
-.sib-face.swap-enter, .sib-grid.swap-enter { animation: none !important; }
+.C-face.swap-enter, .C-grid.swap-enter, .C-reason.swap-enter { animation: none !important; }
 .dt-date { color: var(--text) !important; opacity: 0.75 !important; font-weight: 500 !important; }
 .lvl-name { color: var(--text) !important; font-weight: 600 !important; }
 .lvl-reason { color: var(--text) !important; opacity: 0.82 !important; font-weight: 500 !important; }
