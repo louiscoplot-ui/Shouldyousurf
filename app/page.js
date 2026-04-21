@@ -1175,6 +1175,64 @@ function BreakRow({ b, onSelect, toggleFav, isFav, current, t }) {
   );
 }
 
+// ── Theme Switcher — palette popover in the header. Overrides CSS vars
+// via data-theme on <html>, persisted to localStorage under "sys-theme-v1"
+// so the choice survives refresh and syncs with the /v2 preview route.
+const THEMES = [
+  { key: "original",   name: "Original Blue",     tag: "Default · Sky",           dots: ["#0ea5e9", "#d97706", "#eef4f8"] },
+  { key: "terracotta", name: "Terracotta & Jade", tag: "Warm · Coastal",          dots: ["#2d7a6e", "#d47559", "#f5ede1"] },
+  { key: "burgundy",   name: "Burgundy & Rye",    tag: "Warm · Analog",           dots: ["#7a2a2b", "#c88a3c", "#ecdcb8"] },
+  { key: "nocturnal",  name: "Nocturnal",         tag: "Dark · Dawn patrol",      dots: ["#9ad5c1", "#e9c77d", "#10161a"] },
+  { key: "oceanic",    name: "Oceanic",           tag: "Cool · Cyanotype",        dots: ["#2a5a94", "#4a7ca8", "#dce6ef"] },
+  { key: "forest",     name: "Forest",            tag: "Mossy · Topographic",     dots: ["#3d5a2f", "#c39641", "#e8e5cf"] },
+];
+
+function ThemeSwitcher({ theme, setTheme }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const cur = THEMES.find(t => t.key === theme) || THEMES[0];
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [open]);
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        className="palette-btn"
+        aria-label="Change palette"
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+      >
+        <span className="palette-dots">
+          <span style={{ background: cur.dots[0] }}/>
+          <span style={{ background: cur.dots[1] }}/>
+          <span style={{ background: cur.dots[2] }}/>
+          <span style={{ background: "var(--text-dim)" }}/>
+        </span>
+      </button>
+      {open && (
+        <div className="theme-menu" onClick={(e) => e.stopPropagation()}>
+          <div className="tm-title">Palette</div>
+          {THEMES.map(th => (
+            <button key={th.key} className={`tm-row ${theme === th.key ? "active" : ""}`}
+              onClick={() => { setTheme(th.key); setTimeout(() => setOpen(false), 160); }}>
+              <span className="tm-dots">
+                {th.dots.map((c, i) => <span key={i} style={{ background: c }}/>)}
+              </span>
+              <span className="tm-body">
+                <span className="tm-name">{th.name}</span>
+                <span className="tm-tag">{th.tag}</span>
+              </span>
+              <span className="tm-check"/>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main ────────────────────────────────────────────────────────────────
 export default function SurfApp() {
   const [spot, setSpot] = useState(BREAKS[0]);
@@ -1202,6 +1260,22 @@ export default function SurfApp() {
   const [notifOptIn, setNotifOptIn] = useState(false);
   const [country, setCountry] = useState("AU");
   const [sharedDay, setSharedDay] = useState(null);
+  const [theme, setTheme] = useState("original");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sys-theme-v1");
+      if (saved) setTheme(saved);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (theme && theme !== "original") document.documentElement.dataset.theme = theme;
+    else delete document.documentElement.dataset.theme;
+  }, [theme]);
+  const pickTheme = (next) => {
+    setTheme(next);
+    try { localStorage.setItem("sys-theme-v1", next); } catch {}
+  };
   const tabsRef = useRef(null);
   const tz = spot.timezone || TZ;
   const customLangDict = customLangs.find(c => c.code === lang)?.translations;
@@ -1663,6 +1737,7 @@ export default function SurfApp() {
                 className={`fav-btn ${isFav ? "active" : ""}`}
                 onClick={() => toggleFav(spot.id)}
               >{isFav ? "★" : "☆"}</button>
+              <ThemeSwitcher theme={theme} setTheme={pickTheme}/>
             </div>
           </div>
           <button className="spot-btn" onClick={() => setPickerOpen(true)}>
@@ -2007,6 +2082,98 @@ export default function SurfApp() {
           --text: #1e2a35; --text-mu: rgba(30,42,53,0.62); --text-dim: rgba(30,42,53,0.38);
           --accent: #0ea5e9; --warn: #d97706; --bad: #dc2626;
         }
+
+        /* ── Alternate palettes — applied via data-theme on <html>. "original"
+           uses the defaults above (no data-theme attribute). The five new
+           palettes are ports of the v2 design-system themes. ── */
+        :root[data-theme="terracotta"] {
+          --bg: #f5ede1; --bg-el: #ede1cd; --bg-hi: #e2d2b7;
+          --border: rgba(26,61,58,0.10); --border-str: rgba(26,61,58,0.22);
+          --text: #1a3d3a; --text-mu: rgba(26,61,58,0.66); --text-dim: rgba(26,61,58,0.42);
+          --accent: #2d7a6e; --warn: #d47559; --bad: #b54c3f;
+        }
+        :root[data-theme="burgundy"] {
+          --bg: #ecdcb8; --bg-el: #e1cfa6; --bg-hi: #d4c090;
+          --border: rgba(58,29,31,0.11); --border-str: rgba(58,29,31,0.24);
+          --text: #3a1d1f; --text-mu: rgba(58,29,31,0.66); --text-dim: rgba(58,29,31,0.40);
+          --accent: #7a2a2b; --warn: #c88a3c; --bad: #5a1e20;
+        }
+        :root[data-theme="nocturnal"] {
+          --bg: #10161a; --bg-el: #1e2a30; --bg-hi: #273640;
+          --border: rgba(231,226,211,0.09); --border-str: rgba(231,226,211,0.22);
+          --text: #e7e2d3; --text-mu: rgba(231,226,211,0.68); --text-dim: rgba(231,226,211,0.42);
+          --accent: #9ad5c1; --warn: #e9c77d; --bad: #d97d6a;
+        }
+        :root[data-theme="oceanic"] {
+          --bg: #dce6ef; --bg-el: #cfdce8; --bg-hi: #b9cadc;
+          --border: rgba(20,44,78,0.11); --border-str: rgba(20,44,78,0.24);
+          --text: #142c4e; --text-mu: rgba(20,44,78,0.66); --text-dim: rgba(20,44,78,0.40);
+          --accent: #2a5a94; --warn: #7691af; --bad: #8b4e5c;
+        }
+        :root[data-theme="forest"] {
+          --bg: #e8e5cf; --bg-el: #ddd9b9; --bg-hi: #ccc89d;
+          --border: rgba(29,45,28,0.12); --border-str: rgba(29,45,28,0.26);
+          --text: #1d2d1c; --text-mu: rgba(29,45,28,0.66); --text-dim: rgba(29,45,28,0.40);
+          --accent: #3d5a2f; --warn: #c39641; --bad: #7a3a2a;
+        }
+
+        /* ── Palette button + popover (header) ── */
+        .palette-btn {
+          background: var(--bg-el); border: 1px solid var(--border);
+          border-radius: 6px; width: 28px; height: 28px;
+          cursor: pointer; padding: 0;
+          display: flex; align-items: center; justify-content: center;
+          transition: all 0.15s;
+        }
+        .palette-btn:hover { border-color: var(--border-str); }
+        .palette-dots {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+          width: 14px; height: 14px;
+        }
+        .palette-dots span { border-radius: 50%; }
+        .theme-menu {
+          position: absolute; top: calc(100% + 8px); right: 0; z-index: 1000;
+          background: var(--bg-el); border: 1px solid var(--border-str);
+          border-radius: 12px;
+          padding: 8px; min-width: 240px;
+          box-shadow: 0 10px 30px -10px rgba(0,0,0,0.28);
+          display: flex; flex-direction: column; gap: 4px;
+          font-family: 'Inter', system-ui, sans-serif;
+        }
+        .tm-title {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9px; letter-spacing: 0.2em;
+          color: var(--text-dim); text-transform: uppercase; font-weight: 600;
+          padding: 6px 8px 4px;
+        }
+        .tm-row {
+          display: flex; align-items: center; gap: 10px;
+          background: none; border: none; border-radius: 8px;
+          padding: 8px 10px; cursor: pointer; text-align: left;
+          color: var(--text); font-family: inherit;
+          transition: background 0.12s;
+        }
+        .tm-row:hover { background: var(--bg-hi); }
+        .tm-row.active { background: var(--bg-hi); }
+        .tm-dots { display: flex; gap: 3px; flex-shrink: 0; }
+        .tm-dots span { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.08); }
+        .tm-body { flex: 1; display: flex; flex-direction: column; }
+        .tm-name { font-size: 13px; font-weight: 600; color: var(--text); }
+        .tm-tag {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9px; letter-spacing: 0.1em;
+          color: var(--text-dim); text-transform: uppercase; margin-top: 2px;
+        }
+        .tm-check {
+          width: 14px; height: 14px; border-radius: 50%;
+          border: 1.5px solid var(--border-str); flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          color: var(--accent);
+        }
+        .tm-row.active .tm-check {
+          background: var(--accent); border-color: var(--accent); color: var(--bg);
+        }
+        .tm-row.active .tm-check::after { content: '✓'; font-size: 10px; font-weight: 700; }
 
         html, body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01'; letter-spacing: -0.005em; }
         ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: rgba(30,58,90,0.15); }
