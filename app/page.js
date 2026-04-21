@@ -1198,7 +1198,7 @@ function ThemeSwitcher({ theme, setTheme }) {
     return () => document.removeEventListener("click", onClick);
   }, [open]);
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative", zIndex: open ? 99999 : "auto" }}>
       <button
         className="palette-btn"
         aria-label="Change palette"
@@ -2128,7 +2128,7 @@ export default function SurfApp() {
         }
         .palette-dots span { border-radius: 50%; }
         .theme-menu {
-          position: absolute; top: calc(100% + 8px); right: 0; z-index: 1000;
+          position: absolute; top: calc(100% + 8px); right: 0; z-index: 99999;
           background: var(--bg-el); border: 1px solid var(--border-str);
           border-radius: 12px;
           padding: 8px; min-width: 240px;
