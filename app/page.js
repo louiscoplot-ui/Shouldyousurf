@@ -1922,12 +1922,23 @@ export default function SurfApp() {
               const tideMod = getTideModifier(sel, data.hours);
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
+              // DANGER banner — fires whenever the scoring engine returns SKIP
+              // ("no") for a learner level. Red, bold, in the user's face so
+              // there's zero chance of mistaking SKIP for something softer
+              // like MAYBE. Only shown to learners (first_timer/beginner/
+              // early_int) because they're the ones most at risk from bad
+              // conditions they can't read themselves.
+              const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
+              const showDanger = isLearner && verdict === "no";
               return (
-                <div className="sticky-tip">
-                  <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
-                  {modKey && <span style={{ display: "block", marginTop: 6, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(modKey)}</span>}
-                  {tideMod && <span style={{ display: "block", marginTop: 4, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(tideMod)}</span>}
-                </div>
+                <>
+                  {showDanger && <div className="danger-banner">{t("danger_banner")}</div>}
+                  <div className="sticky-tip">
+                    <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
+                    {modKey && <span style={{ display: "block", marginTop: 6, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(modKey)}</span>}
+                    {tideMod && <span style={{ display: "block", marginTop: 4, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(tideMod)}</span>}
+                  </div>
+                </>
               );
             }
             const tipKey = getDayTip(levelMatrix, sel, effectiveSpot);
@@ -2204,6 +2215,19 @@ export default function SurfApp() {
         }
 
         /* ── Palette button + popover (header) ── */
+        .danger-banner {
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(220,38,38,0.10);
+          border: 1.5px solid var(--bad);
+          color: var(--bad);
+          padding: 10px 14px; border-radius: 8px;
+          font-weight: 700; font-size: 13px; line-height: 1.4;
+          letter-spacing: 0.01em;
+          margin: 8px 0 8px;
+          animation: dangerPulse 1.8s ease-in-out infinite;
+        }
+        @keyframes dangerPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.25); } 50% { box-shadow: 0 0 0 6px rgba(220,38,38,0); } }
+
         .freshness-btn {
           display: inline-flex; align-items: center; gap: 5px;
           background: var(--bg-el); border: 1px solid var(--border);
