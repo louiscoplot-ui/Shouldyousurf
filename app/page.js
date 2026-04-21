@@ -1844,16 +1844,21 @@ export default function SurfApp() {
     sel = dayHours.find(h => h.time.split("T")[1].startsWith("08:")) || dayHours[0];
   }
 
+  // Compute the score BEFORE the `if (!sel) return null` early return so
+  // useTween can be called unconditionally (Rules of Hooks) — otherwise
+  // React detects a mismatched hook count between renders that include vs.
+  // skip the tweening call and throws a client-side exception.
+  const selDayTideCtx = sel ? dayTideCtx(dayHours) : null;
+  const inferred = sel ? inferSpotProfile(data.hours) : null;
+  const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
+  const { score: _computedScore, notes: _computedNotes } =
+    sel ? scoreSurf(sel, effectiveSpot, selDayTideCtx) : { score: 0, notes: [] };
+  const tweenedScore = Math.round(useTween(_computedScore, 380));
+
   if (!sel) return null;
 
-  const selDayTideCtx = dayTideCtx(dayHours);
-  // Effective spot = the curated spot enriched with data-derived idealSwellDir
-  // and offshoreWindDir, so the scoring formula is uniform whether the spot
-  // was hand-tuned in breaks.js or added on the fly via the search.
-  const inferred = inferSpotProfile(data.hours);
-  const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
-  const { score, notes } = scoreSurf(sel, effectiveSpot, selDayTideCtx);
-  const tweenedScore = Math.round(useTween(score, 380));
+  const score = _computedScore;
+  const notes = _computedNotes;
   const level = getLevel(score, sel, effectiveSpot);
   const levelMatrix = surfabilityByLevel(sel, effectiveSpot);
   // Best window must fall within usable daylight — from 1h before sunrise up
