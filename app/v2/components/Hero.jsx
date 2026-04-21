@@ -21,9 +21,6 @@ export function VerdictHero({ verdict, hour, swapKey, onOpenScore }) {
           <span className="score-info" aria-hidden="true">ⓘ</span>
         </button>
       </div>
-      <button className="score-how" onClick={onOpenScore}>
-        How is this calculated? <span className="chev">→</span>
-      </button>
     </div>
   );
 }

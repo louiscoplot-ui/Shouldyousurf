@@ -284,20 +284,21 @@ button, input, select { font-family: inherit; color: inherit; }
   top: 0;
   z-index: 80;
   animation: riseIn 0.5s cubic-bezier(.3,.8,.3,1) 0.45s backwards;
-  transition: padding 0.25s, box-shadow 0.25s, border-radius 0.25s, background 0.25s;
+  /* No shape/padding transition — it produced a visible elastic bounce
+     each time .stuck toggled. Only fade opacity transitions on children
+     (the label/sub hides) keep it feeling alive without the wobble. */
 }
-/* When the sentinel has scrolled off (stuck=true), compact the bar + add blur + shadow */
+/* When the sentinel has scrolled off (stuck=true), snap to a compact
+   variant instantly — no transition, no rebound. */
 .sib.stuck {
   margin-left: -22px;
   margin-right: -22px;
-  padding: 10px 22px 8px;
+  padding: 8px 22px 6px;
   border-radius: 0;
   border-left: none;
   border-right: none;
   border-top: none;
   background: rgba(251,245,234,0.94) !important;
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
   box-shadow: 0 6px 16px -8px rgba(31,58,58,0.22);
 }
 
@@ -465,7 +466,7 @@ button, input, select { font-family: inherit; color: inherit; }
   background: rgba(26,61,58,0.42);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 50;
+  z-index: 300;
   display: flex; align-items: flex-end; justify-content: center;
   animation: bdFade 0.22s ease both;
 }

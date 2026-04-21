@@ -149,7 +149,11 @@ function Loaded({ spot, days, dataSource, fetchError, theme, setTheme }) {
         </div>
 
         <div className="rise-1">
-          <button className="spot-btn">
+          <button
+            className="spot-btn"
+            onClick={() => alert("Spot picker wires in when v2 ships. Right now the preview is pinned to Trigg Beach so you can see the live design with real conditions.")}
+            title="Spot picker (locked to Trigg during preview)"
+          >
             <span className="spot-name">{spot.name}</span>
             <span className="spot-chev">▾</span>
           </button>
