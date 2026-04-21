@@ -104,26 +104,35 @@ button, input, select { font-family: inherit; color: inherit; }
 /* One line, horizontal scroll (drag / swipe left-right). The container has a
    fixed height row; the fade-mask edges hint at off-screen content. */
 .day-tabs {
-  display: flex; gap: 4px;
-  padding: 4px;
+  display: flex; gap: 2px;
+  padding: 3px;
   background: var(--bg-el);
-  border-radius: 12px;
+  border-radius: 8px;
   margin-bottom: 22px;
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x proximity;
   scrollbar-width: none; -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
-  scroll-padding: 4px;
-  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  scroll-padding: 3px;
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
 .day-tabs::-webkit-scrollbar { display: none; }
-.dt { padding: 8px 10px; border-radius: 8px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text); transition: background 0.18s; flex: 0 0 auto; min-width: 48px; scroll-snap-align: center; }
+.dt {
+  width: 54px; flex: 0 0 auto;
+  padding: 6px 2px;
+  border-radius: 6px; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: var(--text); transition: background 0.18s;
+  scroll-snap-align: center;
+}
+.dt-day  { font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px; text-align: center; }
+.dt-date { font-size: 9px !important; }
+.dt-dot  { width: 5px; height: 5px; margin-top: 2px; }
 .dt.active { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
 .dt.past { opacity: 0.5; }
-.dt-day { font-size: 11px; font-weight: 500; }
-.dt-date { font-family:'JetBrains Mono',monospace; font-size: 9.5px; color: var(--text); opacity: 0.72; letter-spacing: 0.04em; font-weight: 500; }
-.dt-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 1px; }
+.dt-date { font-family: 'JetBrains Mono', monospace; color: var(--text); opacity: 0.72; letter-spacing: 0.04em; font-weight: 500; }
+.dt-dot  { border-radius: 50%; }
 
 /* ───────────── Time pill ───────────── */
 .time-pill { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 12px; background: var(--bg-el); border: 1px solid var(--border); border-radius: 20px; font-family:'JetBrains Mono',monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--text-mu); cursor: pointer; }
@@ -524,10 +533,14 @@ button, input, select { font-family: inherit; color: inherit; }
 .C.stuck .C-m[data-cell="daylight"] { grid-area: daylight; }
 .C.stuck .C-m[data-cell="current"]  { display: none; }
 .C.stuck .C-m {
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-right: 1px solid var(--border);
   border-top: 1px solid var(--border);
+  min-height: 0;
 }
+.C.stuck .C-m-lbl { margin-bottom: 1px; font-size: 8px; letter-spacing: 0.18em; }
+.C.stuck .C-m-val { font-size: 12px; }
+.C.stuck .C-m-val .C-unit { font-size: 8.5px; }
 /* Hairlines: no right border on last column, no top border on row 2 (first metric row) */
 .C.stuck .C-m[data-cell="tide"],
 .C.stuck .C-m[data-cell="daylight"] { border-right: none; }

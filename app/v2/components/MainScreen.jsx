@@ -423,17 +423,36 @@ function Loaded({
     if (!el) return;
     const root = el.closest(".viewport");
     if (!root) return;
-    // Compute the threshold robustly: getBoundingClientRect avoids offsetParent
-    // surprises when the viewport isn't the sentinel's direct offsetParent.
+    const bar = root.querySelector(".C"); // the sticky bar itself
     const rect = el.getBoundingClientRect();
     const rootRect = root.getBoundingClientRect();
     const threshold = Math.max(0, rect.top - rootRect.top + root.scrollTop - 1);
-    const BUFFER = 60;         // hysteresis: need to scroll up 60px to un-stick
-    const LATCH_MS = 200;      // after a toggle, ignore scroll for 200ms — kills rebound at slow scroll
+    const BUFFER = 100;        // hysteresis: scroll up 100px to un-stick
+    const LATCH_MS = 500;      // after toggle, ignore scroll for 500ms
     let ticking = false;
     let stuck = false;
     let lastToggle = 0;
+    let suppressScroll = false; // skip onScroll events we trigger ourselves
+
+    // On toggle, compensate scrollTop by the bar's height delta so the
+    // content doesn't visually "jump" — the user's eye doesn't over-correct,
+    // so the threshold isn't accidentally re-crossed. This kills the 2-3
+    // rebound cycles at slow scroll.
+    const compensate = (beforeH) => {
+      requestAnimationFrame(() => {
+        if (!bar) return;
+        const afterH = bar.getBoundingClientRect().height;
+        const delta = beforeH - afterH;
+        if (Math.abs(delta) > 1) {
+          suppressScroll = true;
+          root.scrollTop -= delta;      // bar got smaller → scroll up to keep content anchored
+          requestAnimationFrame(() => { suppressScroll = false; });
+        }
+      });
+    };
+
     const onScroll = () => {
+      if (suppressScroll) return;
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
@@ -441,9 +460,13 @@ function Loaded({
         if (Date.now() - lastToggle < LATCH_MS) return;
         const s = root.scrollTop;
         if (!stuck && s >= threshold) {
+          const beforeH = bar ? bar.getBoundingClientRect().height : 0;
           stuck = true; lastToggle = Date.now(); setSibStuck(true);
+          compensate(beforeH);
         } else if (stuck && s < threshold - BUFFER) {
+          const beforeH = bar ? bar.getBoundingClientRect().height : 0;
           stuck = false; lastToggle = Date.now(); setSibStuck(false);
+          compensate(beforeH);
         }
       });
     };
@@ -510,7 +533,13 @@ function Loaded({
             {days.map((d, i) => (
               <button
                 key={i}
-                onClick={() => setDayIdx(i)}
+                onClick={(e) => {
+                  setDayIdx(i);
+                  // v1 behavior: smoothly scroll the clicked tab toward the
+                  // centre of the tab bar so the neighbouring days become
+                  // visible — same as app/page.js handleTabClick().
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                }}
                 className={`dt ${i === dayIdx ? "active" : ""} ${d.isPast ? "past" : ""}`}
               >
                 <div className="dt-day">{d.label}</div>
