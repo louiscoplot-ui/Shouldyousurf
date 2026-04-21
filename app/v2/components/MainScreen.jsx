@@ -424,7 +424,11 @@ function Loaded({
     <Phone>
       <div className="wrap">
         <div className="hdr rise-1">
-          <div className="brand-row"><span className="now-dot"/><span className="brand">{t("brand") || "should you surf?"}</span></div>
+          <div className="brand-row">
+            <span className="now-dot"/>
+            <span className="brand">{t("brand") || "should you surf?"}</span>
+            <span style={{ marginLeft: 8, padding: "2px 6px", background: "#ff3366", color: "#fff", borderRadius: 4, fontFamily: "monospace", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em" }}>VC·01</span>
+          </div>
           <div className="hdr-actions">
             <button className="ibtn" onClick={onOpenFaq} title={t("faq_title")}>?</button>
             <button className="ibtn lang" onClick={onOpenLang} title="Language">
