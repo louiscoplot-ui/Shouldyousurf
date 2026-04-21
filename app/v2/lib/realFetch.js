@@ -149,16 +149,22 @@ export async function fetchRealForecast(spot) {
   const shapeHour = (raw, tideCtx) => {
     const faceM = estimateFaceHeight(raw.swellHeight, raw.swellPeriod);
     const faceFt = mToFt(faceM);
+    // Score with the prod engine using the raw degrees — BEFORE we overwrite
+    // swellDir/windDir below with the cardinal string the v2 components want.
     const { score, notes } = scoreSurf(raw, effectiveSpot, tideCtx);
+    const swellDirDeg = raw.swellDir;
+    const windDirDeg = raw.windDir;
     return {
       ...raw,
-      // v2-display fields. Keep raw degrees too so downstream can reuse them.
-      swellDirDeg: raw.swellDir,
-      windDirDeg: raw.windDir,
-      swellDirStr: degToCardinal(raw.swellDir),
-      windDirStr: degToCardinal(raw.windDir),
+      // v2 components (StickyInfoBar, Hero, levelMatrixFor, drivingChipsFor)
+      // read these as the compass string. Degree versions kept alongside for
+      // components that need the raw number.
+      swellDir: degToCardinal(swellDirDeg),
+      windDir: degToCardinal(windDirDeg),
+      swellDirDeg,
+      windDirDeg,
       windKmh: knToKmh(raw.windSpeedKn),
-      windType: classifyWind(raw.windDir, effectiveSpot.offshoreWindDir),
+      windType: classifyWind(windDirDeg, effectiveSpot.offshoreWindDir),
       faceFtLow: Math.max(1, Math.floor(faceFt - 0.5)),
       faceFtHigh: Math.ceil(faceFt + 0.5),
       score,
