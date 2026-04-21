@@ -623,6 +623,10 @@ function getPersonalVerdict(userLevel, h, spot) {
   if (wind === "blown") {
     if (size === "upper") return "no";
     if (size === "too_small") return "no";
+    // Safety-first: blown wind + learner = HARD no, no matter the size.
+    // Strong onshore chop + size beyond waist is genuinely dangerous for
+    // people still working on paddling / duck-diving / getting back out.
+    if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
     return "ok";
   }
 
