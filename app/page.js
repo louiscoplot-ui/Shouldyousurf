@@ -1348,6 +1348,41 @@ export default function SurfApp() {
     const t = setInterval(() => setNowTick(Date.now()), 30000);
     return () => clearInterval(t);
   }, []);
+
+  // Sticky-info compact mode — when the big info block docks at top:58px,
+  // we shrink it so it doesn't eat half the viewport. Content stays visible
+  // (clamped reason, tiny face pill, metric label/value pairs with subs
+  // faded), so the user never loses info on scroll.
+  const stickyInfoSentinelRef = useRef(null);
+  const [stickyCompact, setStickyCompact] = useState(false);
+  useEffect(() => {
+    const el = stickyInfoSentinelRef.current;
+    if (!el) return;
+    // Capture the sentinel's position once — offsetTop relative to page body.
+    const threshold = Math.max(0, el.getBoundingClientRect().top + window.scrollY - 58 - 1);
+    const BUFFER = 80;
+    const LATCH_MS = 300;
+    let ticking = false;
+    let compact = false;
+    let lastToggle = 0;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        if (Date.now() - lastToggle < LATCH_MS) return;
+        const s = window.scrollY;
+        if (!compact && s >= threshold) {
+          compact = true; lastToggle = Date.now(); setStickyCompact(true);
+        } else if (compact && s < threshold - BUFFER) {
+          compact = false; lastToggle = Date.now(); setStickyCompact(false);
+        }
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [data]); // re-bind when data changes (page layout may have shifted)
   useEffect(() => {
     try {
       const saved = localStorage.getItem("sys-theme-v1");
@@ -1948,7 +1983,8 @@ export default function SurfApp() {
           )}
         </div>
 
-        <div className="sticky-info">
+        <div ref={stickyInfoSentinelRef} aria-hidden="true" style={{ height: 1, pointerEvents: "none" }}/>
+        <div className={`sticky-info ${stickyCompact ? "compact" : ""}`}>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <button className="sticky-level-btn mono" onClick={() => setLevelPickerOpen(true)}>
               {userLevel ? t("lvl_" + userLevel) : t("set_your_level")} ▾
@@ -2453,7 +2489,56 @@ export default function SurfApp() {
         .notes-label { font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-top: 20px; }
         .note { font-size: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; color: var(--text-mu); }
 
-        .sticky-info { position: sticky; top: 58px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); }
+        .sticky-info { position: sticky; top: 58px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); transition: padding 260ms cubic-bezier(.4,0,.2,1), background-color 200ms ease-out; }
+
+        /* Compact mode — activated when the block docks at top:58px. Every
+           disappearing element uses opacity + max-height (never display:none)
+           so the morph is smooth. Content stays readable: reason clamps to
+           2 lines, face stays visible but tiny, metric values stay, subs
+           fade out. */
+        .sticky-info.compact { padding-top: 2px; padding-bottom: 2px; background: rgba(238,244,248,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .sticky-info .face-height,
+        .sticky-info .metrics,
+        .sticky-info .temp-strip,
+        .sticky-info .sticky-tip,
+        .sticky-info .danger-banner,
+        .sticky-info .face-label,
+        .sticky-info .face-sub,
+        .sticky-info .face-hint,
+        .sticky-info .metric-sub,
+        .sticky-info .face-value {
+          transition: padding 260ms cubic-bezier(.4,0,.2,1),
+                      margin 260ms cubic-bezier(.4,0,.2,1),
+                      font-size 260ms cubic-bezier(.4,0,.2,1),
+                      max-height 260ms cubic-bezier(.4,0,.2,1),
+                      opacity 180ms ease-out;
+        }
+        .sticky-info.compact .face-height { padding: 2px 0; border-bottom: 0; }
+        .sticky-info.compact .face-label,
+        .sticky-info.compact .face-sub,
+        .sticky-info.compact .face-hint { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
+        .sticky-info.compact .face-value { font-size: 16px; }
+        .sticky-info.compact .metrics { padding: 2px 0; }
+        .sticky-info.compact .metric { padding-top: 3px; padding-bottom: 3px; }
+        .sticky-info.compact .metric-sub { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
+        .sticky-info.compact .metric-value { font-size: 13px; }
+        .sticky-info.compact .temp-strip .metric-value { font-size: 12px; }
+        .sticky-info.compact .temp-strip .metric-sub { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
+        .sticky-info.compact .temp-item { padding: 3px 0; }
+        .sticky-info.compact .temp-label { font-size: 8px; margin-bottom: 2px; }
+        .sticky-info.compact .sun-times { font-size: 9.5px; flex-direction: row; gap: 6px; }
+        .sticky-info.compact .sticky-tip {
+          padding: 5px 8px; font-size: 11.5px; line-height: 1.35;
+          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+          overflow: hidden; max-height: 3em; margin: 2px 0;
+        }
+        .sticky-info.compact .sticky-tip > span:nth-of-type(2),
+        .sticky-info.compact .sticky-tip > span:nth-of-type(3) { display: none; }
+        /* Danger banner compacts to an inline warning — same message, tiny */
+        .sticky-info.compact .danger-banner {
+          padding: 4px 8px; font-size: 10.5px; margin: 2px 0;
+          animation: none; border-width: 1px;
+        }
         .face-height { padding: 7px 0 6px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
         .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
         .face-value { font-weight: 500; font-size: 28px; line-height: 1; letter-spacing: -0.03em; }
