@@ -2491,16 +2491,12 @@ export default function SurfApp() {
 
         .sticky-info { position: sticky; top: 58px; z-index: 20; background: var(--bg); margin: 0 -20px; padding: 0 20px; box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15); transition: padding 260ms cubic-bezier(.4,0,.2,1), background-color 200ms ease-out; }
 
-        /* Compact mode — activated when the block docks at top:58px. Every
-           disappearing element uses opacity + max-height (never display:none)
-           so the morph is smooth. Content stays readable: reason clamps to
-           2 lines, face stays visible but tiny, metric values stay, subs
-           fade out. */
+        /* Compact mode — activated when the block docks at top:58px. Goal:
+           keep EVERY bit of info visible (user explicitly asked), just
+           tighten spacing + shrink type so the whole frame takes less
+           vertical room. No opacity:0, no max-height:0, no hidden rows. */
         .sticky-info.compact {
           padding-top: 2px; padding-bottom: 2px;
-          /* Solid var(--bg) fallback for older browsers; modern ones blend
-             the theme bg with ~8% transparency so the sticky dock still
-             feels slightly glassy while staying in-palette. */
           background: var(--bg);
           background: color-mix(in srgb, var(--bg) 92%, transparent);
           backdrop-filter: blur(10px);
@@ -2515,37 +2511,41 @@ export default function SurfApp() {
         .sticky-info .face-sub,
         .sticky-info .face-hint,
         .sticky-info .metric-sub,
-        .sticky-info .face-value {
+        .sticky-info .metric-value,
+        .sticky-info .face-value,
+        .sticky-info .temp-label {
           transition: padding 260ms cubic-bezier(.4,0,.2,1),
                       margin 260ms cubic-bezier(.4,0,.2,1),
                       font-size 260ms cubic-bezier(.4,0,.2,1),
-                      max-height 260ms cubic-bezier(.4,0,.2,1),
-                      opacity 180ms ease-out;
+                      line-height 260ms cubic-bezier(.4,0,.2,1);
         }
-        .sticky-info.compact .face-height { padding: 2px 0; border-bottom: 0; }
-        .sticky-info.compact .face-label,
-        .sticky-info.compact .face-sub,
-        .sticky-info.compact .face-hint { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
-        .sticky-info.compact .face-value { font-size: 16px; }
-        .sticky-info.compact .metrics { padding: 2px 0; }
-        .sticky-info.compact .metric { padding-top: 3px; padding-bottom: 3px; }
-        .sticky-info.compact .metric-sub { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
-        .sticky-info.compact .metric-value { font-size: 13px; }
+        /* Face-height block: tighten padding, shrink type. Keep label, value,
+           conv sub, and italic hint — all visible. */
+        .sticky-info.compact .face-height { padding: 3px 0 4px; }
+        .sticky-info.compact .face-label  { font-size: 8px; margin-bottom: 1px; }
+        .sticky-info.compact .face-value  { font-size: 20px; }
+        .sticky-info.compact .face-sub    { font-size: 9px; margin-top: 1px; }
+        .sticky-info.compact .face-hint   { font-size: 9.5px; margin-top: 2px; line-height: 1.3; }
+        /* Metrics row (Swell / Wind) */
+        .sticky-info.compact .metrics     { padding: 2px 0; }
+        .sticky-info.compact .metric      { padding: 4px 0; }
+        .sticky-info.compact .metric-label{ font-size: 8px; margin-bottom: 2px; }
+        .sticky-info.compact .metric-value{ font-size: 13px; }
+        .sticky-info.compact .metric-sub  { font-size: 9px; margin-top: 2px; line-height: 1.3; }
+        /* Temp strip (Air / Water / Tide / Daylight / Current) */
+        .sticky-info.compact .temp-strip  { padding: 0; }
+        .sticky-info.compact .temp-item   { padding: 3px 0; }
+        .sticky-info.compact .temp-label  { font-size: 8px; margin-bottom: 2px; }
         .sticky-info.compact .temp-strip .metric-value { font-size: 12px; }
-        .sticky-info.compact .temp-strip .metric-sub { opacity: 0; max-height: 0; margin: 0; overflow: hidden; }
-        .sticky-info.compact .temp-item { padding: 3px 0; }
-        .sticky-info.compact .temp-label { font-size: 8px; margin-bottom: 2px; }
-        .sticky-info.compact .sun-times { font-size: 9.5px; flex-direction: row; gap: 6px; }
+        .sticky-info.compact .temp-strip .metric-sub   { font-size: 8.5px; margin-top: 1px; line-height: 1.2; }
+        .sticky-info.compact .sun-times   { font-size: 9.5px; flex-direction: row; gap: 6px; }
+        /* Reason card (keeps all its lines — main + modifier + tide mod) */
         .sticky-info.compact .sticky-tip {
-          padding: 5px 8px; font-size: 11.5px; line-height: 1.35;
-          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-          overflow: hidden; max-height: 3em; margin: 2px 0;
+          padding: 6px 10px; font-size: 12px; line-height: 1.4; margin: 3px 0;
         }
-        .sticky-info.compact .sticky-tip > span:nth-of-type(2),
-        .sticky-info.compact .sticky-tip > span:nth-of-type(3) { display: none; }
-        /* Danger banner compacts to an inline warning — same message, tiny */
+        /* Danger banner: keeps message, loses pulse, tighter padding */
         .sticky-info.compact .danger-banner {
-          padding: 4px 8px; font-size: 10.5px; margin: 2px 0;
+          padding: 5px 10px; font-size: 11px; margin: 3px 0;
           animation: none; border-width: 1px;
         }
         .face-height { padding: 7px 0 6px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
