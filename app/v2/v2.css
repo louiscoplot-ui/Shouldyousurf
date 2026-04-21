@@ -101,8 +101,24 @@ button, input, select { font-family: inherit; color: inherit; }
 .spot-region { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-top: 6px; margin-bottom: 20px; }
 
 /* ───────────── Day tabs ───────────── */
-.day-tabs { display: grid; grid-template-columns: repeat(7, 1fr); padding: 4px; background: var(--bg-el); border-radius: 12px; margin-bottom: 22px; }
-.dt { padding: 8px 2px; border-radius: 8px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text); transition: background 0.18s; }
+/* One line, horizontal scroll (drag / swipe left-right). The container has a
+   fixed height row; the fade-mask edges hint at off-screen content. */
+.day-tabs {
+  display: flex; gap: 4px;
+  padding: 4px;
+  background: var(--bg-el);
+  border-radius: 12px;
+  margin-bottom: 22px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none; -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding: 4px;
+  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+.day-tabs::-webkit-scrollbar { display: none; }
+.dt { padding: 8px 10px; border-radius: 8px; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text); transition: background 0.18s; flex: 0 0 auto; min-width: 48px; scroll-snap-align: center; }
 .dt.active { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
 .dt.past { opacity: 0.5; }
 .dt-day { font-size: 11px; font-weight: 500; }
@@ -317,10 +333,9 @@ button, input, select { font-family: inherit; color: inherit; }
   pointer-events: none;
 }
 .C.stuck .C-hero {
-  padding: 8px 14px;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
+  padding: 8px 90px 8px 14px;  /* right padding reserves space for the
+                                   absolutely-positioned face-val below */
+  gap: 0;
   background: rgba(228,210,178,0.80);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
@@ -361,56 +376,74 @@ button, input, select { font-family: inherit; color: inherit; }
   overflow: hidden;
 }
 
-/* Face height block inside hero */
+/* Face height row — AT REST: left block (label + big value) + right column
+   (conv m + conv sub). STUCK: single inline row aligned right in the hero. */
 .C-face {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  transition: gap 240ms cubic-bezier(.4,0,.2,1);
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+  margin-top: 4px;
+  transition: margin 240ms cubic-bezier(.4,0,.2,1),
+              top 240ms cubic-bezier(.4,0,.2,1),
+              right 240ms cubic-bezier(.4,0,.2,1);
 }
-.C.stuck .C-face {
-  flex-direction: row; align-items: baseline; gap: 6px;
-  flex-shrink: 0;
+.C-face-left {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-width: 0;
 }
+.C-face-right {
+  display: flex; flex-direction: column; align-items: flex-end;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text); font-weight: 500;
+  letter-spacing: 0.04em;
+  padding-bottom: 4px; flex-shrink: 0;
+  opacity: 1; max-width: 120px; overflow: hidden;
+  transition: opacity 180ms ease-out, max-width 240ms cubic-bezier(.4,0,.2,1);
+}
+.C-face-conv-m   { font-size: 11px; opacity: 0.90; }
+.C-face-conv-sub { font-size: 10.5px; opacity: 0.74; margin-top: 2px; }
 .C-face-lbl {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; letter-spacing: 0.22em;
-  color: var(--text-dim); text-transform: uppercase;
-  font-weight: 600;
-  opacity: 1; max-height: 20px; overflow: hidden;
+  color: var(--text); opacity: 0.68;
+  text-transform: uppercase; font-weight: 600;
+  max-height: 20px; overflow: hidden;
   transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1);
 }
-.C.stuck .C-face-lbl { opacity: 0; max-height: 0; }
 .C-face-val {
   font-family: 'Fraunces', serif;
-  font-size: 52px; font-weight: 500; line-height: 1;
+  font-size: 48px; font-weight: 500; line-height: 1;
   letter-spacing: -0.04em;
   font-variation-settings: "SOFT" 100, "opsz" 144;
   color: var(--text);
   transition: font-size 240ms cubic-bezier(.4,0,.2,1);
 }
-.C.stuck .C-face-val { font-size: 22px; }
 .C-face-val .C-unit {
   font-family: 'Inter', sans-serif; font-size: 18px;
   font-weight: 500; color: var(--text); opacity: 0.74;
   font-variation-settings: normal; margin-left: 4px;
   transition: font-size 240ms cubic-bezier(.4,0,.2,1);
 }
-.C.stuck .C-face-val .C-unit { font-size: 11px; }
-.C-face-conv {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px; color: var(--text); opacity: 0.72;
-  letter-spacing: 0.06em; font-weight: 500;
-  max-height: 18px; overflow: hidden;
-  transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1);
-}
-.C.stuck .C-face-conv { opacity: 0; max-height: 0; }
 .C-trans {
   font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
-  font-size: 11.5px; color: var(--text); opacity: 0.82;
-  max-width: 300px; margin: 2px auto 0; text-align: center; line-height: 1.4;
-  max-height: 40px; overflow: hidden;
+  font-size: 12px; color: var(--text); opacity: 0.78;
+  margin: 8px 0 0; text-align: left; line-height: 1.4;
+  max-height: 50px; overflow: hidden;
   transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1),
               margin 240ms cubic-bezier(.4,0,.2,1);
 }
+
+/* STUCK: the face block docks into the top-right corner of the hero via
+   absolute positioning. The reason occupies the left (clamped 1 line).
+   Every disappearing element fades via opacity + max-height / max-width,
+   so nothing snaps.   */
+.C.stuck .C-face {
+  position: absolute; top: 10px; right: 14px;
+  margin: 0; gap: 0; align-items: baseline;
+}
+.C.stuck .C-face-left { flex-direction: row; align-items: baseline; gap: 4px; }
+.C.stuck .C-face-lbl { opacity: 0; max-height: 0; }
+.C.stuck .C-face-val { font-size: 22px; }
+.C.stuck .C-face-val .C-unit { font-size: 11px; }
+.C.stuck .C-face-right { opacity: 0; max-width: 0; padding: 0; }
 .C.stuck .C-trans { opacity: 0; max-height: 0; margin: 0; }
 
 /* ─── Grid block ─── */

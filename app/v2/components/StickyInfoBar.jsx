@@ -28,11 +28,16 @@ export default function StickyInfoBar({ hour, swapKey, reasonText, stuck }) {
       <div className="C-hero">
         <div key={"C-r-" + swapKey} className="C-reason swap-enter">{reasonText}</div>
         <div key={"C-f-" + swapKey} className="C-face swap-enter">
-          <div className="C-face-lbl">Expected face height</div>
-          <div className="C-face-val">{low}–{high}<span className="C-unit">ft</span></div>
-          <div className="C-face-conv">{midM} m · {(hour.swellHeight * 0.9).toFixed(1)}m @ {per}s</div>
-          <div className="C-trans">{trans}</div>
+          <div className="C-face-left">
+            <div className="C-face-lbl">FACE HEIGHT</div>
+            <div className="C-face-val">{low}–{high}<span className="C-unit">ft</span></div>
+          </div>
+          <div className="C-face-right">
+            <div className="C-face-conv-m">{midM} m</div>
+            <div className="C-face-conv-sub">{(hour.swellHeight * 0.9).toFixed(1)}m @ {per}s</div>
+          </div>
         </div>
+        <div key={"C-t-" + swapKey} className="C-trans swap-enter">{trans}</div>
       </div>
 
       <div key={"C-g-" + swapKey} className="C-grid swap-enter">

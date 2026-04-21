@@ -174,27 +174,34 @@ export default function MainScreen({ theme, setTheme }) {
     try { localStorage.setItem("surf-pwa-shown", "1"); } catch {}
   }
 
-  // Fetch forecast whenever the spot changes
+  // Fetch forecast whenever the spot changes.
+  // Strategy: show mock data IMMEDIATELY so the UI is never stuck on the
+  // loading splash, then upgrade to real data when it arrives. If the real
+  // fetch takes more than 8s we just stay on mock (with the "live data
+  // unavailable" badge). This keeps the preview interactive even if the
+  // user's network blocks Open-Meteo.
   useEffect(() => {
     let cancelled = false;
-    setDataSource("loading");
-    setPayload(null);
+    // Seed with mock right away — no loading screen deadlock.
+    const mockDays = makeForecast(spot.id);
+    setPayload({ days: mockDays, sunByDay: {}, effectiveSpot: spot });
+    setDataSource("mock");
+    setFetchError(null);
+
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Fetch timed out after 8s")), 8000),
+    );
     (async () => {
       try {
-        const real = await fetchRealForecast(spot);
+        const real = await Promise.race([fetchRealForecast(spot), timeout]);
         if (cancelled) return;
         if (real && real.days && real.days.length) {
           setPayload(real);
           setDataSource("live");
-          return;
         }
-        throw new Error("Empty forecast");
       } catch (e) {
         if (cancelled) return;
-        console.warn("[v2] real forecast failed, using mock:", e);
-        const mockDays = makeForecast(spot.id);
-        setPayload({ days: mockDays, sunByDay: {}, effectiveSpot: spot });
-        setDataSource("mock");
+        console.warn("[v2] real forecast failed, staying on mock:", e);
         setFetchError(e.message || String(e));
       }
     })();
@@ -366,22 +373,29 @@ function Loaded({
   // Personal advice: if the user picked a level we build a sentence from the
   // prod i18n keys and show it as the sticky-bar reason text. Fallback to the
   // verdict.sub when no level picked or when an i18n key is missing.
+  // Map the quick-picker 3-letter code to a full prod level so the advice
+  // system always has a level to work with, even before the user opens
+  // the level sheet.
+  const QUICK_TO_FULL = { beg: "beginner", eint: "early_int", int: "intermediate", adv: "advanced", exp: "expert" };
+  const effectiveLevel = userLevel || QUICK_TO_FULL[userLevelQuick] || "intermediate";
+
   const personalReason = useMemo(() => {
-    if (!userLevel) return verdict.sub;
     // prodScoring functions want swellDir/windDir in DEGREES — the shaped
     // hour carries them as cardinal strings for display, so rebuild the raw
     // view from the *Deg fields before calling them.
     const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
-    const adviceKey = getPersonalAdviceKey(userLevel, hourDeg, effectiveSpot);
-    const modifierKey = getPersonalModifier(userLevel, hourDeg, effectiveSpot);
+    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
+    const modifierKey = getPersonalModifier(effectiveLevel, hourDeg, effectiveSpot);
     const tideModKey = getTideModifier(hour, day.hours);
     const main = t(adviceKey);
-    if (!main || main === adviceKey || main.startsWith("tip_")) return verdict.sub;
-    const parts = [main];
+    // If translation is missing we still want a human-readable line: fall
+    // back to the generic verdict sub rather than exposing a raw tip_ key.
+    const body = (!main || main === adviceKey || main.startsWith("tip_")) ? verdict.sub : main;
+    const parts = [body];
     if (modifierKey) { const m = t(modifierKey); if (m && m !== modifierKey) parts.push(m); }
     if (tideModKey)  { const m = t(tideModKey);  if (m && m !== tideModKey)  parts.push(m); }
     return parts.filter(Boolean).join(" · ");
-  }, [userLevel, hour, effectiveSpot, day.hours, t, verdict.sub]);
+  }, [effectiveLevel, hour, effectiveSpot, day.hours, t, verdict.sub]);
 
   const sibSentinelRef = useRef(null);
   const [sibStuck, setSibStuck] = useState(false);
@@ -424,21 +438,12 @@ function Loaded({
     <Phone>
       <div className="wrap">
         <div className="hdr rise-1">
-          <div className="brand-row">
-            <span className="now-dot"/>
-            <span className="brand">{t("brand") || "should you surf?"}</span>
-            <span style={{ marginLeft: 8, padding: "2px 6px", background: "#ff3366", color: "#fff", borderRadius: 4, fontFamily: "monospace", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em" }}>VC·01</span>
-          </div>
+          <div className="brand-row"><span className="now-dot"/><span className="brand">{t("brand") || "should you surf?"}</span></div>
           <div className="hdr-actions">
             <button className="ibtn" onClick={onOpenFaq} title={t("faq_title")}>?</button>
             <button className="ibtn lang" onClick={onOpenLang} title="Language">
               <span>{(lang || "en").toUpperCase()}</span>
             </button>
-            <button
-              className={`v2-fav-btn ${isFav ? "active" : ""}`}
-              onClick={() => toggleFav(spot.id)}
-              title={isFav ? "Remove from favourites" : "Save to favourites"}
-            >{isFav ? "★" : "☆"}</button>
             <ThemeSwitcher theme={theme} setTheme={setTheme}/>
           </div>
         </div>
