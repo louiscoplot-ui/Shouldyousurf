@@ -1296,6 +1296,13 @@ export default function SurfApp() {
   const [country, setCountry] = useState("AU");
   const [sharedDay, setSharedDay] = useState(null);
   const [theme, setTheme] = useState("original");
+  const [lastFetchedAt, setLastFetchedAt] = useState(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+  // Tick every 30s so the "Updated Xm ago" indicator keeps updating.
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
   useEffect(() => {
     try {
       const saved = localStorage.getItem("sys-theme-v1");
@@ -1598,6 +1605,7 @@ export default function SurfApp() {
       }
 
       setData({ hours: allHoursFlat, days: orderedDays, sunByDay });
+      setLastFetchedAt(Date.now());
       setSelected(null);
       let tIdx = todayIdx >= 0 ? todayIdx : 0;
       if (sharedDay) {
@@ -1792,6 +1800,21 @@ export default function SurfApp() {
           <div className="header-top">
             <div className="brand"><span className="now-dot"></span>{t("brand")}</div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {lastFetchedAt && (() => {
+                const diff = Math.max(0, Math.floor((nowTick - lastFetchedAt) / 60000));
+                const label = diff === 0 ? t("just_now") : diff < 60 ? `${diff}m` : `${Math.floor(diff/60)}h`;
+                const stale = diff >= 15;
+                return (
+                  <button
+                    className={`freshness-btn mono${stale ? " stale" : ""}`}
+                    onClick={() => fetchAllDays()}
+                    title={stale ? t("data_stale_tip") : t("data_fresh_tip")}
+                    aria-label="Refresh forecast">
+                    <span className="freshness-dot"/>
+                    {label}
+                  </button>
+                );
+              })()}
               <button className="faq-btn" onClick={() => setFaqOpen(true)}>?</button>
               <button className="lang-btn" onClick={() => setLangOpen(true)}>
                 {(LANGUAGES.find(l => l.code === lang) || customLangs.find(c => c.code === lang))?.flag ?? "🌐"} {lang.toUpperCase()}
@@ -2177,6 +2200,25 @@ export default function SurfApp() {
         }
 
         /* ── Palette button + popover (header) ── */
+        .freshness-btn {
+          display: inline-flex; align-items: center; gap: 5px;
+          background: var(--bg-el); border: 1px solid var(--border);
+          border-radius: 999px;
+          padding: 3px 9px 3px 7px;
+          cursor: pointer; color: var(--text-mu);
+          font-size: 10px; font-weight: 500; letter-spacing: 0.05em;
+          transition: all 0.15s;
+        }
+        .freshness-btn:hover { border-color: var(--border-str); color: var(--text); }
+        .freshness-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #16a34a;
+          animation: pulse 2s infinite;
+          flex-shrink: 0;
+        }
+        .freshness-btn.stale { color: var(--warn); border-color: rgba(217,119,6,0.35); }
+        .freshness-btn.stale .freshness-dot { background: var(--warn); }
+
         .palette-btn {
           background: var(--bg-el); border: 1px solid var(--border);
           border-radius: 6px; width: 28px; height: 28px;

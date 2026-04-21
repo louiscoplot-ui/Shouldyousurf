@@ -17,6 +17,11 @@ const T = {
   en: {
     brand: "Should You Surf?",
     loading: "Reading the ocean…",
+    just_now: "now",
+    data_fresh_tip: "Live — tap to refresh",
+    data_stale_tip: "Data is more than 15 min old — tap to refresh now",
+    danger_banner: "⚠️ Dangerous conditions for your level — check on-site before paddling out",
+    footer_disclaimer: "Surf forecasts are estimates. Always check conditions on-site before entering the water. If in doubt, don't paddle out.",
     error_title: "Connection failed",
     error_api: "Marine API unreachable.",
     retry: "Retry",
