@@ -1,8 +1,70 @@
-// Minimal service worker scaffold — registers for future Web Push support.
-// When a push payload arrives it shows the notification. No backend wired yet.
-self.addEventListener("install", (event) => { self.skipWaiting(); });
-self.addEventListener("activate", (event) => { event.waitUntil(self.clients.claim()); });
+// Service worker — v2025.11 (force-refresh + network-first HTML + push scaffold)
+//
+// Strategy:
+// - network-first for navigations / HTML → the page is ALWAYS fresh on open.
+//   The browser cache is bypassed entirely for the document; hashed JS / CSS
+//   chunks are still cache-able by the browser normally (their URLs change
+//   on every deploy so staleness is impossible).
+// - On activation of a NEW version of this SW, force-reload every open
+//   client with client.navigate(client.url). That means every existing user
+//   who already has the old version installed as a PWA will automatically
+//   pick up the latest bundle on their very next app open, no action needed.
+// - Cache the latest HTML only as an offline fallback (not for serving while
+//   online), so zero network = app still opens, with the most recent HTML.
 
+const VERSION = "2026-04-21-fresh";
+const HTML_CACHE = "html-" + VERSION;
+
+self.addEventListener("install", (event) => {
+  // Claim activation immediately — don't wait for tabs to close.
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    // Drop any cache from previous SW versions.
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => k !== HTML_CACHE).map((k) => caches.delete(k)));
+    // Take over all existing pages.
+    await self.clients.claim();
+    // Force a reload on every open client so everyone picks up the new bundle.
+    try {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of windows) {
+        try { await client.navigate(client.url); } catch {}
+      }
+    } catch {}
+  })());
+});
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  const isNav =
+    req.mode === "navigate" ||
+    (req.headers.get("accept") || "").includes("text/html");
+  if (!isNav) return; // let the browser handle hashed assets normally
+
+  event.respondWith((async () => {
+    try {
+      // Always hit the network first — `cache: "no-store"` also blocks the
+      // browser HTTP cache from returning a stale HTML.
+      const res = await fetch(req, { cache: "no-store" });
+      // Refresh the offline fallback copy in the background.
+      try {
+        const cache = await caches.open(HTML_CACHE);
+        cache.put(req, res.clone());
+      } catch {}
+      return res;
+    } catch {
+      // Network failed — serve the last-known HTML if we have one.
+      const cached = await caches.match(req);
+      return cached || new Response("Offline", { status: 503, headers: { "content-type": "text/plain" } });
+    }
+  })());
+});
+
+// ── Push notification handlers (unchanged from previous SW version) ───
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) {}

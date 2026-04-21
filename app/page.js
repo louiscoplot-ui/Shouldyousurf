@@ -1379,7 +1379,13 @@ export default function SurfApp() {
   // Register service worker — future push support + offline shell
   useEffect(() => {
     if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register("/sw.js").then((reg) => {
+        // Force an update check on every page load so a newer SW (with newer
+        // HTML/JS) is picked up as soon as Vercel serves it. The new SW's
+        // activate handler force-reloads the page, so users always run the
+        // latest bundle without manual intervention.
+        try { reg.update(); } catch {}
+      }).catch(() => {});
     }
   }, []);
 
