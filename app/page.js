@@ -2496,7 +2496,16 @@ export default function SurfApp() {
            so the morph is smooth. Content stays readable: reason clamps to
            2 lines, face stays visible but tiny, metric values stay, subs
            fade out. */
-        .sticky-info.compact { padding-top: 2px; padding-bottom: 2px; background: rgba(238,244,248,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .sticky-info.compact {
+          padding-top: 2px; padding-bottom: 2px;
+          /* Solid var(--bg) fallback for older browsers; modern ones blend
+             the theme bg with ~8% transparency so the sticky dock still
+             feels slightly glassy while staying in-palette. */
+          background: var(--bg);
+          background: color-mix(in srgb, var(--bg) 92%, transparent);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+        }
         .sticky-info .face-height,
         .sticky-info .metrics,
         .sticky-info .temp-strip,
