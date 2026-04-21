@@ -370,12 +370,15 @@ function Loaded({
   const verdict = coherentVerdict(hour);
   const [scoreOpen, setScoreOpen] = useState(false);
 
+  // Quick-picker state lives HERE so `effectiveLevel` can reference it
+  // below without a forward-reference ReferenceError.
+  const [userLevelQuick, setUserLevelQuick] = useState(() => userLevel || "int");
+  useEffect(() => { if (userLevel) setUserLevelQuick(userLevel); }, [userLevel]);
+
   // Personal advice: if the user picked a level we build a sentence from the
-  // prod i18n keys and show it as the sticky-bar reason text. Fallback to the
-  // verdict.sub when no level picked or when an i18n key is missing.
-  // Map the quick-picker 3-letter code to a full prod level so the advice
-  // system always has a level to work with, even before the user opens
-  // the level sheet.
+  // prod i18n keys and show it as the sticky-bar reason text. Map the quick-
+  // picker 3-letter code to a full prod level so the advice system always
+  // has a level to work with, even before the user opens the level sheet.
   const QUICK_TO_FULL = { beg: "beginner", eint: "early_int", int: "intermediate", adv: "advanced", exp: "expert" };
   const effectiveLevel = userLevel || QUICK_TO_FULL[userLevelQuick] || "intermediate";
 
@@ -419,8 +422,6 @@ function Loaded({
   }, []);
 
   const isFav = favorites.includes(spot.id);
-  const [userLevelQuick, setUserLevelQuick] = useState(() => userLevel || "int");
-  useEffect(() => { if (userLevel) setUserLevelQuick(userLevel); }, [userLevel]);
 
   async function shareSpot() {
     const url = `${window.location.origin}/v2?spot=${encodeURIComponent(spot.id)}`;
