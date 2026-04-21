@@ -1623,6 +1623,31 @@ export default function SurfApp() {
     /* eslint-disable-next-line */
   }, [spot.id]);
 
+  // Auto-refresh the forecast when the tab comes back from the background or
+  // the window regains focus. Cheap guard: only re-fetch if the last fetch
+  // was more than 10 min ago, so flipping between tabs doesn't hammer the API.
+  useEffect(() => {
+    const STALE_MS = 10 * 60 * 1000;
+    let lastFetchAt = Date.now();
+    const refetchIfStale = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastFetchAt < STALE_MS) return;
+      lastFetchAt = Date.now();
+      fetchAllDays();
+    };
+    const onVis = () => refetchIfStale();
+    const onFocus = () => refetchIfStale();
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onFocus);
+    // Mark the first fetch timestamp now that this effect is set up.
+    lastFetchAt = Date.now();
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onFocus);
+    };
+    /* eslint-disable-next-line */
+  }, [spot.id]);
+
   if (loading) return (
     <div
       className="load-wrap"
