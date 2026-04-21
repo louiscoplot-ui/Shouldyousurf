@@ -1512,10 +1512,13 @@ export default function SurfApp() {
       const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
 
       const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
-        fetch(pastMarineUrl).catch(() => null),
-        fetch(pastWindUrl).catch(() => null),
-        fetch(futureMarineUrl),
-        fetch(futureWindUrl),
+        // `cache: "no-store"` + a rolling timestamp param forces every open
+        // of the app to hit Open-Meteo fresh, so two devices always see the
+        // same up-to-date forecast — no browser/CDN cache between them.
+        fetch(pastMarineUrl  + `&_=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+        fetch(pastWindUrl    + `&_=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+        fetch(futureMarineUrl + `&_=${Date.now()}`, { cache: "no-store" }),
+        fetch(futureWindUrl   + `&_=${Date.now()}`, { cache: "no-store" }),
       ]);
 
       if (!futureMarineRes.ok) throw new Error(`Marine API: HTTP ${futureMarineRes.status}`);
