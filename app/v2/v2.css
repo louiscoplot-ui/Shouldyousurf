@@ -515,3 +515,28 @@ button, input, select { font-family: inherit; color: inherit; }
 .sheet-cta { width: 100%; margin-top: 18px; padding: 14px; background: var(--accent); color: #f5ede1; border: none; border-radius: 10px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; cursor: pointer; }
 .sheet-cta:hover { background: #1d6a5b; }
 .sheet-cta:active { transform: scale(0.98); }
+
+/* ───────────── v2-stage overrides for Next.js hosting ───────────── */
+/* The prototype relied on an inline <style> in index.html to centre the
+   phone frame and colour the page background. Our Next.js root layout
+   already sets body { background: #eef4f8; margin: 0 } so we recreate
+   the centred stage here instead. */
+.v2-stage {
+  min-height: 100vh;
+  padding: 40px 24px 80px;
+  background: #e7dcc5;
+  background-image: radial-gradient(900px 600px at 80% -10%, #f7ecd4, #e4d6b8 65%, #d8c8a6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* On real phones the 390×844 iPhone mock is pointless — collapse the frame,
+   drop the status bar, and let the content fill the screen. */
+@media (max-width: 640px) {
+  .v2-stage { padding: 0; background: var(--bg); background-image: none; }
+  .phone { width: 100%; height: auto; min-height: 100vh; border: none; border-radius: 0; box-shadow: none; background-image: none; background: var(--bg); }
+  .phone::before { display: none; }
+  .viewport { position: static; inset: auto; padding-top: 0; height: auto; overflow: visible; }
+  .status { display: none; }
+}
