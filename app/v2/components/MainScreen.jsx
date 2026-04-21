@@ -37,21 +37,7 @@ import {
   getPersonalVerdict,
   getTideModifier,
   fmtLongDay,
-  mToFt,
-  estimateFaceHeight,
 } from "../lib/prodScoring";
-
-// Maps face-height ft → v1 i18n key (fh_1 … fh_7) so the hint line below the
-// big 6–8 ft number reads the same across all 12 languages.
-function faceHintKey(ft) {
-  if (ft < 2)  return "fh_1";
-  if (ft < 3)  return "fh_2";
-  if (ft < 4)  return "fh_3";
-  if (ft < 6)  return "fh_4";
-  if (ft < 8)  return "fh_5";
-  if (ft < 12) return "fh_6";
-  return "fh_7";
-}
 
 const DEFAULT_SPOT = BREAKS.find((b) => b.id === "trigg") || BREAKS[0];
 
@@ -430,10 +416,6 @@ function Loaded({
     );
   }, [effectiveLevel, hour, effectiveSpot, day.hours, t, verdict.sub]);
 
-  // Face hint line (i18n — same wording as v1 across all 12 languages).
-  const faceFtHigh = hour.faceFtHigh;
-  const faceHint = t(faceHintKey(faceFtHigh));
-
   const sibSentinelRef = useRef(null);
   const [sibStuck, setSibStuck] = useState(false);
   useEffect(() => {
@@ -560,14 +542,13 @@ function Loaded({
           hour={hour}
           swapKey={swapKey}
           reasonText={personalReason}
-          faceHint={faceHint}
           stuck={sibStuck}
-          allHours={day.hours}
+          dayHours={day.hours}
+          allHours={payload.days.flatMap((d) => d.hours)}
           sunByDay={payload.sunByDay}
           tz={spot.timezone || "Australia/Perth"}
           t={t}
           effectiveSpot={effectiveSpot}
-          userLevel={userLevel || userLevelQuick}
         />
 
         <DrivingChips hour={hour}/>

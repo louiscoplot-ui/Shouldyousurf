@@ -472,7 +472,8 @@ button, input, select { font-family: inherit; color: inherit; }
   transition: font-size 240ms cubic-bezier(.4,0,.2,1);
 }
 .C.stuck .C-m-val .C-unit { font-size: 9px; }
-.C-tide-arrow { opacity: 0.65; margin-right: 2px; font-size: 13px; }
+.C-tide-arrow { opacity: 0.65; margin-right: 2px; font-size: 13px; color: var(--text-mu); }
+.C-trend { font-size: 13px; color: var(--text); opacity: 0.55; margin-left: 4px; line-height: 1; font-weight: 500; }
 .C-m-sub {
   font-size: 11px; color: var(--text); opacity: 0.72;
   margin-top: 3px; line-height: 1.35; font-weight: 500;

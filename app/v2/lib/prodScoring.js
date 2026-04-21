@@ -183,6 +183,15 @@ export function tideTrend(hours, sel) {
   return diff > 0 ? "rising" : "falling";
 }
 
+// v1 getWindTypeKey — returns translation key ("offshore"/"onshore"/"cross_shore")
+// so the wind sub can read "S · cross-shore" in 12 languages.
+export function getWindTypeKey(sel, spot) {
+  const d = Math.abs(((sel.windDir - spot.offshoreWindDir + 540) % 360) - 180);
+  if (d <= 45) return "offshore";
+  if (d >= 135) return "onshore";
+  return "cross_shore";
+}
+
 export function getLevel(s, h, spot) {
   if (h && spot) {
     const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
