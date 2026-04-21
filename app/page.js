@@ -2212,7 +2212,7 @@ export default function SurfApp() {
         .mono { font-family: 'JetBrains Mono', monospace; }
         .serif { font-family: 'Fraunces', serif; font-optical-sizing: auto; font-variation-settings: "SOFT" 50; }
 
-        .page { min-height: 100vh; background: var(--bg); background-image: linear-gradient(180deg, #eef4f8 0%, #e6eff5 100%); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+        .page { min-height: 100vh; background: var(--bg); background-image: linear-gradient(180deg, var(--bg) 0%, var(--bg-el) 100%); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
         .wrap { max-width: 440px; margin: 0 auto; padding: 36px 20px 100px; }
 
         .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: dotBounce 1.2s infinite ease-in-out; }
