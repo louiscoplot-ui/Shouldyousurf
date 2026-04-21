@@ -1233,6 +1233,30 @@ const THEMES = [
   { key: "forest",     name: "Forest",            tag: "Mossy · Topographic",     dots: ["#3d5a2f", "#c39641", "#e8e5cf"] },
 ];
 
+// Tween a numeric value over `durationMs` with ease-out-cubic. Used for
+// counting the score up/down smoothly when the user scrubs hours or days
+// instead of the number just snapping to the new value.
+function useTween(target, durationMs = 380) {
+  const [val, setVal] = useState(target);
+  const fromRef = useRef(target);
+  const rafRef = useRef(null);
+  useEffect(() => {
+    fromRef.current = val;
+    const start = performance.now();
+    const from = fromRef.current;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setVal(from + (target - from) * eased);
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => rafRef.current && cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+  return val;
+}
+
 function ThemeSwitcher({ theme, setTheme }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
@@ -1828,6 +1852,7 @@ export default function SurfApp() {
   const inferred = inferSpotProfile(data.hours);
   const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
   const { score, notes } = scoreSurf(sel, effectiveSpot, selDayTideCtx);
+  const tweenedScore = Math.round(useTween(score, 380));
   const level = getLevel(score, sel, effectiveSpot);
   const levelMatrix = surfabilityByLevel(sel, effectiveSpot);
   // Best window must fall within usable daylight — from 1h before sunrise up
@@ -1960,7 +1985,7 @@ export default function SurfApp() {
           <div className="verdict-row">
             <div className="verdict-main serif" style={{ color: level.color }}>{t(level.labelKey)}</div>
             <button className="verdict-score mono" onClick={() => setScoreExplainer(v => !v)}>
-              <strong style={{ color: level.color }}>{score}</strong>/{t("score_lbl")} 100
+              <strong style={{ color: level.color }}>{tweenedScore}</strong>/{t("score_lbl")} 100
               <span className="score-chev">{scoreExplainer ? "▲" : "▼"}</span>
             </button>
           </div>
@@ -2532,13 +2557,34 @@ export default function SurfApp() {
         .sticky-info.compact .metric-label{ font-size: 8px; margin-bottom: 1px; letter-spacing: 0.16em; }
         .sticky-info.compact .metric-value{ font-size: 13px; line-height: 1; }
         .sticky-info.compact .metric-sub  { font-size: 9px; margin-top: 1px; line-height: 1.25; }
-        /* Temp strip (Air / Water / Tide / Daylight / Current) */
+        /* Temp strip (Air / Water / Tide / Daylight / Current) — in compact,
+           each cell becomes an inline flex: LABEL VALUE SUB on one baseline.
+           Saves one line per cell (3-line Tide → 1 line) and looks cleaner.
+           flex-wrap: wrap keeps layouts safe on narrow viewports — a sub
+           that can't fit gracefully falls to its own line. */
         .sticky-info.compact .temp-strip  { padding: 0; }
-        .sticky-info.compact .temp-item   { padding: 2px 0; }
-        .sticky-info.compact .temp-label  { font-size: 8px; margin-bottom: 1px; letter-spacing: 0.16em; }
-        .sticky-info.compact .temp-strip .metric-value { font-size: 12px; line-height: 1; }
-        .sticky-info.compact .temp-strip .metric-sub   { font-size: 8.5px; margin-top: 1px; line-height: 1.2; }
-        .sticky-info.compact .sun-times   { font-size: 9.5px; flex-direction: row; gap: 6px; line-height: 1.1; }
+        .sticky-info.compact .temp-item   {
+          padding: 3px 0 3px 10px;
+          display: flex; align-items: baseline;
+          flex-wrap: wrap; column-gap: 6px; row-gap: 0;
+        }
+        .sticky-info.compact .temp-item:first-child { padding-left: 0; }
+        .sticky-info.compact .temp-label  {
+          font-size: 8px; margin-bottom: 0; letter-spacing: 0.14em;
+          flex: 0 0 auto;
+        }
+        .sticky-info.compact .temp-strip .metric-value {
+          font-size: 12px; line-height: 1;
+          margin-top: 0; flex: 0 0 auto;
+        }
+        .sticky-info.compact .temp-strip .metric-sub   {
+          font-size: 8.5px; margin-top: 0; line-height: 1.1;
+          opacity: 0.78; flex: 0 0 auto;
+        }
+        .sticky-info.compact .sun-times   {
+          font-size: 9.5px; flex-direction: row; gap: 6px; line-height: 1.1;
+          flex: 0 0 auto;
+        }
         /* Reason card (keeps all 3 lines — main + modifier + tide mod) */
         .sticky-info.compact .sticky-tip {
           padding: 5px 10px; font-size: 12px; line-height: 1.35; margin: 2px 0;
