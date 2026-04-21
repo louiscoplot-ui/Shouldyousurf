@@ -367,7 +367,21 @@ button, input, select { font-family: inherit; color: inherit; }
               max-height 240ms cubic-bezier(.4,0,.2,1),
               opacity 180ms ease-out;
 }
-.C-reason b { font-weight: 600; font-style: italic; }
+.C-reason b, .C-reason strong { font-weight: 700; font-style: italic; }
+/* Modifier + tide-modifier — small italic lines below the main reason.
+   They stack under the tip on their own line when at rest, and fade away
+   completely when stuck. */
+.C-reason-mod {
+  display: block; margin-top: 6px;
+  font-size: 11px; color: var(--text-mu);
+  font-style: italic; font-weight: 400;
+  font-family: 'Fraunces', serif;
+  font-variation-settings: "SOFT" 100, "opsz" 14;
+  max-height: 30px; overflow: hidden;
+  transition: opacity 180ms ease-out, max-height 240ms cubic-bezier(.4,0,.2,1),
+              margin 240ms cubic-bezier(.4,0,.2,1);
+}
+.C.stuck .C-reason-mod { opacity: 0; max-height: 0; margin: 0; }
 .C.stuck .C-reason {
   font-size: 11.5px;
   max-height: 1.5em;

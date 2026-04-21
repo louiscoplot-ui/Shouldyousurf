@@ -34,9 +34,24 @@ import { fetchRealForecast } from "../lib/realFetch";
 import {
   getPersonalAdviceKey,
   getPersonalModifier,
+  getPersonalVerdict,
   getTideModifier,
   fmtLongDay,
+  mToFt,
+  estimateFaceHeight,
 } from "../lib/prodScoring";
+
+// Maps face-height ft → v1 i18n key (fh_1 … fh_7) so the hint line below the
+// big 6–8 ft number reads the same across all 12 languages.
+function faceHintKey(ft) {
+  if (ft < 2)  return "fh_1";
+  if (ft < 3)  return "fh_2";
+  if (ft < 4)  return "fh_3";
+  if (ft < 6)  return "fh_4";
+  if (ft < 8)  return "fh_5";
+  if (ft < 12) return "fh_6";
+  return "fh_7";
+}
 
 const DEFAULT_SPOT = BREAKS.find((b) => b.id === "trigg") || BREAKS[0];
 
@@ -382,6 +397,11 @@ function Loaded({
   const QUICK_TO_FULL = { beg: "beginner", eint: "early_int", int: "intermediate", adv: "advanced", exp: "expert" };
   const effectiveLevel = userLevel || QUICK_TO_FULL[userLevelQuick] || "intermediate";
 
+  // Build the sticky-bar reason as a React node so we can highlight the
+  // level name (bold) and the verdict label (coloured) inline — exactly like
+  // the v1 production sticky-tip. Below the main line we append the
+  // modifier (long period, off-angle, glassy, …) and the tide modifier
+  // (tide soon to turn, rising, falling) when they apply.
   const personalReason = useMemo(() => {
     // prodScoring functions want swellDir/windDir in DEGREES — the shaped
     // hour carries them as cardinal strings for display, so rebuild the raw
@@ -390,15 +410,29 @@ function Loaded({
     const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
     const modifierKey = getPersonalModifier(effectiveLevel, hourDeg, effectiveSpot);
     const tideModKey = getTideModifier(hour, day.hours);
-    const main = t(adviceKey);
-    // If translation is missing we still want a human-readable line: fall
-    // back to the generic verdict sub rather than exposing a raw tip_ key.
-    const body = (!main || main === adviceKey || main.startsWith("tip_")) ? verdict.sub : main;
-    const parts = [body];
-    if (modifierKey) { const m = t(modifierKey); if (m && m !== modifierKey) parts.push(m); }
-    if (tideModKey)  { const m = t(tideModKey);  if (m && m !== tideModKey)  parts.push(m); }
-    return parts.filter(Boolean).join(" · ");
+    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    const tipRaw = t(adviceKey);
+    const tipText = (!tipRaw || tipRaw === adviceKey || tipRaw.startsWith("tip_")) ? verdict.sub : tipRaw;
+    const levelLabel = t("lvl_" + effectiveLevel) || effectiveLevel;
+    const verdictLabel = pv === "yes" ? (t("go") || "GO") : pv === "ok" ? (t("maybe") || "MAYBE") : (t("skip") || "SKIP");
+    const verdictColor = pv === "yes" ? "#16a34a" : pv === "ok" ? "#ea580c" : "#dc2626";
+    const modifier = modifierKey ? t(modifierKey) : null;
+    const tideMod = tideModKey ? t(tideModKey) : null;
+    const isValid = (s, k) => s && s !== k && !s.startsWith("tip_");
+    return (
+      <>
+        <strong>{levelLabel}</strong>
+        {" "}<span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span>
+        {" — "}{tipText}
+        {isValid(modifier, modifierKey) && <span className="C-reason-mod">{modifier}</span>}
+        {isValid(tideMod,  tideModKey)  && <span className="C-reason-mod">{tideMod}</span>}
+      </>
+    );
   }, [effectiveLevel, hour, effectiveSpot, day.hours, t, verdict.sub]);
+
+  // Face hint line (i18n — same wording as v1 across all 12 languages).
+  const faceFtHigh = hour.faceFtHigh;
+  const faceHint = t(faceHintKey(faceFtHigh));
 
   const sibSentinelRef = useRef(null);
   const [sibStuck, setSibStuck] = useState(false);
@@ -526,6 +560,7 @@ function Loaded({
           hour={hour}
           swapKey={swapKey}
           reasonText={personalReason}
+          faceHint={faceHint}
           sentinelRef={null}
           stuck={sibStuck}
           userLevel={userLevel || userLevelQuick}
