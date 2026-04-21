@@ -1,7 +1,8 @@
 "use client";
 
 // v2 MainScreen — ported from export-v2/v2-main.jsx.
-// Uses mock data for now; swap in a real forecast fetch when wiring prod data.
+// Now fetches real Open-Meteo data for Trigg Beach (default spot).
+// Falls back to mock if the fetch fails so the preview keeps rendering.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Phone from "./Phone";
@@ -17,16 +18,76 @@ import Footer from "./Footer";
 import { useSwapKey, fmtHour } from "../lib/hooks";
 import { coherentVerdict } from "../lib/verdict";
 import { BREAKS_MOCK, makeForecast } from "../lib/mock";
+import { fetchRealForecast } from "../lib/realFetch";
+
+// Full break info for the live fetch — mirrors app/breaks.js entry for Trigg.
+const TRIGG = {
+  id: "trigg",
+  name: "Trigg Beach",
+  region: "Perth, WA",
+  type: "beach",
+  lat: -31.8826,
+  lng: 115.7519,
+  idealSwellDir: 240,
+  offshoreWindDir: 90,
+  idealTide: "mid-high",
+};
 
 export default function MainScreen() {
-  const spot = BREAKS_MOCK[0];
-  const days = useMemo(() => makeForecast(spot.id), [spot.id]);
-  const [dayIdx, setDayIdx] = useState(() => {
-    const i = days.findIndex((d) => d.label === "Today");
-    return i >= 0 ? i : 0;
-  });
+  const [spot] = useState(TRIGG);
+  const [days, setDays] = useState(null);
+  const [dataSource, setDataSource] = useState("loading"); // "live" | "mock" | "loading"
+  const [fetchError, setFetchError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const real = await fetchRealForecast(spot);
+        if (cancelled) return;
+        if (real && real.length) {
+          setDays(real);
+          setDataSource("live");
+          return;
+        }
+        throw new Error("Empty forecast");
+      } catch (e) {
+        if (cancelled) return;
+        console.warn("[v2] real forecast failed, using mock:", e);
+        setDays(makeForecast(spot.id));
+        setDataSource("mock");
+        setFetchError(e.message || String(e));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [spot]);
+
+  if (!days) {
+    return (
+      <Phone>
+        <div className="wrap" style={{ minHeight: 400, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-mu)", fontStyle: "italic" }}>
+          Reading the ocean…
+        </div>
+      </Phone>
+    );
+  }
+
+  return <Loaded spot={spot} days={days} dataSource={dataSource} fetchError={fetchError}/>;
+}
+
+function Loaded({ spot, days, dataSource, fetchError }) {
+  const todayIdxInit = days.findIndex((d) => d.isToday);
+  const [dayIdx, setDayIdx] = useState(todayIdxInit >= 0 ? todayIdxInit : 0);
   const day = days[dayIdx];
-  const currentHour = 15;
+
+  // "Current hour" for the today column: clamp to day's range
+  const currentHour = (() => {
+    const h = new Date().getHours();
+    const min = day.hours[0].hour;
+    const max = day.hours[day.hours.length - 1].hour;
+    return Math.min(max, Math.max(min, h));
+  })();
+
   const [selectedIdx, setSelectedIdx] = useState(() => {
     const i = day.hours.findIndex((h) => h.hour === currentHour);
     return i >= 0 ? i : day.hours.indexOf(day.bestHour);
@@ -48,7 +109,7 @@ export default function MainScreen() {
     if (el) el.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [selectedIdx]);
 
-  const [ago, setAgo] = useState(3);
+  const [ago, setAgo] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setAgo((a) => a + 1), 60000);
     return () => clearInterval(t);
@@ -91,7 +152,14 @@ export default function MainScreen() {
             <span className="spot-name">{spot.name}</span>
             <span className="spot-chev">▾</span>
           </button>
-          <div className="spot-region">{spot.region} · {spot.type}</div>
+          <div className="spot-region">
+            {spot.region} · {spot.type}
+            {dataSource === "mock" && (
+              <span style={{ marginLeft: 8, color: "var(--coral)", fontStyle: "italic", letterSpacing: 0 }}>
+                · live data unavailable · showing mock
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="rise-2">
@@ -162,3 +230,4 @@ export default function MainScreen() {
     </Phone>
   );
 }
+
