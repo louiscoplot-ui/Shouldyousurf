@@ -486,8 +486,67 @@ button, input, select { font-family: inherit; color: inherit; }
 .C-m-daylight { display: flex; flex-direction: column; gap: 2px; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em; font-weight: 500; color: var(--text); }
 .C-m-daylight span { font-variation-settings: normal; }
 .C.stuck .C-m-daylight { flex-direction: row; gap: 6px; font-size: 9.5px; }
-.C.stuck .C-row-2 > .C-m { padding: 4px 16px; }
-.C.stuck .C-row-temp > .C-m { padding: 4px 10px; }
+
+/* DAYLIGHT → LIGHT when stuck (shorter label fits the 3-col grid cell). */
+.C-lbl-short { display: none; }
+.C.stuck .C-lbl-full { display: none; }
+.C.stuck .C-lbl-short { display: inline; }
+
+/* ── STUCK: flatten the two rows into a single 3×2 grid ──────────────
+   - .C itself becomes a CSS grid with 3 columns
+   - .C-row-2 and .C-row-temp use display:contents so their children
+     become direct grid items of .C
+   - reason (2 cols) + face (1 col) share the top row
+   - row 2: swell | wind | tide
+   - row 3: air | water | daylight
+   - Current hides (grid has no area for it).   */
+.C.stuck {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "reason reason face"
+    "swell  wind   tide"
+    "air    water  daylight";
+  gap: 0;
+  padding: 8px 14px 4px;
+  row-gap: 4px;
+  column-gap: 0;
+}
+.C.stuck .C-row-2,
+.C.stuck .C-row-temp { display: contents; }
+.C.stuck .C-reason { grid-area: reason; margin: 0; padding: 0; background: none; border-left: none; border-radius: 0; }
+.C.stuck .C-face   { grid-area: face; padding: 0; border: none; text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+.C.stuck .C-m[data-cell="swell"]    { grid-area: swell; }
+.C.stuck .C-m[data-cell="wind"]     { grid-area: wind; }
+.C.stuck .C-m[data-cell="tide"]     { grid-area: tide; }
+.C.stuck .C-m[data-cell="air"]      { grid-area: air; }
+.C.stuck .C-m[data-cell="water"]    { grid-area: water; }
+.C.stuck .C-m[data-cell="daylight"] { grid-area: daylight; }
+.C.stuck .C-m[data-cell="current"]  { display: none; }
+.C.stuck .C-m {
+  padding: 4px 10px;
+  border-right: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+/* Hairlines: no right border on last column, no top border on row 2 (first metric row) */
+.C.stuck .C-m[data-cell="tide"],
+.C.stuck .C-m[data-cell="daylight"] { border-right: none; }
+
+/* Reason allows 2 lines of clamp in stuck (not 1) — enough room for the advice. */
+.C.stuck .C-reason {
+  font-size: 11.5px; line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-height: 2.8em;
+  align-self: center;
+}
+/* Face in stuck: face-val only, small, right-aligned */
+.C.stuck .C-face-val { font-size: 20px; }
+.C.stuck .C-face-val .C-unit { font-size: 11px; }
 
 /* prefers-reduced-motion — cut ALL transitions on the bar. */
 @media (prefers-reduced-motion: reduce) {

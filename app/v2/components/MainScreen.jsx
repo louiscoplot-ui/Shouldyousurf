@@ -423,22 +423,28 @@ function Loaded({
     if (!el) return;
     const root = el.closest(".viewport");
     if (!root) return;
-    // scrollTop-based detector with a 24px hysteresis buffer. The threshold
-    // is captured ONCE from the sentinel's offsetTop so the bar's own size
-    // change after going stuck can never feed back into the detection.
-    // rAF coalesces scroll events — no rebound, no flicker, no lag.
-    const threshold = Math.max(0, el.offsetTop - 1);
-    const BUFFER = 24;
+    // Compute the threshold robustly: getBoundingClientRect avoids offsetParent
+    // surprises when the viewport isn't the sentinel's direct offsetParent.
+    const rect = el.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    const threshold = Math.max(0, rect.top - rootRect.top + root.scrollTop - 1);
+    const BUFFER = 60;         // hysteresis: need to scroll up 60px to un-stick
+    const LATCH_MS = 200;      // after a toggle, ignore scroll for 200ms — kills rebound at slow scroll
     let ticking = false;
     let stuck = false;
+    let lastToggle = 0;
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const s = root.scrollTop;
-        if (!stuck && s >= threshold) { stuck = true; setSibStuck(true); }
-        else if (stuck && s < threshold - BUFFER) { stuck = false; setSibStuck(false); }
         ticking = false;
+        if (Date.now() - lastToggle < LATCH_MS) return;
+        const s = root.scrollTop;
+        if (!stuck && s >= threshold) {
+          stuck = true; lastToggle = Date.now(); setSibStuck(true);
+        } else if (stuck && s < threshold - BUFFER) {
+          stuck = false; lastToggle = Date.now(); setSibStuck(false);
+        }
       });
     };
     root.addEventListener("scroll", onScroll, { passive: true });

@@ -108,14 +108,14 @@ export default function StickyInfoBar({
 
       {/* ── Row 2: Swell / Wind (v1 .metrics) ────────────────────────── */}
       <div key={"C-m2-" + swapKey} className="C-row-2 swap-enter">
-        <div className="C-m">
+        <div className="C-m" data-cell="swell">
           <div className="C-m-lbl mono">{tt("swell")}</div>
           <div className="C-m-val">{sel.swellHeight?.toFixed(1)}<span className="C-unit">m</span></div>
           <div className="C-m-sub mono">
             {tt("from")} {degToCompass(sel2.swellDir)} · {sel.swellPeriod?.toFixed(0)}s
           </div>
         </div>
-        <div className="C-m">
+        <div className="C-m" data-cell="wind">
           <div className="C-m-lbl mono">{tt("wind")}</div>
           <div className="C-m-val">
             {windKmh}<span className="C-unit">km/h</span>
@@ -139,19 +139,19 @@ export default function StickyInfoBar({
       {(airTemp != null || seaTemp != null || sunrise || sel.tideM != null || (curVel != null && curVel > 0.05)) && (
         <div key={"C-t-" + swapKey} className="C-row-temp swap-enter">
           {airTemp != null && (
-            <div className="C-m">
+            <div className="C-m" data-cell="air">
               <div className="C-m-lbl mono">{tt("air_temp")}</div>
               <div className="C-m-val">{airTemp}<span className="C-unit">°C</span></div>
             </div>
           )}
           {seaTemp != null && (
-            <div className="C-m">
+            <div className="C-m" data-cell="water">
               <div className="C-m-lbl mono">{tt("water_temp")}</div>
               <div className="C-m-val">{Math.round(seaTemp)}<span className="C-unit">°C</span></div>
             </div>
           )}
           {sel.tideM != null && (
-            <div className="C-m">
+            <div className="C-m" data-cell="tide">
               <div className="C-m-lbl mono">{tt("tide")}</div>
               <div className="C-m-val">
                 {tideArrow && <span className="C-tide-arrow">{tideArrow}</span>}
@@ -165,8 +165,11 @@ export default function StickyInfoBar({
             </div>
           )}
           {sunrise && sunset && (
-            <div className="C-m">
-              <div className="C-m-lbl mono">{tt("daylight")}</div>
+            <div className="C-m" data-cell="daylight">
+              <div className="C-m-lbl mono">
+                <span className="C-lbl-full">{tt("daylight")}</span>
+                <span className="C-lbl-short">{tt("light") || "LIGHT"}</span>
+              </div>
               <div className="C-m-val C-m-daylight mono">
                 <span>↑{sunrise}</span>
                 <span>↓{sunset}</span>
@@ -174,7 +177,7 @@ export default function StickyInfoBar({
             </div>
           )}
           {curVel != null && curVel > 0.05 && (
-            <div className="C-m">
+            <div className="C-m" data-cell="current">
               <div className="C-m-lbl mono">{tt("current")}</div>
               <div className="C-m-val">{(curVel * 3.6).toFixed(1)}<span className="C-unit">km/h</span></div>
               <div className="C-m-sub mono">{degToCompass(sel.currentDir)}</div>
