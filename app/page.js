@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { BREAKS, COUNTRIES, findBreak } from "./breaks";
 import { LANGUAGES, getT, EN_TEMPLATE } from "./i18n";
 
@@ -1189,17 +1190,68 @@ const THEMES = [
 
 function ThemeSwitcher({ theme, setTheme }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const btnRef = useRef(null);
+  const menuRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
   const cur = THEMES.find(t => t.key === theme) || THEMES[0];
+
+  // Recompute anchor coords whenever the popover opens (handles scroll/resize).
   useEffect(() => {
     if (!open) return;
-    const onClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const update = () => {
+      if (!btnRef.current) return;
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => {
+      if (menuRef.current?.contains(e.target)) return;
+      if (btnRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
   }, [open]);
+
+  const menu = open && typeof document !== "undefined" ? createPortal(
+    <div
+      ref={menuRef}
+      className="theme-menu"
+      style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 2147483647 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="tm-title">Palette</div>
+      {THEMES.map(th => (
+        <button key={th.key} className={`tm-row ${theme === th.key ? "active" : ""}`}
+          onClick={() => { setTheme(th.key); setTimeout(() => setOpen(false), 160); }}>
+          <span className="tm-dots">
+            {th.dots.map((c, i) => <span key={i} style={{ background: c }}/>)}
+          </span>
+          <span className="tm-body">
+            <span className="tm-name">{th.name}</span>
+            <span className="tm-tag">{th.tag}</span>
+          </span>
+          <span className="tm-check"/>
+        </button>
+      ))}
+    </div>,
+    document.body,
+  ) : null;
+
   return (
-    <div ref={ref} style={{ position: "relative", zIndex: open ? 99999 : "auto" }}>
+    <>
       <button
+        ref={btnRef}
         className="palette-btn"
         aria-label="Change palette"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
@@ -1211,25 +1263,8 @@ function ThemeSwitcher({ theme, setTheme }) {
           <span style={{ background: "var(--text-dim)" }}/>
         </span>
       </button>
-      {open && (
-        <div className="theme-menu" onClick={(e) => e.stopPropagation()}>
-          <div className="tm-title">Palette</div>
-          {THEMES.map(th => (
-            <button key={th.key} className={`tm-row ${theme === th.key ? "active" : ""}`}
-              onClick={() => { setTheme(th.key); setTimeout(() => setOpen(false), 160); }}>
-              <span className="tm-dots">
-                {th.dots.map((c, i) => <span key={i} style={{ background: c }}/>)}
-              </span>
-              <span className="tm-body">
-                <span className="tm-name">{th.name}</span>
-                <span className="tm-tag">{th.tag}</span>
-              </span>
-              <span className="tm-check"/>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      {menu}
+    </>
   );
 }
 
