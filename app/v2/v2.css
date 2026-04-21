@@ -274,10 +274,10 @@ button, input, select { font-family: inherit; color: inherit; }
    `.stuck` switches it to position:sticky so it stays pinned.
    The bar sits inside .viewport and sticks under the 50px status-bar area. */
 .sib {
-  /* Stable horizontal geometry — we use negative inline margin + equal
-     padding in BOTH states so the bar width never changes. Only the
-     vertical padding / background / radius / shadow morph on stuck —
-     which browsers can transition without a horizontal lurch. */
+  /* Stable geometry in BOTH states — same padding, same height. The
+     .stuck class only changes cosmetic properties (radius, border-top,
+     background opacity, box-shadow). This eliminates the layout reflow
+     that was making the sentinel flip-flop and causing the bounce. */
   margin: 16px -22px 0;
   padding: 12px 22px 10px;
   background: var(--paper);
@@ -290,13 +290,12 @@ button, input, select { font-family: inherit; color: inherit; }
   top: 0;
   z-index: 80;
   animation: riseIn 0.5s cubic-bezier(.3,.8,.3,1) 0.45s backwards;
-  transition: padding 0.24s cubic-bezier(.3,.8,.3,1),
-              border-radius 0.24s cubic-bezier(.3,.8,.3,1),
+  transition: border-radius 0.24s cubic-bezier(.3,.8,.3,1),
               background 0.24s cubic-bezier(.3,.8,.3,1),
               box-shadow 0.28s cubic-bezier(.3,.8,.3,1);
 }
 .sib.stuck {
-  padding: 8px 22px 6px;
+  /* No padding change — keeps the height identical so nothing reflows. */
   border-radius: 0;
   border-top: none;
   background: rgba(251,245,234,0.94);
@@ -564,10 +563,13 @@ button, input, select { font-family: inherit; color: inherit; }
 }
 .m-sub, .sib-m-sub { color: var(--text) !important; opacity: 0.84 !important; font-weight: 500 !important; }
 .m-val, .m-val *, .sib-m-val, .sib-m-val *,
-.fh-val, .fh-val *, .hly-ex-val, .hly-ex-val *,
-.score-num, .score-num * {
+.fh-val, .fh-val *, .hly-ex-val, .hly-ex-val * {
   color: var(--text) !important;
 }
+/* .score-num is intentionally excluded — it takes the verdict colour so the
+   big number matches the word above it ("Pumping" green, "Flat" terracotta…).
+   The /100 and ⓘ keep the default text colour via .score-den/.score-info. */
+.score-den, .score-info { color: var(--text-mu) !important; }
 .m-val .unit, .sib-m-val .unit, .fh-val .unit, .hly-ex-val .unit {
   opacity: 0.82 !important;
 }

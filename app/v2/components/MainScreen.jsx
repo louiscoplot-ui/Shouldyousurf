@@ -372,14 +372,16 @@ function Loaded({
     if (!el) return;
     const root = el.closest(".viewport");
     if (!root) return;
-    function onScroll() {
-      const rect = el.getBoundingClientRect();
-      const rootRect = root.getBoundingClientRect();
-      setSibStuck(rect.top <= rootRect.top);
-    }
-    root.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => root.removeEventListener("scroll", onScroll);
+    // IntersectionObserver is smoother than a scroll handler — it fires once
+    // per crossing (not every pixel of scroll) and doesn't flicker when the
+    // bar's size changes. isIntersecting=false = sentinel is above the top
+    // edge = bar is stuck.
+    const io = new IntersectionObserver(
+      ([entry]) => setSibStuck(!entry.isIntersecting),
+      { root, rootMargin: "0px 0px -100% 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   const isFav = favorites.includes(spot.id);
