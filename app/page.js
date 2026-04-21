@@ -2519,34 +2519,34 @@ export default function SurfApp() {
                       font-size 260ms cubic-bezier(.4,0,.2,1),
                       line-height 260ms cubic-bezier(.4,0,.2,1);
         }
-        /* Face-height block: tighten padding, shrink type. Keep label, value,
-           conv sub, and italic hint — all visible. */
-        .sticky-info.compact .face-height { padding: 3px 0 4px; }
-        .sticky-info.compact .face-label  { font-size: 8px; margin-bottom: 1px; }
-        .sticky-info.compact .face-value  { font-size: 20px; }
-        .sticky-info.compact .face-sub    { font-size: 9px; margin-top: 1px; }
-        .sticky-info.compact .face-hint   { font-size: 9.5px; margin-top: 2px; line-height: 1.3; }
+        /* Face-height block — tight padding, small label, decent value size,
+           label and sub sit almost inline with the value. */
+        .sticky-info.compact .face-height { padding: 2px 0 3px; }
+        .sticky-info.compact .face-label  { font-size: 8px; margin-bottom: 0; letter-spacing: 0.16em; }
+        .sticky-info.compact .face-value  { font-size: 19px; line-height: 1; }
+        .sticky-info.compact .face-sub    { font-size: 9px; margin-top: 0; line-height: 1.2; }
+        .sticky-info.compact .face-hint   { font-size: 9px; margin-top: 1px; line-height: 1.25; }
         /* Metrics row (Swell / Wind) */
-        .sticky-info.compact .metrics     { padding: 2px 0; }
-        .sticky-info.compact .metric      { padding: 4px 0; }
-        .sticky-info.compact .metric-label{ font-size: 8px; margin-bottom: 2px; }
-        .sticky-info.compact .metric-value{ font-size: 13px; }
-        .sticky-info.compact .metric-sub  { font-size: 9px; margin-top: 2px; line-height: 1.3; }
+        .sticky-info.compact .metrics     { padding: 1px 0; }
+        .sticky-info.compact .metric      { padding: 3px 0; }
+        .sticky-info.compact .metric-label{ font-size: 8px; margin-bottom: 1px; letter-spacing: 0.16em; }
+        .sticky-info.compact .metric-value{ font-size: 13px; line-height: 1; }
+        .sticky-info.compact .metric-sub  { font-size: 9px; margin-top: 1px; line-height: 1.25; }
         /* Temp strip (Air / Water / Tide / Daylight / Current) */
         .sticky-info.compact .temp-strip  { padding: 0; }
-        .sticky-info.compact .temp-item   { padding: 3px 0; }
-        .sticky-info.compact .temp-label  { font-size: 8px; margin-bottom: 2px; }
-        .sticky-info.compact .temp-strip .metric-value { font-size: 12px; }
+        .sticky-info.compact .temp-item   { padding: 2px 0; }
+        .sticky-info.compact .temp-label  { font-size: 8px; margin-bottom: 1px; letter-spacing: 0.16em; }
+        .sticky-info.compact .temp-strip .metric-value { font-size: 12px; line-height: 1; }
         .sticky-info.compact .temp-strip .metric-sub   { font-size: 8.5px; margin-top: 1px; line-height: 1.2; }
-        .sticky-info.compact .sun-times   { font-size: 9.5px; flex-direction: row; gap: 6px; }
-        /* Reason card (keeps all its lines — main + modifier + tide mod) */
+        .sticky-info.compact .sun-times   { font-size: 9.5px; flex-direction: row; gap: 6px; line-height: 1.1; }
+        /* Reason card (keeps all 3 lines — main + modifier + tide mod) */
         .sticky-info.compact .sticky-tip {
-          padding: 6px 10px; font-size: 12px; line-height: 1.4; margin: 3px 0;
+          padding: 5px 10px; font-size: 12px; line-height: 1.35; margin: 2px 0;
         }
         /* Danger banner: keeps message, loses pulse, tighter padding */
         .sticky-info.compact .danger-banner {
-          padding: 5px 10px; font-size: 11px; margin: 3px 0;
-          animation: none; border-width: 1px;
+          padding: 4px 10px; font-size: 11px; margin: 2px 0;
+          animation: none; border-width: 1px; line-height: 1.3;
         }
         .face-height { padding: 7px 0 6px; text-align: center; border-bottom: 1px solid var(--border); animation: rise 0.5s 0.2s ease both; }
         .face-label { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
