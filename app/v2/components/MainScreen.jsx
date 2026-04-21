@@ -15,6 +15,7 @@ import TideCurve from "./TideCurve";
 import LevelMatrix from "./LevelMatrix";
 import ScoreSheet from "./ScoreSheet";
 import Footer from "./Footer";
+import ThemeSwitcher from "./ThemeSwitcher";
 import { useSwapKey, fmtHour } from "../lib/hooks";
 import { coherentVerdict } from "../lib/verdict";
 import { BREAKS_MOCK, makeForecast } from "../lib/mock";
@@ -33,7 +34,7 @@ const TRIGG = {
   idealTide: "mid-high",
 };
 
-export default function MainScreen() {
+export default function MainScreen({ theme, setTheme }) {
   const [spot] = useState(TRIGG);
   const [days, setDays] = useState(null);
   const [dataSource, setDataSource] = useState("loading"); // "live" | "mock" | "loading"
@@ -72,10 +73,10 @@ export default function MainScreen() {
     );
   }
 
-  return <Loaded spot={spot} days={days} dataSource={dataSource} fetchError={fetchError}/>;
+  return <Loaded spot={spot} days={days} dataSource={dataSource} fetchError={fetchError} theme={theme} setTheme={setTheme}/>;
 }
 
-function Loaded({ spot, days, dataSource, fetchError }) {
+function Loaded({ spot, days, dataSource, fetchError, theme, setTheme }) {
   const todayIdxInit = days.findIndex((d) => d.isToday);
   const [dayIdx, setDayIdx] = useState(todayIdxInit >= 0 ? todayIdxInit : 0);
   const day = days[dayIdx];
@@ -143,7 +144,7 @@ function Loaded({ spot, days, dataSource, fetchError }) {
           <div className="hdr-actions">
             <button className="ibtn">?</button>
             <button className="ibtn lang"><span>AU</span><span className="on">EN</span></button>
-            <button className="ibtn fav">★</button>
+            <ThemeSwitcher theme={theme} setTheme={setTheme}/>
           </div>
         </div>
 
