@@ -274,12 +274,12 @@ button, input, select { font-family: inherit; color: inherit; }
    `.stuck` switches it to position:sticky so it stays pinned.
    The bar sits inside .viewport and sticks under the 50px status-bar area. */
 .sib {
-  /* Stable geometry in BOTH states — same padding, same height. The
-     .stuck class only changes cosmetic properties (radius, border-top,
-     background opacity, box-shadow). This eliminates the layout reflow
-     that was making the sentinel flip-flop and causing the bounce. */
+  /* Inline margin + equal left/right padding keep the bar width identical
+     in both states, so only vertical geometry transitions. The JS uses
+     scrollTop-based hysteresis (not the sentinel) to toggle .stuck, so the
+     size change doesn't feed back into the toggle and cause a rebound. */
   margin: 16px -22px 0;
-  padding: 12px 22px 10px;
+  padding: 14px 22px 12px;
   background: var(--paper);
   border: 1px solid var(--border);
   border-left: none;
@@ -290,16 +290,35 @@ button, input, select { font-family: inherit; color: inherit; }
   top: 0;
   z-index: 80;
   animation: riseIn 0.5s cubic-bezier(.3,.8,.3,1) 0.45s backwards;
-  transition: border-radius 0.24s cubic-bezier(.3,.8,.3,1),
-              background 0.24s cubic-bezier(.3,.8,.3,1),
-              box-shadow 0.28s cubic-bezier(.3,.8,.3,1);
+  transition: padding 0.32s cubic-bezier(.22,.9,.32,1),
+              border-radius 0.32s cubic-bezier(.22,.9,.32,1),
+              background 0.32s cubic-bezier(.22,.9,.32,1),
+              box-shadow 0.32s cubic-bezier(.22,.9,.32,1);
+}
+.sib > * {
+  transition: opacity 0.28s cubic-bezier(.22,.9,.32,1),
+              max-height 0.32s cubic-bezier(.22,.9,.32,1),
+              transform 0.32s cubic-bezier(.22,.9,.32,1);
 }
 .sib.stuck {
-  /* No padding change — keeps the height identical so nothing reflows. */
+  padding: 8px 22px 8px;
   border-radius: 0;
   border-top: none;
-  background: rgba(251,245,234,0.94);
+  background: rgba(251,245,234,0.96);
   box-shadow: 0 6px 16px -8px rgba(31,58,58,0.22);
+}
+/* When compact: keep the reason visible, fade/shrink the heavy rows below
+   so the bar visually becomes a slim summary. */
+.sib.stuck .sib-face,
+.sib.stuck .sib-grid-4 {
+  max-height: 0; opacity: 0;
+  margin: 0; padding: 0;
+  overflow: hidden; pointer-events: none;
+}
+.sib.stuck .sib-grid-2 {
+  transform: scale(0.92);
+  transform-origin: left center;
+  margin-top: 4px;
 }
 
 /* Reason — the blue-ish intro line in your reference, warmed to the palette */
@@ -566,9 +585,10 @@ button, input, select { font-family: inherit; color: inherit; }
 .fh-val, .fh-val *, .hly-ex-val, .hly-ex-val * {
   color: var(--text) !important;
 }
-/* .score-num is intentionally excluded — it takes the verdict colour so the
-   big number matches the word above it ("Pumping" green, "Flat" terracotta…).
-   The /100 and ⓘ keep the default text colour via .score-den/.score-info. */
+/* .score-num inherits from .score-box, which is coloured inline with the
+   verdict colour. .score-den and .score-info stay in a neutral muted tone
+   so only the big number follows the score band colour. */
+.score-num { color: inherit !important; }
 .score-den, .score-info { color: var(--text-mu) !important; }
 .m-val .unit, .sib-m-val .unit, .fh-val .unit, .hly-ex-val .unit {
   opacity: 0.82 !important;
@@ -1008,3 +1028,59 @@ button, input, select { font-family: inherit; color: inherit; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* ── Loading screen ── themed, animated, keeps the palette. */
+.v2-loading {
+  min-height: 640px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 22px; padding: 80px 40px;
+  color: var(--text);
+  background: var(--paper);
+  animation: fadeIn 0.4s ease both;
+}
+.v2-loading-brand {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic; font-weight: 500;
+  font-size: 36px; line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  text-align: center;
+  font-variation-settings: "SOFT" 100, "opsz" 144;
+  animation: loadingBrand 0.6s cubic-bezier(.22,.9,.32,1) both;
+}
+.v2-loading-wave {
+  width: 180px; height: 40px;
+  color: var(--accent);
+  filter: drop-shadow(0 2px 6px rgba(45,122,110,0.18));
+}
+.v2-loading-dots {
+  display: flex; gap: 8px;
+  animation: fadeIn 0.6s 0.2s ease both;
+}
+.v2-loading-dots span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--coral);
+  animation: loadingDot 1.2s ease-in-out infinite;
+}
+.v2-loading-dots span:nth-child(1) { background: var(--accent); }
+.v2-loading-dots span:nth-child(2) { background: var(--honey); animation-delay: 0.15s; }
+.v2-loading-dots span:nth-child(3) { background: var(--coral); animation-delay: 0.3s; }
+.v2-loading-text {
+  font-size: 10px;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--text-dim); font-weight: 600;
+  animation: loadingFade 1.8s ease-in-out infinite;
+}
+@keyframes loadingBrand {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes loadingDot {
+  0%, 100% { transform: scale(0.6); opacity: 0.45; }
+  40%      { transform: scale(1.1); opacity: 1; }
+}
+@keyframes loadingFade {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}

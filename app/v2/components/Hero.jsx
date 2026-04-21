@@ -14,9 +14,9 @@ export function VerdictHero({ verdict, hour, swapKey, onOpenScore }) {
         <button
           className="score-box"
           onClick={onOpenScore}
-          style={{ borderColor: verdict.color + "55" }}
+          style={{ color: verdict.color, borderColor: verdict.color + "55" }}
         >
-          <span className="score-num" style={{ color: verdict.color }}>{score}</span>
+          <span className="score-num">{score}</span>
           <span className="score-den">/100</span>
           <span className="score-info" aria-hidden="true">ⓘ</span>
         </button>
