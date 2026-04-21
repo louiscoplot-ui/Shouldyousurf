@@ -1733,10 +1733,6 @@ export default function SurfApp() {
               <button className="lang-btn" onClick={() => setLangOpen(true)}>
                 {(LANGUAGES.find(l => l.code === lang) || customLangs.find(c => c.code === lang))?.flag ?? "🌐"} {lang.toUpperCase()}
               </button>
-              <button
-                className={`fav-btn ${isFav ? "active" : ""}`}
-                onClick={() => toggleFav(spot.id)}
-              >{isFav ? "★" : "☆"}</button>
               <ThemeSwitcher theme={theme} setTheme={pickTheme}/>
             </div>
           </div>
