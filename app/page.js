@@ -1629,15 +1629,21 @@ export default function SurfApp() {
       const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${encodeURIComponent(tz)}&forecast_days=5`;
       const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
 
+      // 15-second timeout so a stuck network doesn't leave the user on
+      // the loading screen forever — aborted requests throw, which drops
+      // us into the catch block + the error screen with a Retry button.
+      const ctrl = new AbortController();
+      const timeoutId = setTimeout(() => ctrl.abort(), 15000);
       const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
         // `cache: "no-store"` + a rolling timestamp param forces every open
         // of the app to hit Open-Meteo fresh, so two devices always see the
         // same up-to-date forecast — no browser/CDN cache between them.
-        fetch(pastMarineUrl  + `&_=${Date.now()}`, { cache: "no-store" }).catch(() => null),
-        fetch(pastWindUrl    + `&_=${Date.now()}`, { cache: "no-store" }).catch(() => null),
-        fetch(futureMarineUrl + `&_=${Date.now()}`, { cache: "no-store" }),
-        fetch(futureWindUrl   + `&_=${Date.now()}`, { cache: "no-store" }),
+        fetch(pastMarineUrl  + `&_=${Date.now()}`, { cache: "no-store", signal: ctrl.signal }).catch(() => null),
+        fetch(pastWindUrl    + `&_=${Date.now()}`, { cache: "no-store", signal: ctrl.signal }).catch(() => null),
+        fetch(futureMarineUrl + `&_=${Date.now()}`, { cache: "no-store", signal: ctrl.signal }),
+        fetch(futureWindUrl   + `&_=${Date.now()}`, { cache: "no-store", signal: ctrl.signal }),
       ]);
+      clearTimeout(timeoutId);
 
       if (!futureMarineRes.ok) throw new Error(`Marine API: HTTP ${futureMarineRes.status}`);
       if (!futureWindRes.ok) throw new Error(`Wind API: HTTP ${futureWindRes.status}`);
@@ -1734,8 +1740,13 @@ export default function SurfApp() {
       }, 50);
     } catch (e) {
       setError(true); setErrorDetail(e.message || String(e));
+      // Error screen counts as 'app ready' — it's showing, user can retry.
+      if (typeof window !== "undefined") window.__appReady = true;
     } finally {
       setLoading(false);
+      // Signal to the recovery kill-switch in layout.js that the app is
+      // healthy — it won't nuke SW/caches + reload anymore.
+      if (typeof window !== "undefined") window.__appReady = true;
     }
   }
 

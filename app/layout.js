@@ -63,6 +63,30 @@ export default function RootLayout({ children }) {
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'G-77RCEQZ2YS');
+          // Recovery kill-switch. If the app hasn't signalled ready within
+          // 12s (window.__appReady = true, set from page.js after first
+          // data fetch completes OR the error screen renders), we assume
+          // the user is stuck on a corrupt cached bundle / stale SW and
+          // clear everything + reload. One-shot, per page load.
+          (function() {
+            var bailedAlready = false;
+            setTimeout(function(){
+              if (window.__appReady || bailedAlready) return;
+              bailedAlready = true;
+              try {
+                if ("serviceWorker" in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs){
+                    regs.forEach(function(r){ r.unregister(); });
+                  });
+                }
+                if ("caches" in window) {
+                  caches.keys().then(function(ks){
+                    return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+                  }).then(function(){ location.reload(); });
+                } else { location.reload(); }
+              } catch(e) { location.reload(); }
+            }, 12000);
+          })();
         `}} />
       </head>
       <body>{children}</body>
