@@ -347,10 +347,13 @@ function fmtLongDay(isoDate, tz, t) {
   const dayDate = new Date(Date.UTC(y, mo - 1, d, 12));
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
   const diffDays = Math.round((dayDate.getTime() - new Date(todayStr + "T12:00:00Z").getTime()) / (1000*60*60*24));
-  if (diffDays === 0) return t("today");
-  if (diffDays === 1) return t("tomorrow");
-  if (diffDays === -1) return t("yesterday");
-  return dayDate.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  const dmy = `${String(d).padStart(2, "0")}/${String(mo).padStart(2, "0")}/${y}`;
+  // Today / tomorrow / yesterday stay as friendly words followed by the
+  // explicit jj/mm/aaaa so the header never shows a purely relative label.
+  if (diffDays === 0)  return `${t("today")} · ${dmy}`;
+  if (diffDays === 1)  return `${t("tomorrow")} · ${dmy}`;
+  if (diffDays === -1) return `${t("yesterday")} · ${dmy}`;
+  return dmy;
 }
 
 function describeFaceHeightKey(ft) {
@@ -381,7 +384,9 @@ function unifiedTabLabel(isoDate, tz, t) {
   const [y, mo, d] = isoDate.split("-").map(Number);
   const dayDate = new Date(Date.UTC(y, mo - 1, d, 12));
   const diffDays = Math.round((dayDate.getTime() - new Date(todayStr + "T12:00:00Z").getTime()) / (1000*60*60*24));
-  const dateStr = `${d}/${mo}`;
+  // Full jj/mm/aaaa on every tab. Font is shrunk in CSS to fit the 54px
+  // cell. Year gives unambiguous context for historical + forward days.
+  const dateStr = `${String(d).padStart(2, "0")}/${String(mo).padStart(2, "0")}/${y}`;
   if (diffDays <= -3) return { label: `-${Math.abs(diffDays)}d`, date: dateStr };
   if (diffDays === -2) return { label: "-2d", date: dateStr };
   if (diffDays === -1) return { label: t("yest"), date: dateStr };
@@ -1993,9 +1998,10 @@ export default function SurfApp() {
         </div>
 
         <div className="verdict">
-          {sel.isPast && (
-            <div className="history-badge mono">{t("historical")} · {sel.time.split("T")[0]}</div>
-          )}
+          {sel.isPast && (() => {
+            const [yy, mm, dd] = sel.time.split("T")[0].split("-");
+            return <div className="history-badge mono">{t("historical")} · {dd}/{mm}/{yy}</div>;
+          })()}
           <div className="verdict-label mono" style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span>{fmtLongDay(sel.time.split("T")[0], tz, t)}</span>
             <select className="hour-select mono" value={data.hours.indexOf(sel)}
@@ -2472,7 +2478,7 @@ export default function SurfApp() {
         .tab.past-tab { opacity: 0.6; }
         .tab-day { font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px; text-align: center; }
         .tab.active .tab-day { color: var(--text); }
-        .tab-date { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); letter-spacing: 0.02em; }
+        .tab-date { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: var(--text-dim); letter-spacing: 0; font-variant-numeric: tabular-nums; }
         .tab.active .tab-date { color: var(--text-mu); }
         .tab-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 2px; flex-shrink: 0; }
 
