@@ -1172,3 +1172,128 @@ button, input, select { font-family: inherit; color: inherit; }
   0%, 100% { opacity: 0.45; }
   50%      { opacity: 1; }
 }
+
+/* ── Hourly forecast — horizontal scrollable cards ──────────────
+   Each card = one hour, ~64×80px. Color tone via the --card-color
+   inline custom property + the .hly-card--good/ok/bad modifier that
+   sets the background. Snap-scrolling with momentum on touch.
+   The current-hour card auto-centers via JS scrollIntoView. */
+.hly-cards {
+  display: flex; gap: 8px;
+  padding: 4px 2px 14px;
+  overflow-x: auto; overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; -ms-overflow-style: none;
+  scroll-padding-inline: 50%;
+  margin: 0 -22px; padding-left: 22px; padding-right: 22px;
+  mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+}
+.hly-cards::-webkit-scrollbar { display: none; }
+.hly-card {
+  flex: 0 0 64px;
+  width: 64px; height: 80px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: space-between;
+  padding: 9px 4px 8px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: var(--bg-el);
+  color: var(--text);
+  cursor: pointer; font-family: inherit;
+  scroll-snap-align: center;
+  transition: transform 180ms cubic-bezier(.4,0,.2,1),
+              border-color 180ms cubic-bezier(.4,0,.2,1),
+              background-color 180ms ease-out,
+              box-shadow 180ms ease-out;
+  position: relative;
+}
+.hly-card:hover { background: var(--bg-hi); }
+/* Tone modifiers — tinted backgrounds based on the verdict band. */
+.hly-card--good {
+  background: color-mix(in srgb, var(--v-great, #2d9178) 22%, var(--paper));
+}
+.hly-card--good:hover { background: color-mix(in srgb, var(--v-great, #2d9178) 32%, var(--paper)); }
+.hly-card--ok {
+  background: color-mix(in srgb, var(--v-fun, #a4a558) 26%, var(--paper));
+}
+.hly-card--ok:hover { background: color-mix(in srgb, var(--v-fun, #a4a558) 36%, var(--paper)); }
+.hly-card--bad {
+  background: color-mix(in srgb, var(--v-flat, #b54c3f) 18%, var(--paper));
+}
+.hly-card--bad:hover { background: color-mix(in srgb, var(--v-flat, #b54c3f) 28%, var(--paper)); }
+.hly-card.past { opacity: 0.55; }
+.hly-card.selected {
+  transform: scale(1.06);
+  border-color: var(--card-color, var(--accent));
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--card-color, var(--accent)) 70%, transparent);
+}
+.hly-card-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.04em;
+  color: var(--text); opacity: 0.78; font-weight: 600;
+}
+.hly-card-score {
+  font-family: 'Fraunces', serif;
+  font-weight: 600; font-size: 22px; line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--card-color, var(--text));
+  font-variant-numeric: tabular-nums;
+}
+.hly-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 0.12em;
+  color: var(--card-color, var(--text)); opacity: 0.92;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Compact danger banner ─────────────────────────────────────
+   Single 44px-tall pill: ⚠ + clamped message + See more toggle.
+   Click to expand inline and reveal full detail. Replaces v1 prod's
+   two-block stacked alert that was ~150px tall.    */
+.danger-pill {
+  margin: 8px 0;
+  border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent);
+  background: color-mix(in srgb, var(--bad) 10%, var(--paper));
+  border-radius: 10px;
+  overflow: hidden;
+  transition: background-color 200ms ease-out;
+}
+.danger-pill-row {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 12px;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; color: var(--bad);
+  text-align: left;
+}
+.danger-pill-icon { font-size: 14px; line-height: 1; flex-shrink: 0; }
+.danger-pill-msg {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; font-weight: 700; line-height: 1.3;
+  color: var(--bad);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.danger-pill-toggle {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; letter-spacing: 0.1em;
+  color: var(--bad); opacity: 0.78;
+  text-transform: uppercase; font-weight: 600;
+}
+.danger-pill-chev { font-size: 8px; }
+.danger-pill-row:hover .danger-pill-toggle { opacity: 1; }
+.danger-pill-detail {
+  max-height: 0; overflow: hidden;
+  padding: 0 12px;
+  font-size: 12px; line-height: 1.5;
+  color: var(--text); opacity: 0.92;
+  transition: max-height 280ms cubic-bezier(.4,0,.2,1),
+              padding 280ms cubic-bezier(.4,0,.2,1);
+}
+.danger-pill.open .danger-pill-detail {
+  max-height: 240px; padding: 4px 12px 12px;
+  border-top: 1px dashed color-mix(in srgb, var(--bad) 25%, transparent);
+}

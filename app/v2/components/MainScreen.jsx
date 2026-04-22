@@ -12,6 +12,7 @@ import { getT } from "../../i18n";
 import Phone from "./Phone";
 import { VerdictHero } from "./Hero";
 import StickyInfoBar from "./StickyInfoBar";
+import DangerBanner from "./DangerBanner";
 import { DrivingChips } from "./MetricCards";
 import BestWindow from "./BestWindow";
 import HourlyList from "./HourlyList";
@@ -416,6 +417,23 @@ function Loaded({
     );
   }, [effectiveLevel, hour, effectiveSpot, day.hours, t, verdict.sub]);
 
+  // Compact danger info — shown only to learners (first_timer / beginner /
+  // early_int) when the per-level verdict is SKIP ("no"). Message is a
+  // short always-visible line; detail expands on tap.
+  const danger = useMemo(() => {
+    const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
+    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    const isLearner = effectiveLevel === "first_timer" || effectiveLevel === "beginner" || effectiveLevel === "early_int";
+    if (!(isLearner && pv === "no")) return null;
+    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
+    const raw = t(adviceKey);
+    const tip = (!raw || raw === adviceKey || raw.startsWith("tip_")) ? verdict.sub : raw;
+    return {
+      message: t("danger_banner_short") || "Dangerous for your level",
+      detail: tip,
+    };
+  }, [effectiveLevel, hour, effectiveSpot, t, verdict.sub]);
+
   const sibSentinelRef = useRef(null);
   const [sibStuck, setSibStuck] = useState(false);
   useEffect(() => {
@@ -579,6 +597,8 @@ function Loaded({
         {/* Sentinel — its captured offsetTop is the "lock" threshold. Sits
             directly above the bar in normal flow. scrollTop ≥ threshold ⇒ stuck. */}
         <div ref={sibSentinelRef} aria-hidden="true" style={{ height: 1, pointerEvents: "none" }}/>
+
+        {danger && <DangerBanner message={danger.message} detail={danger.detail}/>}
 
         <StickyInfoBar
           hour={hour}
