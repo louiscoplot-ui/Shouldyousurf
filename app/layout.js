@@ -137,6 +137,21 @@ export default function RootLayout({ children }) {
             React app signals window.__appReady from page.js. */}
         <div id="__preload">
           <div className="pl-brand">Should You Surf?</div>
+          {/* Animated wave — matches the v2 loading screen vibe */}
+          <svg className="pl-wave" width="160" height="36" viewBox="0 0 160 36" preserveAspectRatio="none">
+            <path d="M0,18 Q20,4 40,18 T80,18 T120,18 T160,18" fill="none" stroke="#1558b5" strokeWidth="2" strokeLinecap="round">
+              <animate attributeName="d" dur="3s" repeatCount="indefinite"
+                values="M0,18 Q20,4 40,18 T80,18 T120,18 T160,18;
+                        M0,18 Q20,32 40,18 T80,18 T120,18 T160,18;
+                        M0,18 Q20,4 40,18 T80,18 T120,18 T160,18"/>
+            </path>
+            <path d="M0,24 Q20,14 40,24 T80,24 T120,24 T160,24" fill="none" stroke="#0c2a5e" strokeWidth="1.4" strokeLinecap="round" opacity="0.45">
+              <animate attributeName="d" dur="4.4s" repeatCount="indefinite"
+                values="M0,24 Q20,34 40,24 T80,24 T120,24 T160,24;
+                        M0,24 Q20,14 40,24 T80,24 T120,24 T160,24;
+                        M0,24 Q20,34 40,24 T80,24 T120,24 T160,24"/>
+            </path>
+          </svg>
           <div className="pl-dots"><span/><span/><span/></div>
           <p className="pl-text">Reading the ocean…</p>
         </div>

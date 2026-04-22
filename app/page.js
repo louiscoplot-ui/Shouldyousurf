@@ -1781,6 +1781,45 @@ export default function SurfApp() {
     /* eslint-disable-next-line */
   }, [spot.id]);
 
+  // ── Scoring computation, hoisted ABOVE the early-return guards so the
+  // useTween hook below is called unconditionally on every render
+  // (Rules of Hooks). All steps null-guard `data` / `dayHours` / `sel`
+  // so they're safe to run during the loading + error states. The
+  // hooks-ordered useTween then gets either the real score or 0.
+  const dayEntries = data?.days || [];
+  const currentDay = dayEntries[activeDay];
+  const dayHours = currentDay ? currentDay[1] : [];
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+  const isToday = currentDay && currentDay[0] === todayStr;
+
+  let sel = null;
+  if (dayHours.length) {
+    if (selected !== null && data?.hours?.[selected]) {
+      sel = data.hours[selected];
+    } else if (pinnedHour !== null) {
+      const padded = String(pinnedHour).padStart(2, "0") + ":";
+      sel = dayHours.find(h => h.time.split("T")[1].startsWith(padded)) || dayHours[0];
+    } else if (isToday) {
+      const nowStr = new Date().toLocaleString("en-CA", { timeZone: tz, hour12: false }).replace(", ", "T");
+      const currentHour = nowStr.split("T")[1].split(":")[0];
+      sel = dayHours.find(h => h.time.split("T")[1].startsWith(currentHour + ":")) || dayHours[0];
+    } else {
+      sel = dayHours.find(h => h.time.split("T")[1].startsWith("08:")) || dayHours[0];
+    }
+  }
+
+  // Effective spot = curated spot + data-inferred swell/offshore profile.
+  const selDayTideCtx = sel ? dayTideCtx(dayHours) : null;
+  const inferred = data?.hours ? inferSpotProfile(data.hours) : null;
+  const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
+  const { score, notes } = sel
+    ? scoreSurf(sel, effectiveSpot, selDayTideCtx)
+    : { score: 0, notes: [] };
+
+  // Score count-up — animates 0 → real score on first paint, then tweens
+  // smoothly when the user scrubs hours/days. Hook called unconditionally.
+  const tweenedScore = Math.round(useTween(score, 380));
+
   if (loading) return (
     <div
       className="load-wrap"
@@ -1835,35 +1874,8 @@ export default function SurfApp() {
     </div>
   );
 
-  const dayEntries = data.days;
-  const currentDay = dayEntries[activeDay];
-  const dayHours = currentDay ? currentDay[1] : [];
-  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
-  const isToday = currentDay && currentDay[0] === todayStr;
-
-  let sel;
-  if (selected !== null && data.hours[selected]) {
-    sel = data.hours[selected];
-  } else if (pinnedHour !== null) {
-    const padded = String(pinnedHour).padStart(2, "0") + ":";
-    sel = dayHours.find(h => h.time.split("T")[1].startsWith(padded)) || dayHours[0];
-  } else if (isToday) {
-    const nowStr = new Date().toLocaleString("en-CA", { timeZone: tz, hour12: false }).replace(", ", "T");
-    const currentHour = nowStr.split("T")[1].split(":")[0];
-    sel = dayHours.find(h => h.time.split("T")[1].startsWith(currentHour + ":")) || dayHours[0];
-  } else {
-    sel = dayHours.find(h => h.time.split("T")[1].startsWith("08:")) || dayHours[0];
-  }
-
   if (!sel) return null;
 
-  // Effective spot = the curated spot enriched with data-derived idealSwellDir
-  // and offshoreWindDir, so the scoring formula is uniform whether the spot
-  // was hand-tuned in breaks.js or added on the fly via the search.
-  const selDayTideCtx = dayTideCtx(dayHours);
-  const inferred = inferSpotProfile(data.hours);
-  const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
-  const { score, notes } = scoreSurf(sel, effectiveSpot, selDayTideCtx);
   const level = getLevel(score, sel, effectiveSpot);
   const levelMatrix = surfabilityByLevel(sel, effectiveSpot);
   // Best window must fall within usable daylight — from 1h before sunrise up
@@ -1997,7 +2009,7 @@ export default function SurfApp() {
           <div className="verdict-row">
             <div className="verdict-main serif" style={{ color: level.color }}>{t(level.labelKey)}</div>
             <button className="verdict-score mono" onClick={() => setScoreExplainer(v => !v)}>
-              <strong style={{ color: level.color }}>{score}</strong>/{t("score_lbl")} 100
+              <strong style={{ color: level.color }}>{tweenedScore}</strong>/{t("score_lbl")} 100
               <span className="score-chev">{scoreExplainer ? "▲" : "▼"}</span>
             </button>
           </div>
@@ -2449,9 +2461,9 @@ export default function SurfApp() {
         .now-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s infinite; vertical-align: middle; }
         .spot-btn { background: none; border: none; text-align: left; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 12px; color: var(--text); }
         .spot-name { font-weight: 500; font-size: 40px; line-height: 1; letter-spacing: -0.025em; }
-        .chev-pill { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: var(--accent); color: #fff; flex-shrink: 0; box-shadow: 0 3px 10px rgba(14,165,233,0.4); transition: transform 0.15s ease, box-shadow 0.15s ease; animation: chevPulse 2.4s ease-in-out infinite; }
-        .spot-btn:hover .chev-pill, .spot-btn:active .chev-pill { transform: scale(1.08); box-shadow: 0 4px 14px rgba(14,165,233,0.55); }
-        @keyframes chevPulse { 0%,100% { box-shadow: 0 3px 10px rgba(14,165,233,0.4); } 50% { box-shadow: 0 3px 16px rgba(14,165,233,0.65); } }
+        .chev-pill { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: var(--accent); color: #fff; flex-shrink: 0; box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform 0.15s ease, box-shadow 0.15s ease; animation: chevPulse 2.4s ease-in-out infinite; }
+        .spot-btn:hover .chev-pill, .spot-btn:active .chev-pill { transform: scale(1.08); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 55%, transparent); }
+        @keyframes chevPulse { 0%,100% { box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 40%, transparent); } 50% { box-shadow: 0 3px 16px color-mix(in srgb, var(--accent) 65%, transparent); } }
         .spot-region { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-top: 8px; }
         .fav-btn { background: none; border: 1px solid var(--border); border-radius: 999px; width: 34px; height: 34px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: var(--text-mu); }
         .fav-btn.active { border-color: var(--warn); color: var(--warn); background: rgba(217,119,6,0.08); }
