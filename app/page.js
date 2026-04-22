@@ -2054,23 +2054,15 @@ export default function SurfApp() {
               const tideMod = getTideModifier(sel, data.hours);
               const verdictLabel = verdict === "yes" ? t("go") : verdict === "ok" ? t("maybe") : t("skip");
               const verdictColor = verdict === "yes" ? "#16a34a" : verdict === "ok" ? "#ea580c" : "#dc2626";
-              // DANGER banner — fires whenever the scoring engine returns SKIP
-              // ("no") for a learner level. Red, bold, in the user's face so
-              // there's zero chance of mistaking SKIP for something softer
-              // like MAYBE. Only shown to learners (first_timer/beginner/
-              // early_int) because they're the ones most at risk from bad
-              // conditions they can't read themselves.
-              const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
-              const showDanger = isLearner && verdict === "no";
+              // The coloured SKIP label in the sticky-tip below already
+              // conveys the safety warning — the separate red banner was
+              // redundant + ate a lot of vertical space. Removed.
               return (
-                <>
-                  {showDanger && <div className="danger-banner">{t("danger_banner")}</div>}
-                  <div className="sticky-tip">
-                    <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
-                    {modKey && <span style={{ display: "block", marginTop: 6, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(modKey)}</span>}
-                    {tideMod && <span style={{ display: "block", marginTop: 4, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(tideMod)}</span>}
-                  </div>
-                </>
+                <div className="sticky-tip">
+                  <strong>{t("lvl_" + userLevel)}</strong> <span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span> — {t(tipKey)}
+                  {modKey && <span style={{ display: "block", marginTop: 6, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(modKey)}</span>}
+                  {tideMod && <span style={{ display: "block", marginTop: 4, fontSize: 11, color: "var(--text-mu)", fontStyle: "italic" }}>{t(tideMod)}</span>}
+                </div>
               );
             }
             const tipKey = getDayTip(levelMatrix, sel, effectiveSpot);
