@@ -1430,11 +1430,32 @@ button, input, select { font-family: inherit; color: inherit; }
   opacity: 0.6; line-height: 1.4;
   margin-bottom: 10px;
 }
+/* ── Expand grid 3-col: Swell/Wind/Tide · Air/Water/Current · Daylight full-row ── */
 .hly-xgrid {
   display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 10px; margin-top: 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
 }
-.hly-xcell { min-width: 0; }
+.hly-xcell {
+  min-width: 0;
+  padding: 6px 12px 7px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.hly-xcell:nth-child(3n) { border-right: none; }
+.hly-xcell:nth-last-child(-n+1) { border-bottom: none; }
+.hly-xcell--daylight {
+  grid-column: 1 / -1;
+  border-right: none;
+}
+.hly-xcell--no-data .hly-xval { opacity: 0.6; }
+.hly-xsub-top {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text); opacity: 0.5;
+  margin-bottom: 3px;
+}
 .hly-xval {
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 15px; font-weight: 700;
@@ -1449,6 +1470,13 @@ button, input, select { font-family: inherit; color: inherit; }
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 9px; color: var(--text-mu);
   margin-top: 2px; line-height: 1.3;
+}
+.hly-xdaylight {
+  display: inline-flex; flex-direction: row; align-items: baseline; gap: 6px;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+}
+.hly-xdaylight-sep {
+  font-size: 11px; opacity: 0.5; font-weight: 400;
 }
 
 /* ── List mode — collapse the sticky info / drv / best sections so
@@ -1507,3 +1535,57 @@ button, input, select { font-family: inherit; color: inherit; }
 /* ── Notif ibtn in the header (next to ?) ── */
 .ibtn.notif.on { color: var(--accent); }
 .ibtn.notif.on svg { opacity: 1; }
+
+/* ── Sticky compact day-nav ─────────────────────────────────────
+   Appears as an absolutely-positioned bar inside .viewport when the
+   user scrolls past the regular .day-tabs row. The `top` coord is
+   updated by MainScreen's scroll listener to keep the bar at
+   scrollTop + 50 (status-bar height), so it always sits just below
+   the status bar regardless of how far the user has scrolled. */
+.sticky-day-nav {
+  position: absolute;
+  left: 0; right: 0;
+  z-index: 70;
+  background: var(--paper);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 22px;
+  display: none;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.sticky-day-nav::-webkit-scrollbar { display: none; }
+.sticky-day-nav.visible { display: flex; align-items: center; gap: 2px; }
+.sticky-day-nav .dt {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 3px 8px 4px;
+  border-radius: 10px;
+  background: none; border: none; cursor: pointer;
+  opacity: 0.55;
+  transition: background 150ms, opacity 150ms;
+  color: var(--text);
+  font-family: inherit;
+}
+.sticky-day-nav .dt:not(.past) { opacity: 0.8; }
+.sticky-day-nav .dt.active {
+  background: var(--accent-soft);
+  opacity: 1;
+}
+.sticky-day-nav .dt.active .dt-day,
+.sticky-day-nav .dt.active .dt-date { color: var(--accent); }
+.sticky-day-nav .dt .dt-day {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-dim); line-height: 1.3;
+}
+.sticky-day-nav .dt .dt-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px; font-weight: 500;
+  color: var(--text-dim); line-height: 1.2;
+}
+.sticky-day-nav .dt .dt-dot {
+  width: 4px; height: 4px; border-radius: 50%; margin-top: 2px;
+}

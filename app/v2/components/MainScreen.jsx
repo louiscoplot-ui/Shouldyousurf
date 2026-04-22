@@ -436,6 +436,28 @@ function Loaded({
 
   const sibSentinelRef = useRef(null);
   const [sibStuck, setSibStuck] = useState(false);
+
+  // Sticky day nav — compact floating bar that mirrors .day-tabs and
+  // appears at top:50px (under the status bar) once the user has scrolled
+  // past the regular day-tabs row. Absolute-positioned inside .viewport
+  // with its `top` updated via scroll listener.
+  const dayTabsRef = useRef(null);
+  const [dayNavTop, setDayNavTop] = useState(50);
+  const [dayNavVisible, setDayNavVisible] = useState(false);
+  useEffect(() => {
+    const root = dayTabsRef.current?.closest(".viewport");
+    if (!root || !dayTabsRef.current) return;
+    const el = dayTabsRef.current;
+    const onScroll = () => {
+      const st = root.scrollTop;
+      setDayNavTop(st + 50);
+      const threshold = el.offsetTop + el.offsetHeight;
+      setDayNavVisible(st > threshold);
+    };
+    root.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => root.removeEventListener("scroll", onScroll);
+  }, []);
   useEffect(() => {
     const el = sibSentinelRef.current;
     if (!el) return;
@@ -550,7 +572,7 @@ function Loaded({
         </div>
 
         <div className="rise-2">
-          <div className="day-tabs">
+          <div className="day-tabs" ref={dayTabsRef}>
             {days.map((d, i) => (
               <button
                 key={i}
@@ -569,6 +591,26 @@ function Loaded({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Sticky compact day-nav — appears docked under the status bar
+            once the user scrolls past the regular .day-tabs row. */}
+        <div
+          className={`sticky-day-nav ${dayNavVisible ? "visible" : ""}`}
+          style={{ top: dayNavTop }}
+          aria-hidden={!dayNavVisible}
+        >
+          {days.map((d, i) => (
+            <button
+              key={i}
+              onClick={() => setDayIdx(i)}
+              className={`dt ${i === dayIdx ? "active" : ""} ${d.isPast ? "past" : ""}`}
+            >
+              <div className="dt-day">{d.label}</div>
+              <div className="dt-date">{d.dateLabel}</div>
+              <div className="dt-dot" style={{ background: d.bestLevel.color }}/>
+            </button>
+          ))}
         </div>
 
         <div className="rise-2" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
@@ -621,7 +663,14 @@ function Loaded({
         <BestWindow day={day}/>
 
         <div ref={hlyWrapRef}>
-          <HourlyList hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx} currentHour={currentHour}/>
+          <HourlyList
+            hours={day.hours}
+            selectedIdx={selectedIdx}
+            onSelect={setSelectedIdx}
+            currentHour={currentHour}
+            sunByDay={payload.sunByDay}
+            tz={spot.timezone || "Australia/Perth"}
+          />
         </div>
 
         <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx}/>

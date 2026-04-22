@@ -23,7 +23,15 @@ const WindIcon = () => (
   </svg>
 );
 
-export default function HourlyList({ hours, selectedIdx, onSelect, currentHour }) {
+function fmtTimeShort(iso, tz) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz || "Australia/Perth" })
+      .toLowerCase().replace(" ", "");
+  } catch { return ""; }
+}
+
+export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, tz }) {
   const [viewMode, setViewMode] = useState("cards");
   const [openIdx, setOpenIdx] = useState(null);
   const scrollerRef = useRef(null);
@@ -137,34 +145,68 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour }
                         <span className="hly-xface-sub">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
                       </div>
                       <div className="hly-xhint">{v.sub}</div>
-                      <div className="hly-xgrid">
-                        <div className="hly-xcell">
-                          <div className="hly-xval" style={{ color: v.color }}>{h.swellHeight.toFixed(1)}<span className="hly-xunit">m</span></div>
-                          <div className="hly-xsub">Swell · {swellDir} · {Math.round(h.swellPeriod)}s</div>
-                        </div>
-                        <div className="hly-xcell">
-                          <div className="hly-xval" style={{ color: v.color }}>{Math.round(h.windKmh)}<span className="hly-xunit">km/h</span></div>
-                          <div className="hly-xsub">Wind · {windDir} · {h.windType}</div>
-                        </div>
-                        {h.tideM != null && (
-                          <div className="hly-xcell">
-                            <div className="hly-xval" style={{ color: v.color }}>{h.tideM.toFixed(1)}<span className="hly-xunit">m</span></div>
-                            <div className="hly-xsub">Tide</div>
+                      {(() => {
+                        const dayKey = h.time?.split("T")?.[0];
+                        const sun = sunByDay ? sunByDay[dayKey] : null;
+                        const rise = fmtTimeShort(sun?.sunrise, tz);
+                        const set  = fmtTimeShort(sun?.sunset, tz);
+                        const curKmh = h.currentVel != null ? (h.currentVel * 3.6) : null;
+                        return (
+                          <div className="hly-xgrid">
+                            {/* Row 1 — Swell · Wind · Tide */}
+                            <div className="hly-xcell">
+                              <div className="hly-xsub-top">Swell</div>
+                              <div className="hly-xval" style={{ color: v.color }}>{h.swellHeight.toFixed(1)}<span className="hly-xunit">m</span></div>
+                              <div className="hly-xsub">{swellDir} · {Math.round(h.swellPeriod)}s</div>
+                            </div>
+                            <div className="hly-xcell">
+                              <div className="hly-xsub-top">Wind</div>
+                              <div className="hly-xval" style={{ color: v.color }}>{Math.round(h.windKmh)}<span className="hly-xunit">km/h</span></div>
+                              <div className="hly-xsub">{windDir} · {h.windType}</div>
+                            </div>
+                            <div className={`hly-xcell ${h.tideM == null ? "hly-xcell--no-data" : ""}`}>
+                              <div className="hly-xsub-top">Tide</div>
+                              <div className="hly-xval" style={{ color: v.color }}>
+                                {h.tideM != null ? <>{h.tideM.toFixed(1)}<span className="hly-xunit">m</span></> : <span style={{ opacity: 0.35 }}>—</span>}
+                              </div>
+                              <div className="hly-xsub">&nbsp;</div>
+                            </div>
+                            {/* Row 2 — Air · Water · Current (with "—" fallback) */}
+                            <div className={`hly-xcell ${h.airTemp == null ? "hly-xcell--no-data" : ""}`}>
+                              <div className="hly-xsub-top">Air</div>
+                              <div className="hly-xval" style={{ color: v.color }}>
+                                {h.airTemp != null ? <>{Math.round(h.airTemp)}<span className="hly-xunit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}
+                              </div>
+                              <div className="hly-xsub">&nbsp;</div>
+                            </div>
+                            <div className={`hly-xcell ${h.seaTemp == null ? "hly-xcell--no-data" : ""}`}>
+                              <div className="hly-xsub-top">Water</div>
+                              <div className="hly-xval" style={{ color: v.color }}>
+                                {h.seaTemp != null ? <>{Math.round(h.seaTemp)}<span className="hly-xunit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}
+                              </div>
+                              <div className="hly-xsub">&nbsp;</div>
+                            </div>
+                            <div className={`hly-xcell hly-xcell--current ${curKmh == null || curKmh < 0.18 ? "hly-xcell--no-data" : ""}`}>
+                              <div className="hly-xsub-top">Current</div>
+                              <div className="hly-xval" style={{ color: v.color }}>
+                                {curKmh != null && curKmh >= 0.18 ? <>{curKmh.toFixed(1)}<span className="hly-xunit">km/h</span></> : <span style={{ opacity: 0.35 }}>—</span>}
+                              </div>
+                              <div className="hly-xsub">{(curKmh != null && curKmh >= 0.18 && h.currentDir != null) ? (typeof h.currentDir === "string" ? h.currentDir : degToCompass(h.currentDir)) : " "}</div>
+                            </div>
+                            {/* Row 3 — Daylight full-width */}
+                            {(rise || set) && (
+                              <div className="hly-xcell hly-xcell--daylight">
+                                <div className="hly-xsub-top">Daylight</div>
+                                <div className="hly-xval hly-xdaylight">
+                                  <span>↑{rise}</span>
+                                  <span className="hly-xdaylight-sep">·</span>
+                                  <span>↓{set}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {h.airTemp != null && (
-                          <div className="hly-xcell">
-                            <div className="hly-xval" style={{ color: v.color }}>{Math.round(h.airTemp)}<span className="hly-xunit">°C</span></div>
-                            <div className="hly-xsub">Air</div>
-                          </div>
-                        )}
-                        {h.seaTemp != null && (
-                          <div className="hly-xcell">
-                            <div className="hly-xval" style={{ color: v.color }}>{Math.round(h.seaTemp)}<span className="hly-xunit">°C</span></div>
-                            <div className="hly-xsub">Water</div>
-                          </div>
-                        )}
-                      </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
