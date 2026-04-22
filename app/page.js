@@ -1734,8 +1734,17 @@ export default function SurfApp() {
       }, 50);
     } catch (e) {
       setError(true); setErrorDetail(e.message || String(e));
+      // Surface the error screen by fading the boot splash.
+      if (typeof window !== "undefined" && typeof window.__hideBoot === "function") window.__hideBoot();
     } finally {
       setLoading(false);
+      // Tell the static boot splash in layout.js it can fade out now —
+      // the real app is ready to take over. No white-gap transition on
+      // iOS PWA standalone mode.
+      if (typeof window !== "undefined" && typeof window.__hideBoot === "function") {
+        // Defer by a frame so React has painted the new UI underneath.
+        requestAnimationFrame(() => requestAnimationFrame(() => window.__hideBoot()));
+      }
     }
   }
 

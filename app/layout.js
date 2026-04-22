@@ -103,25 +103,24 @@ export default function RootLayout({ children }) {
         </div>
         {children}
         <script dangerouslySetInnerHTML={{ __html: `
-          // Remove the boot splash once the React tree has had a chance to
-          // paint at least one frame with its real styles.
-          function __hideBoot() {
+          // Boot splash stays visible for the ENTIRE loading period — until
+          // the real app has rendered with data. The app signals readiness
+          // by calling window.__hideBoot() (wired in page.js once loading
+          // finishes). This way:
+          //  - desktop: splash → app (no flicker)
+          //  - iOS PWA standalone: splash → app (no white gap between
+          //    React's loading screen unmounting and the app mounting)
+          // The React loading screen (.load-wrap in page.js) is redundant
+          // now and never gets shown — the splash covers that window.
+          window.__hideBoot = function() {
             var el = document.getElementById("__bootsplash");
             if (!el) return;
             el.classList.add("gone");
             setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 260);
-          }
-          // Double rAF = wait one paint after layout → guarantees styles
-          // are applied and content has rendered under the splash.
-          if (document.readyState === "complete") {
-            requestAnimationFrame(function(){ requestAnimationFrame(__hideBoot); });
-          } else {
-            window.addEventListener("load", function(){
-              requestAnimationFrame(function(){ requestAnimationFrame(__hideBoot); });
-            });
-          }
-          // Safety net — never let the splash stick around longer than 6 s.
-          setTimeout(__hideBoot, 6000);
+          };
+          // Safety net — never let the splash stick around longer than 10s
+          // even if something goes wrong in the React render path.
+          setTimeout(function(){ if (window.__hideBoot) window.__hideBoot(); }, 10000);
         `}} />
       </body>
     </html>
