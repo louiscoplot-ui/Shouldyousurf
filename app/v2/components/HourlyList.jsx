@@ -35,7 +35,35 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
   const [viewMode, setViewMode] = useState("cards");
   const [openIdx, setOpenIdx] = useState(null);
   const scrollerRef = useRef(null);
+  const barsRef = useRef(null);
   const cardRefs = useRef([]);
+
+  // Scrub gesture on the bar chart: tap or drag horizontally across
+  // the bars and the card row above tracks to the matching hour. The
+  // bars themselves stay flex:1 (full day visible at once).
+  const scrubHour = (clientX, smooth = false) => {
+    const el = barsRef.current;
+    if (!el || !hours.length) return;
+    const rect = el.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const idx = Math.max(0, Math.min(hours.length - 1, Math.round((x / rect.width) * (hours.length - 1))));
+    onSelect(idx);
+    const cardEl = cardRefs.current[idx];
+    if (cardEl && cardEl.scrollIntoView) {
+      cardEl.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "nearest", inline: "center" });
+    }
+  };
+  const onBarsPointerDown = (e) => {
+    if (barsRef.current && barsRef.current.setPointerCapture) {
+      try { barsRef.current.setPointerCapture(e.pointerId); } catch {}
+    }
+    scrubHour(e.clientX, true);
+  };
+  const onBarsPointerMove = (e) => {
+    // Only scrub while pressed — buttons bitmask 1 = primary mouse / touch.
+    if (e.buttons !== 1 && e.pointerType !== "touch") return;
+    scrubHour(e.clientX, false);
+  };
 
   // Toggle .wrap.hly-cardmode-active so the sticky info bar (.C) + driving
   // chips (.drv) + best-window (.best) collapse — in cards mode the details
@@ -126,13 +154,25 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           from the bottom with a 60ms stagger, cascade-from-left. Spec:
           design-system/themes-preview.html (.a-bars / @keyframes bars). */}
       {viewMode === "cards" && (
-        <div className="hly-bars" key={`bars-${hours[0]?.time?.split("T")?.[0] || "day"}`} aria-hidden="true">
+        <div
+          className="hly-bars"
+          ref={barsRef}
+          key={`bars-${hours[0]?.time?.split("T")?.[0] || "day"}`}
+          onPointerDown={onBarsPointerDown}
+          onPointerMove={onBarsPointerMove}
+          role="slider"
+          aria-label="Drag across hours to preview each one"
+          aria-valuemin={0}
+          aria-valuemax={hours.length - 1}
+          aria-valuenow={selectedIdx}
+        >
           {hours.map((h, i) => {
             const v = coherentVerdict(h);
+            const selected = selectedIdx === i;
             return (
               <div
                 key={i}
-                className={`hly-bar hly-bar--${v.key}`}
+                className={`hly-bar hly-bar--${v.key} ${selected ? "selected" : ""}`}
                 style={{
                   height: `${Math.max(6, h.score)}%`,
                   animationDelay: `${i * 60}ms`,
