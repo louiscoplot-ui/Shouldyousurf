@@ -86,6 +86,12 @@ export default function RootLayout({ children }) {
             letter-spacing: 0.2em; text-transform: uppercase;
             font-weight: 500; margin: 0;
           }
+          /* Wave — exact size/colour treatment from v2 loading screen */
+          #__preload .pl-wave {
+            width: 180px; height: 40px;
+            color: #1558b5;
+            filter: drop-shadow(0 2px 6px rgba(21,88,181,0.18));
+          }
           @keyframes pl-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
           /* React's .load-wrap (from page.js) sits under the preload
              splash at z-index:1 — invisible to the user while preload
@@ -137,19 +143,22 @@ export default function RootLayout({ children }) {
             React app signals window.__appReady from page.js. */}
         <div id="__preload">
           <div className="pl-brand">Should You Surf?</div>
-          {/* Animated wave — matches the v2 loading screen vibe */}
-          <svg className="pl-wave" width="160" height="36" viewBox="0 0 160 36" preserveAspectRatio="none">
-            <path d="M0,18 Q20,4 40,18 T80,18 T120,18 T160,18" fill="none" stroke="#1558b5" strokeWidth="2" strokeLinecap="round">
-              <animate attributeName="d" dur="3s" repeatCount="indefinite"
-                values="M0,18 Q20,4 40,18 T80,18 T120,18 T160,18;
-                        M0,18 Q20,32 40,18 T80,18 T120,18 T160,18;
-                        M0,18 Q20,4 40,18 T80,18 T120,18 T160,18"/>
+          {/* Animated wave — direct port of the v2 loading screen SVG.
+              Uses inline SMIL <animate> on the d attribute, same timings
+              and easings as v2 (3.2s top wave, 4.4s bottom wave). The
+              SVG itself is sized via the .pl-wave CSS rule below. */}
+          <svg className="pl-wave" viewBox="0 0 180 40" preserveAspectRatio="none">
+            <path d="M0,20 Q22.5,5 45,20 T90,20 T135,20 T180,20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <animate attributeName="d" dur="3.2s" repeatCount="indefinite"
+                values="M0,20 Q22.5,5 45,20 T90,20 T135,20 T180,20;
+                        M0,20 Q22.5,35 45,20 T90,20 T135,20 T180,20;
+                        M0,20 Q22.5,5 45,20 T90,20 T135,20 T180,20"/>
             </path>
-            <path d="M0,24 Q20,14 40,24 T80,24 T120,24 T160,24" fill="none" stroke="#0c2a5e" strokeWidth="1.4" strokeLinecap="round" opacity="0.45">
+            <path d="M0,28 Q22.5,18 45,28 T90,28 T135,28 T180,28" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.45">
               <animate attributeName="d" dur="4.4s" repeatCount="indefinite"
-                values="M0,24 Q20,34 40,24 T80,24 T120,24 T160,24;
-                        M0,24 Q20,14 40,24 T80,24 T120,24 T160,24;
-                        M0,24 Q20,34 40,24 T80,24 T120,24 T160,24"/>
+                values="M0,28 Q22.5,38 45,28 T90,28 T135,28 T180,28;
+                        M0,28 Q22.5,18 45,28 T90,28 T135,28 T180,28;
+                        M0,28 Q22.5,38 45,28 T90,28 T135,28 T180,28"/>
             </path>
           </svg>
           <div className="pl-dots"><span/><span/><span/></div>
