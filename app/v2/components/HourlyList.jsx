@@ -53,10 +53,12 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
       cardEl.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "nearest", inline: "center" });
     }
   };
+  const [scrubbing, setScrubbing] = useState(false);
   const onBarsPointerDown = (e) => {
     if (barsRef.current && barsRef.current.setPointerCapture) {
       try { barsRef.current.setPointerCapture(e.pointerId); } catch {}
     }
+    setScrubbing(true);
     scrubHour(e.clientX, true);
   };
   const onBarsPointerMove = (e) => {
@@ -64,6 +66,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
     if (e.buttons !== 1 && e.pointerType !== "touch") return;
     scrubHour(e.clientX, false);
   };
+  const onBarsPointerUp = () => setScrubbing(false);
 
   // Toggle .wrap.hly-cardmode-active so the sticky info bar (.C) + driving
   // chips (.drv) + best-window (.best) collapse — in cards mode the details
@@ -120,11 +123,11 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           />
           <button
             className={`hly-pill-opt ${viewMode === "cards" ? "on" : ""}`}
-            onClick={() => setViewMode("cards")}
+            onClick={() => { setViewMode("cards"); setOpenIdx(null); }}
           >Cards</button>
           <button
             className={`hly-pill-opt ${viewMode === "list" ? "on" : ""}`}
-            onClick={() => setViewMode("list")}
+            onClick={() => { setViewMode("list"); setOpenIdx(selectedIdx >= 0 ? selectedIdx : null); }}
           >List</button>
         </div>
       </div>
@@ -167,11 +170,14 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           design-system/themes-preview.html (.a-bars / @keyframes bars). */}
       {viewMode === "cards" && (
         <div
-          className="hly-bars"
+          className={`hly-bars ${scrubbing ? "scrubbing" : ""}`}
           ref={barsRef}
           key={`bars-${hours[0]?.time?.split("T")?.[0] || "day"}`}
           onPointerDown={onBarsPointerDown}
           onPointerMove={onBarsPointerMove}
+          onPointerUp={onBarsPointerUp}
+          onPointerCancel={onBarsPointerUp}
+          onPointerLeave={onBarsPointerUp}
           role="slider"
           aria-label="Drag across hours to preview each one"
           aria-valuemin={0}

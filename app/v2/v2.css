@@ -1783,10 +1783,53 @@ button, input, select { font-family: inherit; color: inherit; }
   transform-origin: bottom;
   animation: hly-bars-rise 800ms cubic-bezier(.25,.8,.3,1) both;
   opacity: 0.72;
-  transition: opacity 120ms;
+  transition: opacity 160ms cubic-bezier(.22,.9,.32,1),
+              transform 160ms cubic-bezier(.22,.9,.32,1),
+              filter 160ms cubic-bezier(.22,.9,.32,1),
+              box-shadow 180ms ease-out;
   pointer-events: none; /* container handles all clicks / scrubs */
+  will-change: transform, opacity;
 }
-.hly-bar.selected { opacity: 1; outline: 1.5px solid var(--paper); outline-offset: -2px; }
+/* Selected bar — always slightly lifted so the active hour is visible at
+   rest. Scaled 1.05Y from the bottom + brightened + a soft paper-tinted
+   glow. Position:relative + z-index lifts it above neighbours. */
+.hly-bar.selected {
+  opacity: 1;
+  filter: brightness(1.1);
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 -2px 10px -2px color-mix(in srgb, var(--bar-color, var(--accent)) 55%, transparent);
+}
+.hly-bar.selected::after {
+  /* Tiny accent tick at the top of the selected bar — reads as a
+     playhead marker so the user knows exactly which hour they've
+     landed on while dragging. */
+  content: "";
+  position: absolute;
+  left: 50%; top: -5px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--bar-color, var(--accent));
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 2px var(--paper);
+}
+/* While scrubbing: dim the non-selected bars so the user's finger
+   position reads louder. Selected bar brightens further and grows its
+   glow so it "pops" as the finger moves across. Avoids touching
+   transform (the bars-rise animation owns that with fill-mode:both). */
+.hly-bars.scrubbing .hly-bar { opacity: 0.38; filter: saturate(0.7); }
+.hly-bars.scrubbing .hly-bar.selected {
+  opacity: 1;
+  filter: brightness(1.18) saturate(1.1);
+  box-shadow: 0 -4px 14px -2px color-mix(in srgb, var(--bar-color, var(--accent)) 75%, transparent),
+              0 0 0 2px color-mix(in srgb, var(--paper) 90%, transparent);
+}
+.hly-bars.scrubbing .hly-bar.selected::after {
+  /* Tick grows while scrubbing to feel like a handle under the finger. */
+  width: 6px; height: 6px; top: -7px;
+  box-shadow: 0 0 0 2.5px var(--paper), 0 2px 6px -1px color-mix(in srgb, var(--bar-color) 60%, transparent);
+}
+.hly-bar::after { transition: width 160ms, height 160ms, top 160ms; }
 /* Tone-match the gradient to the verdict key so Blown/Flat look muted
    in terracotta, Small in coral, Great/Pumping in jade — same palette
    as the card tones. */
