@@ -14,15 +14,30 @@ export function getLevel(s) {
   return SCORE_SCALE.find((x) => s >= x.min && s <= x.max) || SCORE_SCALE[5];
 }
 
-// Coherent verdict: label derived from BOTH score and conditions
+// Coherent verdict: label derived from BOTH score and conditions.
+// Criteria match v1 prod's getLevel() override so the label agrees with
+// the numeric score (was producing "Blown out" at 25 km/h cross-shore
+// even when the underlying score was 74 — now only calls Blown when the
+// scoreSurf engine has genuinely penalised the hour below 75).
 export function coherentVerdict(h) {
   const face = (h.faceFtLow + h.faceFtHigh) / 2;
-  const cross = (h.windType || "").toLowerCase().includes("cross");
-  const on    = (h.windType || "").toLowerCase().includes("onshore");
-  const hardWind = h.windKmh >= 25;
-  const isWrecked = (cross || on) && hardWind;
+  const windType = (h.windType || "").toLowerCase();
+  const cross = windType.includes("cross");
+  const on    = windType.includes("onshore");
+  const off   = windType.includes("offshore");
+  const kmh   = h.windKmh || 0;
+  const score = h.score || 0;
 
-  if (isWrecked && face >= 1.5) {
+  // Genuinely blown:
+  //   - onshore ≥ 25 km/h (real chop directly into the face), OR
+  //   - cross-shore ≥ 35 km/h (heavy side-chop), OR
+  //   - offshore ≥ 55 km/h (gale — rips the face apart), OR
+  //   - any direction ≥ 40 km/h
+  // AND the numeric score is < 75 (exception: monster groundswell days
+  // can still read as Pumping through moderate wind — the score engine
+  // already reflects that).
+  const trulyBlown = (on && kmh >= 25) || (cross && kmh >= 35) || (off && kmh >= 55) || kmh >= 40;
+  if (trulyBlown && score < 75 && face >= 1.5) {
     return { key: "blown", label: "Blown out", color: "#b54c3f",
              sub: "There are waves, but wind makes it unsurfable." };
   }
@@ -34,7 +49,7 @@ export function coherentVerdict(h) {
     return { key: "flat", label: "Flat", color: "#b54c3f",
              sub: "Nothing to surf." };
   }
-  const s = getLevel(h.score);
+  const s = getLevel(score);
   const labelMap = { pumping: "Pumping", great: "Great", good: "Good", fun: "Fun", small: "Small", flat: "Flat" };
   const subMap = {
     pumping: "Everything aligned — go now.",
