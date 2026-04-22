@@ -120,6 +120,30 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         </div>
       ) : null}
 
+      {/* ── Hourly bars rise — compact bar chart under the cards row in
+          Cards mode. Each bar = one hour. Height = score%. Coloured by
+          verdict band. On first paint + day change, each bar scales Y
+          from the bottom with a 60ms stagger, cascade-from-left. Spec:
+          design-system/themes-preview.html (.a-bars / @keyframes bars). */}
+      {viewMode === "cards" && (
+        <div className="hly-bars" key={`bars-${hours[0]?.time?.split("T")?.[0] || "day"}`} aria-hidden="true">
+          {hours.map((h, i) => {
+            const v = coherentVerdict(h);
+            return (
+              <div
+                key={i}
+                className={`hly-bar hly-bar--${v.key}`}
+                style={{
+                  height: `${Math.max(6, h.score)}%`,
+                  animationDelay: `${i * 60}ms`,
+                  "--bar-color": v.color,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+
       {/* Card panel — rendered BELOW the cards in Cards mode. Replaces the
           StickyInfoBar (.C) which is hidden via .wrap.hly-cardmode-active.
           Always reflects the currently selected hour. */}

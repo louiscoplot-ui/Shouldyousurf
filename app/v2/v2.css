@@ -1751,3 +1751,49 @@ button, input, select { font-family: inherit; color: inherit; }
   letter-spacing: 0.08em !important;
   opacity: 0.7 !important;
 }
+
+/* ── Hourly bars rise ─────────────────────────────────────────────
+   Bar chart strip rendered below the hourly cards in Cards mode.
+   Each bar = one hour, height = score%, colour = verdict band,
+   cascade-from-left rise animation on mount + day change.
+   Ported from design-system/themes-preview.html (.a-bars). */
+.hly-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 60px;
+  padding: 4px 0 0;
+  margin-top: 2px;
+  width: 100%;
+}
+.hly-bar {
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--bar-color, var(--accent)) 78%, black 15%),
+    var(--bar-color, var(--accent))
+  );
+  transform-origin: bottom;
+  animation: hly-bars-rise 800ms cubic-bezier(.25,.8,.3,1) both;
+  opacity: 0.92;
+}
+.hly-bar:hover { opacity: 1; }
+/* Tone-match the gradient to the verdict key so Blown/Flat look muted
+   in terracotta, Small in coral, Great/Pumping in jade — same palette
+   as the card tones. */
+.hly-bar--blown   { background: linear-gradient(to top, #7a2d24, #b54c3f); }
+.hly-bar--flat    { background: linear-gradient(to top, #7a2d24, #b54c3f); }
+.hly-bar--small   { background: linear-gradient(to top, #a04833, #d47559); }
+.hly-bar--fun     { background: linear-gradient(to top, #74753a, #a4a558); }
+.hly-bar--good    { background: linear-gradient(to top, #3a7a3f, #62a06a); }
+.hly-bar--great   { background: linear-gradient(to top, #1d6a5b, #2d9178); }
+.hly-bar--pumping { background: linear-gradient(to top, #0f4a3e, #1d6a5b); }
+
+@keyframes hly-bars-rise {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hly-bar { animation: none !important; }
+}
