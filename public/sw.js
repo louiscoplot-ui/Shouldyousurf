@@ -1,28 +1,22 @@
-// Service worker — v2026-04-22-fast (stale-while-revalidate HTML)
+// Service worker — v2026-04-22-minimal
 //
-// Strategy for the HTML navigation document:
-// - Stale-while-revalidate: if we have a cached copy of the HTML, serve it
-//   IMMEDIATELY (PWA boots instantly, no multi-second black while iOS waits
-//   on the network). In the background, fetch a fresh copy from the network
-//   and update the cache — so the NEXT open picks up the latest deploy.
-// - If we don't have a cached copy yet (very first install), do a plain
-//   network fetch with no-store so we don't trap the user on stale data.
-// - Hashed JS / CSS chunks aren't intercepted here — the browser handles
-//   them with its own cache, and their URLs rotate on every deploy so the
-//   'cached HTML' never references stale chunks once the user has loaded
-//   the latest HTML at least once.
+// IMPORTANT: no fetch/navigate interception. Letting the browser handle
+// HTML/JS/CSS natively via its HTTP cache is FASTER on iOS PWA than any
+// SW strategy — intercepting navigations was adding 2-6s of black screen
+// on cold PWA launches because iOS has to wait for the SW to handshake
+// before it can paint the HTML.
 //
-// The small trade-off is that deploys take ONE extra open to show up:
-// user opens the app → instant boot from cache (yesterday's bundle) +
-// background fetch of latest HTML → next open, latest bundle runs.
+// Freshness of the Open-Meteo API responses is already guaranteed by the
+// `fetch(url, {cache: "no-store"})` calls in page.js — no SW required.
 //
-// Also:
-// - skipWaiting / claim so the new SW takes over all open pages.
-// - Old caches from previous SW versions are dropped on activate.
-// - Push notification + notificationclick handlers kept unchanged.
-
-const VERSION = "2026-04-22-fast";
-const HTML_CACHE = "html-" + VERSION;
+// This file only exists for:
+// - future Web Push notifications (handlers below)
+// - satisfying the manifest registration so iOS treats the app as a PWA
+//
+// When a previously-installed aggressive SW is on someone's device, this
+// minimal one replaces it on next app open (skipWaiting + clients.claim).
+// The old fetch handler is gone, so the browser immediately resumes its
+// native (fast) HTML loading.
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -30,47 +24,15 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
+    // Blow away any cache the previous aggressive SW had created — we don't
+    // want stale HTML sitting around and confusing anyone.
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k !== HTML_CACHE).map((k) => caches.delete(k)));
+    await Promise.all(keys.map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
-  const isNav =
-    req.mode === "navigate" ||
-    (req.headers.get("accept") || "").includes("text/html");
-  if (!isNav) return;
-
-  event.respondWith((async () => {
-    const cache = await caches.open(HTML_CACHE);
-    const cached = await cache.match(req);
-
-    // Fire off the revalidation regardless — this updates the cache for
-    // the next open. Detached from the response so it never blocks serve.
-    const revalidate = fetch(req, { cache: "no-store" })
-      .then((res) => {
-        // Only cache successful responses. Don't poison cache with 500s.
-        if (res && res.ok) {
-          try { cache.put(req, res.clone()); } catch {}
-        }
-        return res;
-      })
-      .catch(() => null);
-
-    if (cached) {
-      // Keep the revalidate alive after we've responded.
-      event.waitUntil(revalidate);
-      return cached;
-    }
-
-    // No cache yet (very first install) → wait for the network.
-    const fresh = await revalidate;
-    return fresh || new Response("Offline", { status: 503, headers: { "content-type": "text/plain" } });
-  })());
-});
+// No `fetch` listener — browser handles everything natively.
 
 // ── Push notification handlers ───────────────────────────────────────
 self.addEventListener("push", (event) => {

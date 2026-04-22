@@ -1734,22 +1734,8 @@ export default function SurfApp() {
       }, 50);
     } catch (e) {
       setError(true); setErrorDetail(e.message || String(e));
-      // Surface the error screen by fading the boot splash.
-      if (typeof window !== "undefined" && typeof window.__hideBoot === "function") window.__hideBoot();
     } finally {
       setLoading(false);
-      // Tell the static boot splash in layout.js it can fade out now —
-      // the real app is ready to take over. No white-gap transition on
-      // iOS PWA standalone mode.
-      if (typeof window !== "undefined" && typeof window.__hideBoot === "function") {
-        // 400ms buffer so styled-jsx has definitely flushed + browser has
-        // painted the styled app underneath. rAF alone wasn't enough on
-        // iOS Safari PWA where styled-jsx can inject a fresh batch of
-        // styles when the load-wrap subtree unmounts and the full app
-        // mounts — without the buffer there was a ~0.5s unstyled flash
-        // after the splash faded.
-        setTimeout(() => { try { window.__hideBoot(); } catch {} }, 400);
-      }
     }
   }
 

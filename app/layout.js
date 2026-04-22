@@ -28,6 +28,19 @@ export default function RootLayout({ children }) {
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        {/* Apple touch startup images — shown BEFORE the HTML loads on iOS
+            PWA cold start. Without these, iOS defaults to a black splash.
+            Matched per device resolution so iOS picks the right one. */}
+        <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1290x2796.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1284x2778.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1242x2688.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-828x1792.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1242x2208.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1179x2556.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1170x2532.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1125x2436.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-750x1334.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-640x1136.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600&family=Inter:wght@400;500;600&display=swap" />
@@ -35,46 +48,6 @@ export default function RootLayout({ children }) {
           html { background: #eef4f8; color-scheme: light; }
           html, body { margin: 0; font-family: 'Inter', system-ui, sans-serif; color: var(--text, #0f1e2e); }
           body { background: var(--bg, #eef4f8); }
-          /* Boot splash — pure CSS + static HTML below, visible IMMEDIATELY
-             when the HTML parses, BEFORE React hydrates / styled-jsx injects
-             its styles. Kills the FOUC (flash of unstyled content) that was
-             showing the DOM tree in default browser fonts between the loading
-             screen and the app. Fades out and removes itself once the React
-             app has painted. */
-          #__bootsplash {
-            position: fixed; inset: 0; z-index: 9999;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 20px; padding: 0 24px; text-align: center;
-            background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%);
-            transition: opacity 220ms ease-out;
-          }
-          #__bootsplash.gone { opacity: 0; pointer-events: none; }
-          #__bs-brand {
-            font-family: 'Fraunces', Georgia, serif;
-            font-weight: 500; font-size: 44px; line-height: 1.1;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent; color: #0c2a5e;
-          }
-          #__bs-text {
-            font-family: 'Inter', system-ui, sans-serif;
-            font-size: 11px; color: #f59e0b;
-            letter-spacing: 0.2em; text-transform: uppercase;
-            font-weight: 500; margin: 0;
-          }
-          #__bs-dots { display: flex; gap: 7px; }
-          #__bs-dots span {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #f59e0b;
-            animation: bs-bounce 1.2s infinite ease-in-out both;
-          }
-          #__bs-dots span:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
-          #__bs-dots span:nth-child(3) { animation-delay: 0.3s; }
-          @keyframes bs-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
-          /* Keep the old load-wrap classes working (page.js still uses them
-             after hydration for the "Reading the ocean…" phase). */
           .load-wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 0 24px; text-align: center; background: linear-gradient(180deg, var(--bg, #eef4f8) 0%, var(--bg-el, #dde7ee) 100%); z-index: 1; }
           .load-brand { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 44px; line-height: 1.1; letter-spacing: -0.03em; background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
           .load-text { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; color: #f59e0b; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500; margin: 0; }
@@ -92,37 +65,7 @@ export default function RootLayout({ children }) {
           gtag('config', 'G-77RCEQZ2YS');
         `}} />
       </head>
-      <body>
-        {/* Static boot splash — pure HTML, rendered immediately by the
-            browser before any React / styled-jsx runs. Covers the app
-            until it has fully hydrated + painted its first frame. */}
-        <div id="__bootsplash">
-          <div id="__bs-brand">Should You Surf?</div>
-          <div id="__bs-dots"><span/><span/><span/></div>
-          <p id="__bs-text">Reading the ocean…</p>
-        </div>
-        {children}
-        <script dangerouslySetInnerHTML={{ __html: `
-          // Boot splash stays visible for the ENTIRE loading period — until
-          // the real app has rendered with data. The app signals readiness
-          // by calling window.__hideBoot() (wired in page.js once loading
-          // finishes). This way:
-          //  - desktop: splash → app (no flicker)
-          //  - iOS PWA standalone: splash → app (no white gap between
-          //    React's loading screen unmounting and the app mounting)
-          // The React loading screen (.load-wrap in page.js) is redundant
-          // now and never gets shown — the splash covers that window.
-          window.__hideBoot = function() {
-            var el = document.getElementById("__bootsplash");
-            if (!el) return;
-            el.classList.add("gone");
-            setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 260);
-          };
-          // Safety net — never let the splash stick around longer than 10s
-          // even if something goes wrong in the React render path.
-          setTimeout(function(){ if (window.__hideBoot) window.__hideBoot(); }, 10000);
-        `}} />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
