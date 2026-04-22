@@ -48,14 +48,56 @@ export default function RootLayout({ children }) {
           html { background: #eef4f8; color-scheme: light; }
           html, body { margin: 0; font-family: 'Inter', system-ui, sans-serif; color: var(--text, #0f1e2e); }
           body { background: var(--bg, #eef4f8); }
+          /* ── Preload splash ──────────────────────────────────────────
+             Rendered as static HTML at the top of <body>. Appears the
+             instant the browser parses the first line of body — before
+             React hydrates, before Google Fonts load, before Open-Meteo
+             answers. Uses system serif (Georgia) so there's ZERO font-
+             download wait. Removed by a tiny script once the React app
+             signals window.__appReady. */
+          #__preload {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 20px; padding: 0 24px; text-align: center;
+            background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%);
+            transition: opacity 180ms ease-out;
+          }
+          #__preload.gone { opacity: 0; pointer-events: none; }
+          #__preload .pl-brand {
+            font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+            font-weight: 500; font-size: 44px; line-height: 1.1;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: #0c2a5e;
+          }
+          #__preload .pl-dots { display: flex; gap: 7px; }
+          #__preload .pl-dots span {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #f59e0b;
+            animation: pl-bounce 1.2s infinite ease-in-out both;
+          }
+          #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
+          #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s; }
+          #__preload .pl-text {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 11px; color: #f59e0b;
+            letter-spacing: 0.2em; text-transform: uppercase;
+            font-weight: 500; margin: 0;
+          }
+          @keyframes pl-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+          /* React's .load-wrap (from page.js) sits under the preload
+             splash at z-index:1 — invisible to the user while preload
+             is on top. Kept as safety net in case the preload has been
+             removed but data is still coming. */
           .load-wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 0 24px; text-align: center; background: linear-gradient(180deg, var(--bg, #eef4f8) 0%, var(--bg-el, #dde7ee) 100%); z-index: 1; }
           .load-brand { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 44px; line-height: 1.1; letter-spacing: -0.03em; background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
           .load-text { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; color: #f59e0b; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500; margin: 0; }
           .load-dots { display: flex; gap: 7px; }
-          .load-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: load-bounce 1.2s infinite ease-in-out both; }
+          .load-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pl-bounce 1.2s infinite ease-in-out both; }
           .load-dot:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
           .load-dot:nth-child(3) { animation-delay: 0.3s; }
-          @keyframes load-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
         `}</style>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-77RCEQZ2YS"></script>
         <script dangerouslySetInnerHTML={{ __html: `
@@ -89,7 +131,40 @@ export default function RootLayout({ children }) {
           })();
         `}} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Static preload splash — appears the INSTANT the HTML parses,
+            before React hydrates / Google Fonts load. Hidden once the
+            React app signals window.__appReady from page.js. */}
+        <div id="__preload">
+          <div className="pl-brand">Should You Surf?</div>
+          <div className="pl-dots"><span/><span/><span/></div>
+          <p className="pl-text">Reading the ocean…</p>
+        </div>
+        {children}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var hidden = false;
+            function hide() {
+              if (hidden) return;
+              hidden = true;
+              var el = document.getElementById("__preload");
+              if (!el) return;
+              el.classList.add("gone");
+              setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+            }
+            // Poll for app-ready signal from page.js (set after first
+            // fetchAllDays resolves or errors).
+            var tries = 0;
+            var iv = setInterval(function(){
+              tries++;
+              if (window.__appReady) { clearInterval(iv); hide(); }
+              // Hard ceiling at 8s — don't leave the splash stuck on
+              // a broken app forever.
+              else if (tries > 80) { clearInterval(iv); hide(); }
+            }, 100);
+          })();
+        `}} />
+      </body>
     </html>
   );
 }
