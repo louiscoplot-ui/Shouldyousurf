@@ -12,7 +12,7 @@
 // - Cache the latest HTML only as an offline fallback (not for serving while
 //   online), so zero network = app still opens, with the most recent HTML.
 
-const VERSION = "2026-04-22-calm";
+const VERSION = "2026-04-22-splash";
 const HTML_CACHE = "html-" + VERSION;
 
 self.addEventListener("install", (event) => {

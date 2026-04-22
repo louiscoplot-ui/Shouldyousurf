@@ -1742,8 +1742,13 @@ export default function SurfApp() {
       // the real app is ready to take over. No white-gap transition on
       // iOS PWA standalone mode.
       if (typeof window !== "undefined" && typeof window.__hideBoot === "function") {
-        // Defer by a frame so React has painted the new UI underneath.
-        requestAnimationFrame(() => requestAnimationFrame(() => window.__hideBoot()));
+        // 400ms buffer so styled-jsx has definitely flushed + browser has
+        // painted the styled app underneath. rAF alone wasn't enough on
+        // iOS Safari PWA where styled-jsx can inject a fresh batch of
+        // styles when the load-wrap subtree unmounts and the full app
+        // mounts — without the buffer there was a ~0.5s unstyled flash
+        // after the splash faded.
+        setTimeout(() => { try { window.__hideBoot(); } catch {} }, 400);
       }
     }
   }
