@@ -159,6 +159,8 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             var hidden = false;
+            var startTime = Date.now();
+            var MIN_SHOW = 1500;  // min 1.5s on screen so the wave + dots actually have time to play
             function hide() {
               if (hidden) return;
               hidden = true;
@@ -167,12 +169,17 @@ export default function RootLayout({ children }) {
               el.classList.add("gone");
               setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 220);
             }
+            function tryHide() {
+              var elapsed = Date.now() - startTime;
+              if (elapsed >= MIN_SHOW) hide();
+              else setTimeout(hide, MIN_SHOW - elapsed);
+            }
             // Poll for app-ready signal from page.js (set after first
             // fetchAllDays resolves or errors).
             var tries = 0;
             var iv = setInterval(function(){
               tries++;
-              if (window.__appReady) { clearInterval(iv); hide(); }
+              if (window.__appReady) { clearInterval(iv); tryHide(); }
               // Hard ceiling at 8s — don't leave the splash stuck on
               // a broken app forever.
               else if (tries > 80) { clearInterval(iv); hide(); }
