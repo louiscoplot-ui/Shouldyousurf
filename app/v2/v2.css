@@ -1589,3 +1589,152 @@ button, input, select { font-family: inherit; color: inherit; }
 .sticky-day-nav .dt .dt-dot {
   width: 4px; height: 4px; border-radius: 50%; margin-top: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HLY PATCHES v2 — card panel + compact spacing + hide sticky-info
+   in cards mode. Ported from the user's IIFE patch into scoped CSS.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Danger pill: fully hidden in v2 (the colored SKIP label in the
+      reason card is the only warning surface now). ── */
+.danger-pill { display: none !important; }
+
+/* ── Compact spacing on the main page ── */
+.hdr { margin-bottom: 8px !important; }
+.spot-btn    { margin-bottom: 5px !important; }
+.spot-region { margin-top: 2px !important; margin-bottom: 8px !important; }
+.day-tabs    { margin-bottom: 10px !important; }
+.lvl-inline  { margin-top: 8px !important; margin-bottom: 5px !important; }
+.hly         { margin-top: 14px !important; }
+.hly-h       { margin-bottom: 7px !important; }
+.hly-cards   { padding-bottom: 6px !important; }
+.hly-cpanel  { margin-top: 4px !important; }
+.hly-card { padding: 7px 4px 6px !important; }
+.hly-card-score { font-size: 20px !important; line-height: 20px !important; }
+
+/* ── Cards-mode: collapse the sticky info + driving chips + best-window.
+      In cards mode the details live in the dedicated .hly-cpanel below.
+      In list mode the existing .wrap:has(.hly--list-mode) rule handles it. */
+.wrap.hly-cardmode-active .C,
+.wrap.hly-cardmode-active .drv,
+.wrap.hly-cardmode-active .best {
+  max-height: 0 !important; overflow: hidden !important;
+  opacity: 0 !important; margin: 0 !important; padding: 0 !important;
+  border: none !important; pointer-events: none !important;
+}
+
+/* ── Card panel (below the cards in Cards mode) ─────────────────
+   Contains: reason, face, hint, and a 3-col grid
+   (Swell|Wind|Tide · Air|Water|Current · Daylight full-row). */
+.hly-cpanel {
+  background: var(--bg-el);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  animation: cpanel-in 0.18s ease both;
+}
+@keyframes cpanel-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hly-cp-reason {
+  padding: 7px 14px 6px;
+  border-left: 3px solid var(--hly-cp-color, var(--accent));
+  background: var(--accent-soft);
+}
+.hly-cp-reason-main {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px; line-height: 1.45; color: var(--text);
+  margin-bottom: 2px;
+}
+.hly-cp-reason-main strong { font-weight: 700; }
+.hly-cp-reason-main .C-reason-mod {
+  display: block; margin-top: 3px;
+  font-size: 10.5px; font-style: italic;
+  opacity: 0.62; line-height: 1.4;
+}
+.hly-cp-face {
+  display: flex; align-items: baseline; gap: 7px;
+  padding: 5px 14px 1px;
+}
+.hly-cp-face-val {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 20px; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1;
+  color: var(--hly-cp-color, var(--accent));
+}
+.hly-cp-face-unit {
+  font-size: 13px; font-weight: 500;
+  opacity: 0.7; margin-left: 3px;
+}
+.hly-cp-face-conv {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px; font-weight: 500; opacity: 0.55;
+}
+.hly-cp-hint {
+  padding: 0 14px 5px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px; font-style: italic;
+  opacity: 0.52; line-height: 1.4;
+  color: var(--text);
+}
+
+/* ── 3-col grid ───────────────────────────────────────────────── */
+.hly-cp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--border);
+}
+.hly-cp-cell {
+  padding: 5px 14px 6px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+.hly-cp-cell:nth-child(3n) { border-right: none; }
+.hly-cp-cell:last-child, .hly-cp-cell--daylight { border-bottom: none; }
+.hly-cp-cell--daylight {
+  grid-column: 1 / -1;
+  border-right: none;
+}
+.hly-cp-cell--daylight .hly-cp-cell-val {
+  display: flex; flex-direction: row; align-items: baseline; gap: 0;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+}
+.hly-cp-day-sep { font-size: 11px; opacity: 0.5; font-weight: 400; }
+.hly-cp-cell--no-data .hly-cp-cell-val { opacity: 0.35; }
+.hly-cp-cell--current .hly-cp-cell-sub {
+  font-size: 9px; letter-spacing: 0.04em;
+}
+.hly-cp-cell-lbl {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 8.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  opacity: 0.42; color: var(--text);
+  margin-bottom: 3px;
+}
+.hly-cp-cell-val {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px; font-weight: 700;
+  letter-spacing: -0.02em; line-height: 1.1;
+  color: var(--hly-cp-color, var(--accent));
+  font-variant-numeric: tabular-nums;
+}
+.hly-cp-cell-unit {
+  font-size: 10px; font-weight: 600;
+  opacity: 0.65; margin-left: 2px;
+}
+.hly-cp-cell-sub {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 9.5px; font-weight: 500;
+  opacity: 0.52; color: var(--text);
+  margin-top: 2px; line-height: 1.3;
+}
+
+/* ── List row verdict label — per patch, JetBrains Mono 7.5px ── */
+.hly-list .hly-lverd {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 7.5px !important; font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  opacity: 0.7 !important;
+}

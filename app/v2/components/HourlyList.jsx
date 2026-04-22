@@ -31,11 +31,22 @@ function fmtTimeShort(iso, tz) {
   } catch { return ""; }
 }
 
-export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, tz }) {
+export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, tz, reasonText }) {
   const [viewMode, setViewMode] = useState("cards");
   const [openIdx, setOpenIdx] = useState(null);
   const scrollerRef = useRef(null);
   const cardRefs = useRef([]);
+
+  // Toggle .wrap.hly-cardmode-active so the sticky info bar (.C) + driving
+  // chips (.drv) + best-window (.best) collapse — in cards mode the details
+  // live in a dedicated panel below the cards instead. In list mode the
+  // existing .hly--list-mode rule already handles it.
+  useEffect(() => {
+    const wrap = document.querySelector(".wrap");
+    if (!wrap) return;
+    wrap.classList.toggle("hly-cardmode-active", viewMode === "cards");
+    return () => { wrap.classList.remove("hly-cardmode-active"); };
+  }, [viewMode]);
 
   // Auto-centre the current hour when the cards view mounts or the
   // selection changes.
@@ -104,7 +115,83 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
             );
           })}
         </div>
-      ) : (
+      ) : null}
+
+      {/* Card panel — rendered BELOW the cards in Cards mode. Replaces the
+          StickyInfoBar (.C) which is hidden via .wrap.hly-cardmode-active.
+          Always reflects the currently selected hour. */}
+      {viewMode === "cards" && hours[selectedIdx] && (() => {
+        const h = hours[selectedIdx];
+        const v = coherentVerdict(h);
+        const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
+        const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
+        const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
+        const dayKey   = h.time?.split("T")?.[0];
+        const sun      = sunByDay ? sunByDay[dayKey] : null;
+        const rise     = fmtTimeShort(sun?.sunrise, tz);
+        const set      = fmtTimeShort(sun?.sunset, tz);
+        return (
+          <div className="hly-cpanel" style={{ "--hly-cp-color": v.color }}>
+            {reasonText && (
+              <div className="hly-cp-reason">
+                <div className="hly-cp-reason-main">{reasonText}</div>
+              </div>
+            )}
+            <div className="hly-cp-face">
+              <span className="hly-cp-face-val">{h.faceFtLow}–{h.faceFtHigh}<span className="hly-cp-face-unit"> ft</span></span>
+              <span className="hly-cp-face-conv">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
+            </div>
+            <div className="hly-cp-hint">{v.sub}</div>
+            <div className="hly-cp-grid">
+              {/* Row 1 */}
+              <div className="hly-cp-cell">
+                <div className="hly-cp-cell-lbl">Swell</div>
+                <div className="hly-cp-cell-val">{h.swellHeight.toFixed(1)}<span className="hly-cp-cell-unit">m</span></div>
+                <div className="hly-cp-cell-sub">{swellDir} · {Math.round(h.swellPeriod)}s</div>
+              </div>
+              <div className="hly-cp-cell">
+                <div className="hly-cp-cell-lbl">Wind</div>
+                <div className="hly-cp-cell-val">{Math.round(h.windKmh)}<span className="hly-cp-cell-unit">km/h</span></div>
+                <div className="hly-cp-cell-sub">{windDir} · {h.windType}</div>
+              </div>
+              <div className={`hly-cp-cell ${h.tideM == null ? "hly-cp-cell--no-data" : ""}`}>
+                <div className="hly-cp-cell-lbl">Tide</div>
+                <div className="hly-cp-cell-val">{h.tideM != null ? <>{h.tideM.toFixed(1)}<span className="hly-cp-cell-unit">m</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
+                <div className="hly-cp-cell-sub">&nbsp;</div>
+              </div>
+              {/* Row 2 */}
+              <div className={`hly-cp-cell ${h.airTemp == null ? "hly-cp-cell--no-data" : ""}`}>
+                <div className="hly-cp-cell-lbl">Air</div>
+                <div className="hly-cp-cell-val">{h.airTemp != null ? <>{Math.round(h.airTemp)}<span className="hly-cp-cell-unit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
+                <div className="hly-cp-cell-sub">&nbsp;</div>
+              </div>
+              <div className={`hly-cp-cell ${h.seaTemp == null ? "hly-cp-cell--no-data" : ""}`}>
+                <div className="hly-cp-cell-lbl">Water</div>
+                <div className="hly-cp-cell-val">{h.seaTemp != null ? <>{Math.round(h.seaTemp)}<span className="hly-cp-cell-unit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
+                <div className="hly-cp-cell-sub">&nbsp;</div>
+              </div>
+              <div className={`hly-cp-cell hly-cp-cell--current ${curKmh == null || curKmh < 0.18 ? "hly-cp-cell--no-data" : ""}`}>
+                <div className="hly-cp-cell-lbl">Current</div>
+                <div className="hly-cp-cell-val">{curKmh != null && curKmh >= 0.18 ? <>{curKmh.toFixed(1)}<span className="hly-cp-cell-unit">km/h</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
+                <div className="hly-cp-cell-sub">{(curKmh != null && curKmh >= 0.18 && h.currentDir != null) ? (typeof h.currentDir === "string" ? h.currentDir : degToCompass(h.currentDir)) : " "}</div>
+              </div>
+              {/* Row 3 — Daylight full-width */}
+              {(rise || set) && (
+                <div className="hly-cp-cell hly-cp-cell--daylight">
+                  <div className="hly-cp-cell-lbl">Daylight</div>
+                  <div className="hly-cp-cell-val">
+                    <span>↑{rise}</span>
+                    <span className="hly-cp-day-sep"> · </span>
+                    <span>↓{set}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {viewMode === "list" && (
         <div className="hly-list">
           {hours.map((h, i) => {
             const v = coherentVerdict(h);

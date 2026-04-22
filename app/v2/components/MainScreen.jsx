@@ -670,6 +670,7 @@ function Loaded({
             currentHour={currentHour}
             sunByDay={payload.sunByDay}
             tz={spot.timezone || "Australia/Perth"}
+            reasonText={personalReason}
           />
         </div>
 
