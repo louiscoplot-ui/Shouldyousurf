@@ -1,37 +1,38 @@
-// Service worker — v2025.11 (force-refresh + network-first HTML + push scaffold)
+// Service worker — v2026-04-22-fast (stale-while-revalidate HTML)
 //
-// Strategy:
-// - network-first for navigations / HTML → the page is ALWAYS fresh on open.
-//   The browser cache is bypassed entirely for the document; hashed JS / CSS
-//   chunks are still cache-able by the browser normally (their URLs change
-//   on every deploy so staleness is impossible).
-// - On activation of a NEW version of this SW, force-reload every open
-//   client with client.navigate(client.url). That means every existing user
-//   who already has the old version installed as a PWA will automatically
-//   pick up the latest bundle on their very next app open, no action needed.
-// - Cache the latest HTML only as an offline fallback (not for serving while
-//   online), so zero network = app still opens, with the most recent HTML.
+// Strategy for the HTML navigation document:
+// - Stale-while-revalidate: if we have a cached copy of the HTML, serve it
+//   IMMEDIATELY (PWA boots instantly, no multi-second black while iOS waits
+//   on the network). In the background, fetch a fresh copy from the network
+//   and update the cache — so the NEXT open picks up the latest deploy.
+// - If we don't have a cached copy yet (very first install), do a plain
+//   network fetch with no-store so we don't trap the user on stale data.
+// - Hashed JS / CSS chunks aren't intercepted here — the browser handles
+//   them with its own cache, and their URLs rotate on every deploy so the
+//   'cached HTML' never references stale chunks once the user has loaded
+//   the latest HTML at least once.
+//
+// The small trade-off is that deploys take ONE extra open to show up:
+// user opens the app → instant boot from cache (yesterday's bundle) +
+// background fetch of latest HTML → next open, latest bundle runs.
+//
+// Also:
+// - skipWaiting / claim so the new SW takes over all open pages.
+// - Old caches from previous SW versions are dropped on activate.
+// - Push notification + notificationclick handlers kept unchanged.
 
-const VERSION = "2026-04-22-splash";
+const VERSION = "2026-04-22-fast";
 const HTML_CACHE = "html-" + VERSION;
 
 self.addEventListener("install", (event) => {
-  // Claim activation immediately — don't wait for tabs to close.
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
-    // Drop any cache from previous SW versions.
     const keys = await caches.keys();
     await Promise.all(keys.filter((k) => k !== HTML_CACHE).map((k) => caches.delete(k)));
-    // Take over all existing pages for future navigations.
     await self.clients.claim();
-    // NOTE: we deliberately do NOT force-reload existing clients here
-    // (was causing a visible flash on every open + broke the app for
-    // some users whose network choked mid-navigate). The network-first
-    // HTML strategy below guarantees freshness on the NEXT natural load
-    // — users always get the latest bundle within one open.
   })());
 });
 
@@ -41,28 +42,37 @@ self.addEventListener("fetch", (event) => {
   const isNav =
     req.mode === "navigate" ||
     (req.headers.get("accept") || "").includes("text/html");
-  if (!isNav) return; // let the browser handle hashed assets normally
+  if (!isNav) return;
 
   event.respondWith((async () => {
-    try {
-      // Always hit the network first — `cache: "no-store"` also blocks the
-      // browser HTTP cache from returning a stale HTML.
-      const res = await fetch(req, { cache: "no-store" });
-      // Refresh the offline fallback copy in the background.
-      try {
-        const cache = await caches.open(HTML_CACHE);
-        cache.put(req, res.clone());
-      } catch {}
-      return res;
-    } catch {
-      // Network failed — serve the last-known HTML if we have one.
-      const cached = await caches.match(req);
-      return cached || new Response("Offline", { status: 503, headers: { "content-type": "text/plain" } });
+    const cache = await caches.open(HTML_CACHE);
+    const cached = await cache.match(req);
+
+    // Fire off the revalidation regardless — this updates the cache for
+    // the next open. Detached from the response so it never blocks serve.
+    const revalidate = fetch(req, { cache: "no-store" })
+      .then((res) => {
+        // Only cache successful responses. Don't poison cache with 500s.
+        if (res && res.ok) {
+          try { cache.put(req, res.clone()); } catch {}
+        }
+        return res;
+      })
+      .catch(() => null);
+
+    if (cached) {
+      // Keep the revalidate alive after we've responded.
+      event.waitUntil(revalidate);
+      return cached;
     }
+
+    // No cache yet (very first install) → wait for the network.
+    const fresh = await revalidate;
+    return fresh || new Response("Offline", { status: 503, headers: { "content-type": "text/plain" } });
   })());
 });
 
-// ── Push notification handlers (unchanged from previous SW version) ───
+// ── Push notification handlers ───────────────────────────────────────
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) {}
