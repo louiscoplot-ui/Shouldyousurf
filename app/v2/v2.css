@@ -1297,3 +1297,213 @@ button, input, select { font-family: inherit; color: inherit; }
   max-height: 240px; padding: 4px 12px 12px;
   border-top: 1px dashed color-mix(in srgb, var(--bad) 25%, transparent);
 }
+
+/* ── Hourly section header with pill toggle ───────────────────────
+   .hly-h : left group (title + ⓘ) · right pill (Cards | List)
+   .hly-pill : a 24px segmented control with a sliding white cursor */
+.hly-h .hly-h-left { display: flex; align-items: center; gap: 4px; }
+.hly-pill {
+  position: relative;
+  display: flex; align-items: center;
+  background: var(--bg-el); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2px;
+  height: 24px; overflow: hidden;
+  min-width: 98px;
+}
+.hly-pill-cursor {
+  position: absolute; top: 2px; left: 2px;
+  height: calc(100% - 4px); width: 50%;
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  transition: transform 220ms cubic-bezier(.4,0,.2,1);
+  z-index: 1; pointer-events: none;
+}
+.hly-pill-opt {
+  position: relative; z-index: 2;
+  flex: 1; padding: 0 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text); opacity: 0.45;
+  transition: opacity 200ms;
+  background: none; border: none; cursor: pointer;
+  line-height: 20px; white-space: nowrap; font-family: inherit;
+}
+.hly-pill-opt.on { opacity: 0.9; }
+
+/* ── List view rows (v1-style dense layout) ───────────────────────
+   grid: 52px time | 1fr bar | 72px score+verdict | 108px wave+wind */
+.hly-list { padding-top: 4px; }
+.hly-lwrap { border-radius: 6px; transition: background 120ms; }
+.hly-lwrap.open { background: rgba(255,255,255,0.22); margin-bottom: 2px; }
+.hly-lrow {
+  display: grid;
+  grid-template-columns: 52px 1fr 72px 108px;
+  align-items: center; gap: 8px;
+  padding: 7px 2px 5px;
+  cursor: pointer; border-radius: 6px;
+  transition: background 120ms;
+  position: relative;
+}
+.hly-lrow:hover { background: rgba(255,255,255,0.4); }
+.hly-lrow.sel { background: var(--accent-soft); }
+.hly-lrow.past { opacity: 0.45; }
+/* thin coloured bar under each row, opacity = score/110 */
+.hly-lrow::after {
+  content: ''; position: absolute; bottom: 0; left: 2px; right: 2px;
+  height: 1.5px; border-radius: 1px;
+  background: var(--row-color, var(--border));
+  opacity: var(--row-opacity, 0.18);
+}
+.hly-lrow.sel::after { opacity: 0.55; }
+.hly-ltime {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px; letter-spacing: -0.01em;
+  color: var(--text); opacity: 0.88; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.hly-lbar {
+  height: 3px; background: rgba(128,128,128,0.12);
+  border-radius: 2px; overflow: hidden; position: relative;
+}
+.hly-lbar-fill {
+  position: absolute; inset: 0 auto 0 0;
+  border-radius: 2px; height: 100%;
+}
+.hly-lscoreverdict {
+  display: flex; align-items: baseline; gap: 5px;
+  justify-content: flex-end;
+}
+.hly-lscore {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1; letter-spacing: -0.02em;
+}
+.hly-lverd {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 8px; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.hly-lstats {
+  display: flex; align-items: center; gap: 5px;
+  justify-content: flex-end;
+}
+.hly-lstat {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px; font-weight: 600;
+  color: var(--text); opacity: 0.72;
+  white-space: nowrap; letter-spacing: -0.01em;
+}
+.hly-lstat svg { flex-shrink: 0; opacity: 0.7; }
+.hly-lstat-sep {
+  font-size: 9px; color: var(--text); opacity: 0.28;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Row expand on click — fades in with max-height transition ── */
+.hly-lexpand {
+  overflow: hidden; max-height: 0;
+  transition: max-height 320ms cubic-bezier(.3,.8,.3,1);
+}
+.hly-lexpand.open { max-height: 480px; }
+.hly-lexpand-inner { padding: 10px 2px 14px; }
+.hly-xface {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 2px 0 3px;
+}
+.hly-xface-val {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 22px; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1;
+}
+.hly-xface-sub {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 9.5px; opacity: 0.55; font-weight: 500;
+}
+.hly-xhint {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px; font-style: italic;
+  opacity: 0.6; line-height: 1.4;
+  margin-bottom: 10px;
+}
+.hly-xgrid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-top: 6px;
+}
+.hly-xcell { min-width: 0; }
+.hly-xval {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1; letter-spacing: -0.02em;
+}
+.hly-xunit {
+  font-size: 10px; font-weight: 600;
+  opacity: 0.65; margin-left: 2px;
+}
+.hly-xsub {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 9px; color: var(--text-mu);
+  margin-top: 2px; line-height: 1.3;
+}
+
+/* ── List mode — collapse the sticky info / drv / best sections so
+   the list gets the whole viewport. Same principle as v1. ── */
+.wrap:has(.hly.hly--list-mode) .C,
+.wrap:has(.hly.hly--list-mode) .drv,
+.wrap:has(.hly.hly--list-mode) .best {
+  max-height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important; padding: 0 !important;
+  border: none !important; opacity: 0;
+  pointer-events: none;
+  transition: max-height 250ms ease, opacity 200ms, padding 250ms ease, margin 250ms ease;
+}
+.wrap:has(.hly.hly--list-mode) .hly { margin-top: 8px !important; }
+.wrap:has(.hly.hly--list-mode) .lvl-inline { margin-bottom: 4px !important; }
+
+/* ── Typography overrides: condition values use Inter, not Fraunces,
+   for a tighter stat-readout feel in the sticky info bar. ── */
+.C-m-val {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+  font-variation-settings: normal !important;
+}
+.C-m-sub {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  opacity: 0.65 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.C-m-lbl {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  opacity: 0.5 !important;
+}
+.C-face-hint {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-style: italic !important;
+  font-size: 11px !important;
+  opacity: 0.6 !important;
+}
+.C-face-conv {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  opacity: 0.65 !important;
+}
+
+/* ── Notif ibtn in the header (next to ?) ── */
+.ibtn.notif.on { color: var(--accent); }
+.ibtn.notif.on svg { opacity: 1; }

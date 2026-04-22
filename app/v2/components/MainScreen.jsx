@@ -513,6 +513,19 @@ function Loaded({
         <div className="hdr rise-1">
           <div className="brand-row"><span className="now-dot"/><span className="brand">{t("brand") || "should you surf?"}</span></div>
           <div className="hdr-actions">
+            {/* Notification toggle — icon-only, sits before the ? */}
+            <button
+              className={`ibtn notif ${notifOptIn ? "on" : ""}`}
+              onClick={toggleNotifications}
+              title={notifOptIn ? (t("notif_on") || "Notifications on") : (t("notif_off") || "Notifications off")}
+              aria-label="Toggle notifications"
+            >
+              {notifOptIn ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+              )}
+            </button>
             <button className="ibtn" onClick={onOpenFaq} title={t("faq_title")}>?</button>
             <button className="ibtn lang" onClick={onOpenLang} title="Language">
               <span>{(lang || "en").toUpperCase()}</span>
@@ -533,16 +546,6 @@ function Loaded({
                 · live data unavailable · showing mock
               </span>
             )}
-          </div>
-          <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button
-              className={`v2-hdr-chip ${notifOptIn ? "on" : ""}`}
-              onClick={toggleNotifications}
-              title={notifOptIn ? t("notif_on") : t("notif_off")}
-            >
-              {notifOptIn ? "🔔" : "🔕"} <span>{notifOptIn ? (t("notif_on") || "notifications on") : (t("notif_off") || "notifications off")}</span>
-            </button>
-            <button className="v2-hdr-chip" onClick={shareSpot}>🔗 <span>{t("share") || "share"}</span></button>
           </div>
         </div>
 
