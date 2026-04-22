@@ -12,7 +12,7 @@
 // - Cache the latest HTML only as an offline fallback (not for serving while
 //   online), so zero network = app still opens, with the most recent HTML.
 
-const VERSION = "2026-04-21-fresh";
+const VERSION = "2026-04-22-calm";
 const HTML_CACHE = "html-" + VERSION;
 
 self.addEventListener("install", (event) => {
@@ -25,15 +25,13 @@ self.addEventListener("activate", (event) => {
     // Drop any cache from previous SW versions.
     const keys = await caches.keys();
     await Promise.all(keys.filter((k) => k !== HTML_CACHE).map((k) => caches.delete(k)));
-    // Take over all existing pages.
+    // Take over all existing pages for future navigations.
     await self.clients.claim();
-    // Force a reload on every open client so everyone picks up the new bundle.
-    try {
-      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      for (const client of windows) {
-        try { await client.navigate(client.url); } catch {}
-      }
-    } catch {}
+    // NOTE: we deliberately do NOT force-reload existing clients here
+    // (was causing a visible flash on every open + broke the app for
+    // some users whose network choked mid-navigate). The network-first
+    // HTML strategy below guarantees freshness on the NEXT natural load
+    // — users always get the latest bundle within one open.
   })());
 });
 
