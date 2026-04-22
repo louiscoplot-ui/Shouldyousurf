@@ -1,16 +1,16 @@
 "use client";
 
-// v2 design is now the default at "/". The old v1 SurfApp lives at /v1-legacy
-// (if kept) and the standalone preview at /v2. Theme is owned here so the
-// data-theme attribute cascades to every child via CSS vars.
+// v2 preview route entry.
+// Lives at /v2 alongside the prod app at "/". Fetches live Open-Meteo data.
+// Owns the theme state (5 palettes, persisted to localStorage) so the
+// data-theme attribute can cascade to all child components via CSS vars.
 
 import { useEffect, useState } from "react";
-import "./v2/v2.css";
-import MainScreen from "./v2/components/MainScreen";
+import MainScreen from "./components/MainScreen";
 
 const THEME_KEY = "sys-theme-v1";
 
-export default function Home() {
+export default function V2Page() {
   const [theme, setTheme] = useState("terracotta");
   useEffect(() => {
     try {
