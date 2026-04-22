@@ -79,14 +79,13 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
     return () => { wrap.classList.remove("hly-cardmode-active"); };
   }, [viewMode]);
 
-  // When the user switches to List mode, auto-open the currently
-  // selected hour's row so the metric detail is visible immediately —
-  // hint that rows are expandable. Clicking the same row (or any other)
-  // still toggles normally, so users can close it if they prefer a
-  // denser overview.
+  // Safety net: if viewMode flips to list from a code path other than
+  // the pill click (e.g. future prefs / URL state), open the 6am row
+  // so the detail is still visible above the fold.
   useEffect(() => {
-    if (viewMode === "list") {
-      setOpenIdx(selectedIdx >= 0 ? selectedIdx : null);
+    if (viewMode === "list" && openIdx == null) {
+      const morning = hours.findIndex((h) => h.hour === 6);
+      setOpenIdx(morning >= 0 ? morning : 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode]);
@@ -127,7 +126,16 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           >Cards</button>
           <button
             className={`hly-pill-opt ${viewMode === "list" ? "on" : ""}`}
-            onClick={() => { setViewMode("list"); setOpenIdx(selectedIdx >= 0 ? selectedIdx : null); }}
+            onClick={() => {
+              setViewMode("list");
+              // Open the 6am row by default — it's near the top of the
+              // list so the user can see the expanded detail without
+              // scrolling down. Falls back to the first available hour
+              // if 6am isn't in this day's data (rare, e.g. archived
+              // past days).
+              const morning = hours.findIndex((h) => h.hour === 6);
+              setOpenIdx(morning >= 0 ? morning : 0);
+            }}
           >List</button>
         </div>
       </div>
