@@ -90,7 +90,10 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
       </div>
 
       {viewMode === "cards" ? (
-        <div className="hly-cards" ref={scrollerRef}>
+        // key = the day (YYYY-MM-DD) so React remounts the whole row
+        // whenever the user switches days → replays the cascade-from-
+        // left rise-in animation on each day change AND on first paint.
+        <div className="hly-cards" ref={scrollerRef} key={`cards-${hours[0]?.time?.split("T")?.[0] || "day"}`}>
           {hours.map((h, i) => {
             const v = coherentVerdict(h);
             const past = h.hour < currentHour;
@@ -106,7 +109,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                 className={`hly-card hly-card--${tone} ${selected ? "selected" : ""} ${past ? "past" : ""}`}
                 onClick={() => onSelect(i)}
                 aria-pressed={selected}
-                style={{ "--card-color": v.color }}
+                style={{ "--card-color": v.color, animationDelay: `${i * 45}ms` }}
               >
                 <div className="hly-card-time">{fmtHour(h.hour)}</div>
                 <div className="hly-card-score">{h.score}</div>

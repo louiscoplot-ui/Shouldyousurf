@@ -1208,6 +1208,19 @@ button, input, select { font-family: inherit; color: inherit; }
               background-color 180ms ease-out,
               box-shadow 180ms ease-out;
   position: relative;
+  /* Cascade-from-left rise animation on first paint + on every day
+     change (the parent .hly-cards uses key={dayKey} so React remounts
+     the whole row, re-triggering the CSS animation). The per-card
+     animation-delay is set inline as i*45ms. `backwards` fill keeps
+     each card invisible until its turn. */
+  animation: hly-card-rise 420ms cubic-bezier(.22,.9,.32,1) backwards;
+}
+@keyframes hly-card-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hly-card { animation: none !important; }
 }
 .hly-card:hover { background: var(--bg-hi); }
 /* Tone modifiers — tinted backgrounds based on the verdict band. */
