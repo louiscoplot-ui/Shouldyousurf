@@ -76,6 +76,18 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
     return () => { wrap.classList.remove("hly-cardmode-active"); };
   }, [viewMode]);
 
+  // When the user switches to List mode, auto-open the currently
+  // selected hour's row so the metric detail is visible immediately —
+  // hint that rows are expandable. Clicking the same row (or any other)
+  // still toggles normally, so users can close it if they prefer a
+  // denser overview.
+  useEffect(() => {
+    if (viewMode === "list") {
+      setOpenIdx(selectedIdx >= 0 ? selectedIdx : null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
+
   // Auto-centre the current hour when the cards view mounts or the
   // selection changes.
   useEffect(() => {
