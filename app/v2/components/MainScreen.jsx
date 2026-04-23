@@ -183,7 +183,7 @@ export default function MainScreen({ theme, setTheme }) {
   // sees the splash.
   const [splashReady, setSplashReady] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setSplashReady(true), 2500);
+    const id = setTimeout(() => setSplashReady(true), 3000);
     return () => clearTimeout(id);
   }, []);
 
