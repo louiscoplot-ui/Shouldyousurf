@@ -1118,14 +1118,26 @@ button, input, select { font-family: inherit; color: inherit; }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 /* ── Loading screen ── themed, animated, keeps the palette. */
-/* ─── Full-bleed LoadingScreen (video + pale blue veil + wordmark) ─── */
+/* ─── LoadingScreen — fits inside the Phone frame on desktop, fills
+       the screen on mobile (where .viewport is static). The status bar
+       padding-top of .viewport is overridden so the splash truly fills
+       the phone interior, top to bottom. ─── */
 .v2-ls {
-  position: fixed; inset: 0;
+  position: absolute; inset: 0;
+  margin-top: -50px; padding-top: 50px;  /* cancel .viewport's status-bar padding so the video reaches the very top of the phone */
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   background: #0b2233;                 /* solid fallback while video loads */
-  z-index: 9500;
+  z-index: 50;
   animation: fadeIn 0.35s ease both;
+  border-radius: inherit;
+}
+@media (max-width: 640px) {
+  .v2-ls {
+    position: fixed; inset: 0;
+    margin-top: 0; padding-top: 0;
+    z-index: 9500;
+  }
 }
 .v2-ls-video {
   position: absolute; inset: 0;
