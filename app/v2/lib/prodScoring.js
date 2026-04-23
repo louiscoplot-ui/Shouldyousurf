@@ -523,6 +523,15 @@ export function getPersonalVerdict(userLevel, h, spot) {
   if (reefTooMuch) return "no";
   if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
+    // Even the inside reform is chop when the wind is truly hammering the
+    // beach. At 30+ km/h onshore the whole surface zone is textured —
+    // nothing clean to take. At 45+ km/h any direction it's a gale, stay
+    // out. Keeps the rescue honest instead of blanket-MAYBEing everything.
+    const kmh = knToKmh(h.windSpeedKn);
+    const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
+    const isOffshore = windDelta <= 45;
+    if (!isOffshore && kmh >= 30) return "no";
+    if (kmh >= 45) return "no";
     if (size === "sweet" && wind === "clean") return "yes";
     return "ok";
   }

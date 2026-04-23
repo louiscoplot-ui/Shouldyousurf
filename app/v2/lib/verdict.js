@@ -91,14 +91,15 @@ export function drivingChipsFor(h) {
 // Short plain-English reason per level, derived from the same
 // classifyConditions / verdict logic the main score uses. Keeps the
 // "Can you surf?" block consistent with the top-of-screen number.
-function shortReason(userLevel, cls, foamie, period) {
+function shortReason(userLevel, cls, foamie, period, verdict) {
   const { size, wind, reefTooMuch, currentHazard, faceFt } = cls;
   if (currentHazard === "dangerous") return "Dangerous rip — stay out";
   if (reefTooMuch) return "Reef / heavy spot — too risky";
-  if (foamie && (size === "too_big" || size === "upper" || wind === "blown") && faceFt <= 10 && faceFt >= 0.3) {
-    // "foamie" is actually `hasInsideReform` since we passed hasInsideReform
-    // in from LevelMatrix — so this fires for first_timer/beginner AND
-    // early_int. The inside reform is the escape for all three.
+  // Inside-reform rescue only applies when the verdict actually came back
+  // as something other than "no". If getPersonalVerdict decided the wind
+  // is beyond reform (e.g. 30+ km/h onshore), we say so honestly instead
+  // of suggesting the reform they can't actually ride.
+  if (verdict !== "no" && foamie && (size === "too_big" || size === "upper" || wind === "blown") && faceFt <= 10 && faceFt >= 0.3) {
     if (userLevel === "first_timer" || userLevel === "beginner") {
       return "Foamie inside — ride the reform";
     }
@@ -148,7 +149,7 @@ export function levelMatrixFor(hour, spot, fns) {
     // as "can use the inside-reform rescue", which covers first_timer,
     // beginner AND early_int (not just the foamie-eligible subset).
     const foamie = hasInsideReform(r.level, cls.faceFt, spot);
-    const reason = shortReason(r.level, cls, foamie, hDeg.swellPeriod || 0);
+    const reason = shortReason(r.level, cls, foamie, hDeg.swellPeriod || 0, verdict);
     return { ...r, verdict, reason };
   });
 }
