@@ -14,7 +14,7 @@ const LEVEL_LABELS = {
   intermediate: "Intermediate", advanced: "Advanced", expert: "Expert",
 };
 
-export default function ScoreSheet({ hour, verdict, onClose, userLevel }) {
+export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec, sessionNotes }) {
   const bd = scoreBreakdown(hour);
   const scale = SCORE_SCALE;
   // Use the score actually shown on the main card (level-adjusted) rather
@@ -49,6 +49,24 @@ export default function ScoreSheet({ hour, verdict, onClose, userLevel }) {
           hazard are all calibrated for this level. Change level from the main
           screen to see how the same conditions read for other surfers.
         </div>
+
+        {boardRec && boardRec.long && (
+          <div className="sheet-board-rec">
+            <div className="sheet-eyebrow mono">BOARD FOR THIS SESSION</div>
+            <div className="sheet-board-short">{boardRec.short}</div>
+            <div className="sheet-board-long">{boardRec.long}</div>
+          </div>
+        )}
+
+        {sessionNotes && sessionNotes.length > 0 && (
+          <div className="sheet-notes">
+            <div className="sheet-eyebrow mono">HEADS-UP</div>
+            <ul className="sheet-notes-list">
+              {sessionNotes.map((n, i) => <li key={i}>{n}</li>)}
+            </ul>
+          </div>
+        )}
+
         <div className="sheet-intro">
           We weigh <b>size</b>, <b>swell period</b>, <b>swell direction</b> and <b>wind</b> against this spot's profile. Long-period groundswell with light offshore wind scores highest.
         </div>

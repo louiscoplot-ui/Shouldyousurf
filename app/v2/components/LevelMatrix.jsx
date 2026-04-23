@@ -1,11 +1,21 @@
 "use client";
 
-// v2 LevelMatrix — ported from export-v2/v2-parts.jsx.
+// v2 LevelMatrix — unified with the main score. Delegates row-by-row
+// verdict + reason to the same classifyConditions / getPersonalVerdict
+// the sticky tip uses, so "Can you surf?" can't disagree with the top
+// of the screen any more.
 
 import { levelMatrixFor } from "../lib/verdict";
+import {
+  classifyConditions,
+  getPersonalVerdict,
+  isFoamieFriendly,
+} from "../lib/prodScoring";
 
-export default function LevelMatrix({ hour }) {
-  const m = levelMatrixFor(hour);
+const FNS = { classifyConditions, getPersonalVerdict, isFoamieFriendly };
+
+export default function LevelMatrix({ hour, spot }) {
+  const m = levelMatrixFor(hour, spot, FNS);
   const text = { yes: "GO", ok: "WORTH IT", no: "SKIP" };
   return (
     <div className="lvl-block">

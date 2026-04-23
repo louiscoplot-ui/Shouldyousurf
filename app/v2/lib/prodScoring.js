@@ -309,26 +309,29 @@ export function classifyConditions(userLevel, h, spot) {
   else if (faceFt <= z.upperMax) size = "upper";
   else size = "too_big";
 
-  // Learner-specific wind thresholds — first-timer / beginner classify
-  // "blown" at much lower speeds because they haven't built the paddling
-  // / duck-diving chops to handle chop the way an intermediate can.
-  const isLearner = userLevel === "first_timer" || userLevel === "beginner";
-  const blownNonOffshore = isLearner ? 18 : 25;
-  const galeOffshore     = isLearner ? 45 : 55;
+  // Wind thresholds aligned with scoreSurf's onshore classification
+  // (20 km/h = n_on_blown) so the label never contradicts the score number.
+  // Early-learners get tighter thresholds because they haven't built the
+  // paddling / duck-diving chops yet. Early_int is included in the wind
+  // tolerance check (they still struggle with moderate onshore chop).
+  const isEarlyLearner = userLevel === "first_timer" || userLevel === "beginner";
+  const isWindSensitive = isEarlyLearner || userLevel === "early_int";
+  const blownNonOffshore = isWindSensitive ? 18 : 20;
+  const galeOffshore     = isWindSensitive ? 45 : 55;
 
   let wind;
-  if ((isOffshore && kmh < 30) || kmh < 10) wind = "clean";
+  if ((isOffshore && kmh < 25) || kmh < 8) wind = "clean";
   else if ((!isOffshore && kmh >= blownNonOffshore) || kmh >= 40 || (isOffshore && kmh >= galeOffshore)) wind = "blown";
   else wind = "bumpy";
 
-  const reefTooMuch = (spot.heavy || spot.type === "reef") && (userLevel === "first_timer" || userLevel === "beginner");
+  const reefTooMuch = (spot.heavy || spot.type === "reef") && isEarlyLearner;
 
-  // Ocean-current hazard for learners — a rip drains a beginner faster than
-  // they can paddle against it. Open-Meteo returns velocity in m/s;
+  // Ocean-current hazard for early-learners — a rip drains a beginner faster
+  // than they can paddle against it. Open-Meteo returns velocity in m/s;
   // 0.28 m/s ≈ 1 km/h, 0.56 m/s ≈ 2 km/h.
   const curVel = h.currentVel || 0;
-  const currentHazard = isLearner && curVel >= 0.56 ? "dangerous"
-                      : isLearner && curVel >= 0.28 ? "strong"
+  const currentHazard = isEarlyLearner && curVel >= 0.56 ? "dangerous"
+                      : isEarlyLearner && curVel >= 0.28 ? "strong"
                       : "none";
   return { size, wind, reefTooMuch, faceFt, currentHazard };
 }
@@ -373,6 +376,116 @@ export function getPersonalModifier(userLevel, h, spot) {
   if (dirDelta > 75) return "tip_mod_off_angle";
   if (wind === "clean" && knToKmh(h.windSpeedKn) < 8) return "tip_mod_glassy";
   return null;
+}
+
+// Board recommendation per level + face size + period. Returns a short label
+// for inline display plus a longer explanation for tooltips / ScoreSheet.
+// First-timer and beginner always stay on a foamie (soft-top) — it's safer
+// for them and anyone around them, and takes-offs are much more forgiving.
+// When size / wind exceed their level we recommend riding the INSIDE reform
+// on the foamie (whitewash after the peak breaks), never the outside peak.
+export function getBoardRec(userLevel, faceFt, period, spot) {
+  const foamie = isFoamieFriendly(userLevel, spot);
+  const longP = period >= 12;
+  if (userLevel === "first_timer") {
+    if (faceFt < 0.6) return { short: "—", long: "Not enough wave — save your wax" };
+    if (faceFt <= 2)  return { short: "Foamie 8'+", long: "8' or bigger soft-top. Stay in the whitewash — catch re-formed waves near the sand, don't paddle past the break" };
+    if (foamie && faceFt <= 10) return { short: "Foamie inside only", long: "Peak is too much for a first-timer. Stay INSIDE on a foamie and ride the reform (smaller waves that form after the main wave breaks)" };
+    return { short: "Watch today", long: "Beyond a first-timer's kit. Watch the ocean, learn where the rip is, try again when it's smaller" };
+  }
+  if (userLevel === "beginner") {
+    if (faceFt < 0.6) return { short: "—", long: "Not enough wave" };
+    if (faceFt <= 3)  return { short: "Foamie 7'–8'", long: "Soft-top 7' to 8' — easy paddle, forgiving take-offs, safer for everyone if you lose it" };
+    if (foamie && faceFt <= 8) return { short: "Foamie inside", long: "Peak's getting big — stay on the foamie in the reform (the smaller foam waves close to shore)" };
+    return { short: "Wait smaller", long: "Too much for a beginner foamie — come back when it drops" };
+  }
+  if (userLevel === "early_int") {
+    if (faceFt < 1.2) return { short: "Longboard 9'", long: "Only a longboard will catch this little energy" };
+    if (faceFt <= 2.5) return { short: "Mid-length 7'", long: "7'0–7'6 mid-length. Plenty of paddle, catches cleanly, still forgiving on take-offs" };
+    if (faceFt <= 4)  return { short: "Mid 6'10 / SB 6'8", long: "Mid-length 6'10 if you want easy waves, or try a shortboard 6'6–6'8 if you're feeling confident" };
+    if (faceFt <= 6)  return { short: "Pick your waves", long: "Size is on the edge — stick with the mid-length, don't force the biggest sets, take the inside ones" };
+    return { short: "Hold back", long: "Out of your range — watch a set, don't go unless you know the rip and the paddle-out" };
+  }
+  if (userLevel === "intermediate") {
+    if (faceFt < 1.5) return { short: "Longboard", long: "Too soft for a shortboard — longboard or step off" };
+    if (faceFt <= 2.5) return { short: "Fish / groveler 5'8–6'0", long: "Small-wave blade — a fish or groveler with volume so you keep moving through the soft sections" };
+    if (faceFt <= 4.5) return { short: "Shortboard 5'11–6'4", long: "Your daily driver — the sweet spot for progressive surfing" };
+    if (faceFt <= 6.5) return { short: longP ? "Step-up 6'4–6'6" : "Shortboard 6'2+", long: "Slightly longer board for paddle power and hold. On a long-period day size up a little" };
+    return { short: "Hold back", long: "Overhead-plus is beyond your comfort zone — watch a set or two, don't force it" };
+  }
+  if (userLevel === "advanced") {
+    if (faceFt < 2) return { short: "Longboard / fish", long: "Longboard for fun, or a fish if there's any push" };
+    if (faceFt <= 3)  return { short: "Fish / groveler", long: "Small-wave board with volume" };
+    if (faceFt <= 6)  return { short: "Shortboard 6'0–6'4", long: "Your daily driver zone" };
+    if (faceFt <= 9)  return { short: "Step-up 6'6–7'0", long: "Step up — a bit more foam and length for paddle and hold in bigger surf" };
+    if (faceFt <= 12) return { short: "Mini-gun 7'2+", long: "Big-wave territory — length and rail for commitment in the drop" };
+    return { short: "Gun 7'6+", long: "Full big-wave kit — know the spot, know your limits, never alone" };
+  }
+  if (userLevel === "expert") {
+    if (faceFt < 2)   return { short: "Longboard", long: "Fun longboard day" };
+    if (faceFt <= 3)  return { short: "Groveler", long: "Small-wave blade" };
+    if (faceFt <= 6)  return { short: "Shortboard", long: "Daily driver — whatever's in your bag for this size" };
+    if (faceFt <= 9)  return { short: "Step-up 6'6–7'0", long: "Step up for paddle and hold" };
+    if (faceFt <= 12) return { short: "Gun 7'2–7'6", long: "Proper gun — drop-ins and hold" };
+    return { short: "Big-wave gun 8'+", long: "Full big-wave kit — tow options, safety crew, full protocol" };
+  }
+  return null;
+}
+
+// Strategy / safety bullets — contextual advice based on level + hour +
+// day-wide patterns. Returns an array of short imperative strings that the
+// UI can render as bullet points. Covers: current/rip safety, crowd, wind
+// shift timing, tide strategy, period warnings.
+export function getSessionNotes(userLevel, h, dayHours, spot) {
+  const out = [];
+  if (!h || !spot) return out;
+  const cls = classifyConditions(userLevel, h, spot);
+  const { size, wind, currentHazard } = cls;
+  const kmh = knToKmh(h.windSpeedKn);
+
+  // Safety first — current / rip
+  if (currentHazard === "dangerous") {
+    out.push("⚠ Strong rip running — do not paddle out, check with a lifeguard first");
+  } else if (currentHazard === "strong") {
+    out.push("⚠ Noticeable current — surf between flags, don't drift past the break");
+  }
+
+  // Reef / heavy spot warnings for levels below advanced
+  if ((spot.heavy || spot.type === "reef") && (userLevel === "early_int" || userLevel === "intermediate")) {
+    out.push("Reef / heavy spot — know the entry, watch the locals, don't drop in");
+  }
+
+  // Foamie inside advice for learners when conditions are too much
+  if (isFoamieFriendly(userLevel, spot) && (size === "too_big" || size === "upper" || wind === "blown") && cls.faceFt <= 10 && cls.faceFt >= 0.3) {
+    out.push("Stay INSIDE on the foamie — ride the reform close to shore, smaller and forgiving");
+  }
+
+  // Wind shift forecast — clean now but blows up later
+  if (dayHours && wind !== "blown") {
+    const myIdx = dayHours.findIndex((x) => x.time === h.time);
+    if (myIdx >= 0) {
+      const later = dayHours.slice(myIdx + 1).find((hh) => knToKmh(hh.windSpeedKn) > 22);
+      if (later) {
+        const laterH = new Date(later.time).getHours();
+        out.push(`Wind picks up around ${laterH}:00 — prioritize the early`);
+      }
+    }
+  }
+
+  // Period warnings
+  const period = h.swellPeriod || 0;
+  if (period >= 13 && (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int")) {
+    out.push("Long-period swell — waves hit harder than they look, be patient with take-offs");
+  } else if (period > 0 && period < 8 && (size === "sweet" || size === "upper")) {
+    out.push("Short period — waves close out faster, read the line quickly or miss the wall");
+  }
+
+  // Cross-shore warning at bigger sizes for mid levels
+  if (wind === "bumpy" && kmh >= 18 && (userLevel === "intermediate" || userLevel === "early_int")) {
+    out.push("Cross-shore texture — paddle wider for a clean face, avoid the chop zones");
+  }
+
+  return out;
 }
 
 export function getTideModifier(sel, hours) {

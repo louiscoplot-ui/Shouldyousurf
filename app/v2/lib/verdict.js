@@ -6,8 +6,8 @@ export const SCORE_SCALE = [
   { key: "great",   min: 55, max: 74,  color: "#2d9178", label: "Great",   sub: "Clean, well-shaped" },
   { key: "good",    min: 45, max: 54,  color: "#62a06a", label: "Good",    sub: "Solid session" },
   { key: "fun",     min: 35, max: 44,  color: "#a4a558", label: "Fun",     sub: "Surfable but unremarkable" },
-  { key: "small",   min: 15, max: 34,  color: "#d47559", label: "Small",   sub: "Longboard or skip" },
-  { key: "flat",    min: 0,  max: 14,  color: "#b54c3f", label: "Flat",    sub: "Nothing to surf" },
+  { key: "junky",   min: 15, max: 34,  color: "#d47559", label: "Junky",   sub: "Waves but messy — pick and choose" },
+  { key: "skip",    min: 0,  max: 14,  color: "#b54c3f", label: "Skip",    sub: "Not worth paddling" },
 ];
 
 export function getLevel(s) {
@@ -15,10 +15,10 @@ export function getLevel(s) {
 }
 
 // Coherent verdict: label derived from BOTH score and conditions.
-// Criteria match v1 prod's getLevel() override so the label agrees with
-// the numeric score (was producing "Blown out" at 25 km/h cross-shore
-// even when the underlying score was 74 — now only calls Blown when the
-// scoreSurf engine has genuinely penalised the hour below 75).
+// "Flat" is reserved for "no swell at all — good for a swim" (swellHeight
+// < 0.4 m AND score low). If there IS swell but wind is trashing it, the
+// label reads "Blown out" (or "Junky" for marginal cases) — users were
+// getting confused by "Flat" on a big windy day.
 export function coherentVerdict(h) {
   const face = (h.faceFtLow + h.faceFtHigh) / 2;
   const windType = (h.windType || "").toLowerCase();
@@ -27,37 +27,41 @@ export function coherentVerdict(h) {
   const off   = windType.includes("offshore");
   const kmh   = h.windKmh || 0;
   const score = h.score || 0;
+  const swellH = h.swellHeight || 0;
 
-  // Genuinely blown:
-  //   - onshore ≥ 25 km/h (real chop directly into the face), OR
-  //   - cross-shore ≥ 35 km/h (heavy side-chop), OR
-  //   - offshore ≥ 55 km/h (gale — rips the face apart), OR
-  //   - any direction ≥ 40 km/h
-  // AND the numeric score is < 75 (exception: monster groundswell days
-  // can still read as Pumping through moderate wind — the score engine
-  // already reflects that).
-  const trulyBlown = (on && kmh >= 25) || (cross && kmh >= 35) || (off && kmh >= 55) || kmh >= 40;
-  if (trulyBlown && score < 75 && face >= 1.5) {
+  // Truly no waves — swell height negligible. Only place the "Flat" label
+  // fires. Short sub copy explicitly says "no waves" so users don't think
+  // the app is calling good-size windy days "Flat".
+  if (swellH < 0.4 && face < 1) {
+    return { key: "flat", label: "Flat", color: "#94a3a0",
+             sub: "No waves — good for a swim, not for a surf." };
+  }
+
+  // Blown out: there ARE waves but wind has trashed them. Fires whenever
+  // the score is low AND there's enough swell to matter, OR the wind is
+  // genuinely heavy even if the score is borderline.
+  const heavyWind = (on && kmh >= 22) || (cross && kmh >= 30) || (off && kmh >= 55) || kmh >= 38;
+  if (swellH >= 0.4 && heavyWind && score < 55) {
     return { key: "blown", label: "Blown out", color: "#b54c3f",
-             sub: "There are waves, but wind makes it unsurfable." };
+             sub: "Waves are there, wind is killing the shape. Not worth paddling." };
   }
-  if (face < 1.5) {
+
+  // Tiny but clean — shown as "Small" rather than "Junky" so users don't
+  // think small clean days are bad, they're just not scoring sessions.
+  if (face < 1.5 && !heavyWind) {
     return { key: "small", label: "Small", color: "#d47559",
-             sub: "Tiny waves — groms or longboard only." };
+             sub: "Tiny waves — longboard practice or whitewash only." };
   }
-  if (h.swellHeight < 0.4) {
-    return { key: "flat", label: "Flat", color: "#b54c3f",
-             sub: "Nothing to surf." };
-  }
+
   const s = getLevel(score);
-  const labelMap = { pumping: "Pumping", great: "Great", good: "Good", fun: "Fun", small: "Small", flat: "Flat" };
+  const labelMap = { pumping: "Pumping", great: "Great", good: "Good", fun: "Fun", junky: "Junky", skip: "Skip" };
   const subMap = {
     pumping: "Everything aligned — go now.",
-    great:   "Clean, well-organized waves. Worth rearranging your morning.",
+    great:   "Clean, well-organised waves. Worth rearranging your morning.",
     good:    "Solid fun session. Not memorable but you'll enjoy it.",
-    fun:     "Surfable but unremarkable. Worth a paddle if you have nothing better.",
-    small:   "Little wave energy — longboard only.",
-    flat:    "Nothing to surf.",
+    fun:     "Surfable but unremarkable. Worth a paddle if nothing better.",
+    junky:   "There are waves but they're messy — pick your sets carefully.",
+    skip:    "Not worth paddling today.",
   };
   return { key: s.key, label: labelMap[s.key] || s.label, color: s.color, sub: subMap[s.key] || s.sub };
 }
@@ -125,62 +129,60 @@ export function drivingChipsFor(h) {
   return chips;
 }
 
-export function levelMatrixFor(h) {
-  const face = (h.faceFtLow + h.faceFtHigh) / 2;
-  const wind = h.windKmh;
-  const period = h.swellPeriod;
-  const type = (h.windType || "").toLowerCase();
-  const clean = type === "offshore" || wind < 12;
-  const choppy = type.includes("onshore") || wind >= 25;
-  const cross = type.includes("cross");
-  const longP = period >= 11;
+// Short plain-English reason per level, derived from the same
+// classifyConditions / verdict logic the main score uses. Keeps the
+// "Can you surf?" block consistent with the top-of-screen number.
+function shortReason(userLevel, cls, foamie, period) {
+  const { size, wind, reefTooMuch, currentHazard, faceFt } = cls;
+  if (currentHazard === "dangerous") return "Dangerous rip — stay out";
+  if (reefTooMuch) return "Reef / heavy spot — too risky";
+  if (foamie && (size === "too_big" || size === "upper" || wind === "blown") && faceFt <= 10 && faceFt >= 0.3) {
+    return "Foamie inside only — ride the reform";
+  }
+  if (size === "too_small") return "Too small — not enough push";
+  if (size === "too_big") return faceFt > 12 ? "Way over your head" : "Too big for this level";
+  if (wind === "blown") return "Blown out — wind trashing the shape";
+  if (size === "sweet" && wind === "clean") {
+    return period >= 12 ? "Prime groundswell — right in your zone" : "Clean + in your zone — go";
+  }
+  if (size === "sweet") return "Right size, a bit of texture on the face";
+  if (size === "upper") return wind === "clean" ? "On the big side but clean" : "Big and bumpy — pick sets carefully";
+  if (size === "small") return wind === "clean" ? "Small + clean — good practice session" : "Small + wind texture — fun only";
+  return "";
+}
 
-  const rows = [];
-  rows.push((() => {
-    const tooBig = face > 3.5;
-    const tooMess = choppy && face > 2;
-    const ok = face >= 1 && face <= 3 && clean;
-    if (tooBig) return { key: "beginner", name: "Beginner", verdict: "no", reason: face > 6 ? "Way overhead — dangerous" : "Too big, stay out" };
-    if (tooMess) return { key: "beginner", name: "Beginner", verdict: "no", reason: "Choppy + too big — wait" };
-    if (face < 0.8) return { key: "beginner", name: "Beginner", verdict: "no", reason: "Flat — nothing to catch" };
-    if (ok) return { key: "beginner", name: "Beginner", verdict: "yes", reason: "Small clean waves — learn now" };
-    return { key: "beginner", name: "Beginner", verdict: "ok", reason: clean ? "Fun little peelers" : "Workable if you paddle inside" };
-  })());
+// Build the per-level matrix using the same classifyConditions + verdict
+// logic as the main score. Takes the raw hour + spot + the prodScoring
+// function refs (injected to avoid a circular import) so reasons reflect
+// the real ideal-direction / offshore-wind / spot-type / heavy flags.
+// Falls back to a face-only heuristic if fns/spot aren't provided.
+export function levelMatrixFor(hour, spot, fns) {
+  const rows = [
+    { key: "beginner", name: "Beginner",     level: "beginner" },
+    { key: "eint",     name: "Early Int.",   level: "early_int" },
+    { key: "int",      name: "Intermediate", level: "intermediate" },
+    { key: "adv",      name: "Advanced",     level: "advanced" },
+    { key: "exp",      name: "Expert",       level: "expert" },
+  ];
 
-  rows.push((() => {
-    if (face < 1.2) return { key: "eint", name: "Early Int.", verdict: "no", reason: "Too small — mushy" };
-    if (face > 5 && choppy) return { key: "eint", name: "Early Int.", verdict: "no", reason: "Overhead + windy — too much" };
-    if (face > 6) return { key: "eint", name: "Early Int.", verdict: "no", reason: "Way beyond comfort zone" };
-    if (face >= 1.5 && face <= 4 && clean) return { key: "eint", name: "Early Int.", verdict: "yes", reason: longP ? "Clean groundswell, good size" : "Clean, rideable" };
-    if (face >= 2 && face <= 4) return { key: "eint", name: "Early Int.", verdict: "ok", reason: choppy ? "Bumpy but ridable" : "Workable side-wind" };
-    return { key: "eint", name: "Early Int.", verdict: "ok", reason: face < 2 ? "Small but clean" : "A bit messy, still doable" };
-  })());
+  if (!fns || !fns.classifyConditions || !fns.getPersonalVerdict || !fns.isFoamieFriendly || !spot) {
+    const face = (hour.faceFtLow + hour.faceFtHigh) / 2;
+    return rows.map((r) => ({
+      ...r,
+      verdict: face < 1 ? "no" : face > 10 ? "no" : "ok",
+      reason: face < 1 ? "Flat" : face > 10 ? "Huge" : "Surfable",
+    }));
+  }
 
-  rows.push((() => {
-    if (face < 1.5) return { key: "int", name: "Intermediate", verdict: "no", reason: "Too small and slow" };
-    if (face > 8 && !clean) return { key: "int", name: "Intermediate", verdict: "no", reason: "Big + blown out — wait" };
-    if (face >= 2 && face <= 6 && clean) return { key: "int", name: "Intermediate", verdict: "yes", reason: longP ? "Prime groundswell — go" : "Clean, well-sized" };
-    if (face >= 2 && face <= 6) return { key: "int", name: "Intermediate", verdict: "ok", reason: choppy ? "Workable onshore texture" : "Ridable cross-shore" };
-    return { key: "int", name: "Intermediate", verdict: "ok", reason: face > 6 ? "Stepping up in size" : "Small but clean" };
-  })());
-
-  rows.push((() => {
-    if (face < 2) return { key: "adv", name: "Advanced", verdict: "no", reason: "Too small to enjoy" };
-    if (face >= 3 && face <= 10 && clean) return { key: "adv", name: "Advanced", verdict: "yes", reason: longP ? "Powerful groundswell — go now" : "Proper size, clean wind" };
-    if (face >= 3 && face <= 10) return { key: "adv", name: "Advanced", verdict: "ok", reason: choppy ? "Solid but blown-out" : "Ridable, bumpy face" };
-    if (face > 10 && clean) return { key: "adv", name: "Advanced", verdict: "ok", reason: "Big — paddle with care" };
-    return { key: "adv", name: "Advanced", verdict: "ok", reason: "Below your threshold but fun" };
-  })());
-
-  rows.push((() => {
-    if (face < 2.5) return { key: "exp", name: "Expert", verdict: "no", reason: "Nothing to charge" };
-    if (face >= 5 && clean && longP) return { key: "exp", name: "Expert", verdict: "yes", reason: "Prime conditions — this is why you wake up" };
-    if (face >= 5 && clean) return { key: "exp", name: "Expert", verdict: "yes", reason: "Proper size, clean — go" };
-    if (face >= 5) return { key: "exp", name: "Expert", verdict: "ok", reason: choppy ? "Big + messy — doable" : "Cross-shore chop, workable" };
-    return { key: "exp", name: "Expert", verdict: "ok", reason: "Fun but below threshold" };
-  })());
-
-  return rows;
+  const { classifyConditions, getPersonalVerdict, isFoamieFriendly } = fns;
+  const hDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
+  return rows.map((r) => {
+    const cls = classifyConditions(r.level, hDeg, spot);
+    const verdict = getPersonalVerdict(r.level, hDeg, spot);
+    const foamie = isFoamieFriendly(r.level, spot);
+    const reason = shortReason(r.level, cls, foamie, hDeg.swellPeriod || 0);
+    return { ...r, verdict, reason };
+  });
 }
 
 export const LEVEL_TO_MATRIX_IDX = {

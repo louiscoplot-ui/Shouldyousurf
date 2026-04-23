@@ -599,6 +599,46 @@ button, input, select { font-family: inherit; color: inherit; }
   margin: 14px 0 6px;
 }
 .sheet-level-note b { color: var(--text); font-weight: 600; }
+.sheet-board-rec {
+  margin: 14px 0 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(26,61,58,0.04);
+}
+.sheet-board-short {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--text);
+  margin: 4px 0 2px;
+  letter-spacing: -0.01em;
+}
+.sheet-board-long {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-mu);
+}
+.sheet-notes {
+  margin: 12px 0 6px;
+  padding: 10px 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(26,61,58,0.04);
+}
+.sheet-notes-list {
+  margin: 6px 0 0;
+  padding-left: 0;
+  list-style: none;
+}
+.sheet-notes-list li {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text);
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.sheet-notes-list li:last-child { border-bottom: none; }
 @keyframes shRise { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .sheet-grip { width: 36px; height: 4px; border-radius: 2px; background: rgba(26,61,58,0.22); margin: 6px auto 14px; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -1847,7 +1887,10 @@ button, input, select { font-family: inherit; color: inherit; }
    as the card tones. */
 .hly-bar--blown   { background: linear-gradient(to top, #7a2d24, #b54c3f); }
 .hly-bar--flat    { background: linear-gradient(to top, #7a2d24, #b54c3f); }
+.hly-bar--skip    { background: linear-gradient(to top, #7a2d24, #b54c3f); }
 .hly-bar--small   { background: linear-gradient(to top, #a04833, #d47559); }
+.hly-bar--junky   { background: linear-gradient(to top, #a04833, #d47559); }
+.hly-bar--blown   { background: linear-gradient(to top, #7a2d24, #b54c3f); }
 .hly-bar--fun     { background: linear-gradient(to top, #74753a, #a4a558); }
 .hly-bar--good    { background: linear-gradient(to top, #3a7a3f, #62a06a); }
 .hly-bar--great   { background: linear-gradient(to top, #1d6a5b, #2d9178); }

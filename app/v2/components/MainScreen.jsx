@@ -39,6 +39,10 @@ import {
   getTideModifier,
   fmtLongDay,
   adaptForecastToLevel,
+  getBoardRec,
+  getSessionNotes,
+  mToFt,
+  estimateFaceHeight,
 } from "../lib/prodScoring";
 
 const DEFAULT_SPOT = BREAKS.find((b) => b.id === "trigg") || BREAKS[0];
@@ -429,16 +433,36 @@ function Loaded({
     const modifier = modifierKey ? t(modifierKey) : null;
     const tideMod = tideModKey ? t(tideModKey) : null;
     const isValid = (s, k) => s && s !== k && !s.startsWith("tip_");
+
+    // Board recommendation — short inline label (e.g. "Foamie 7'–8'",
+    // "Shortboard 6'0–6'4"). Hidden when verdict is SKIP (no board advice
+    // makes sense when the session itself is off).
+    const faceFt = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0));
+    const boardRec = pv !== "no" ? getBoardRec(effectiveLevel, faceFt, hour.swellPeriod || 0, effectiveSpot) : null;
+
     return (
       <>
         <strong>{levelLabel}</strong>
         {" "}<span style={{ color: verdictColor, fontWeight: 600 }}>· {verdictLabel}</span>
         {" — "}{tipText}
+        {boardRec && boardRec.short && boardRec.short !== "—" && (
+          <span className="C-reason-mod">🏄 {boardRec.short}</span>
+        )}
         {isValid(modifier, modifierKey) && <span className="C-reason-mod">{modifier}</span>}
         {isValid(tideMod,  tideModKey)  && <span className="C-reason-mod">{tideMod}</span>}
       </>
     );
   }, [effectiveLevel, hour, effectiveSpot, day.hours, t, verdict.sub]);
+
+  // Contextual session notes — safety, wind-shift, tide window, foamie
+  // inside advice. Computed per-hour so the ScoreSheet can show them.
+  const sessionNotes = useMemo(() => {
+    const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
+    return getSessionNotes(effectiveLevel, hourDeg, day.hours, effectiveSpot);
+  }, [effectiveLevel, hour, day.hours, effectiveSpot]);
+
+  const faceFtForSheet = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0));
+  const boardRecForSheet = getBoardRec(effectiveLevel, faceFtForSheet, hour.swellPeriod || 0, effectiveSpot);
 
   // Compact danger info — shown only to learners (first_timer / beginner /
   // early_int) when the per-level verdict is SKIP ("no"). Message is a
@@ -649,7 +673,7 @@ function Loaded({
 
         <VerdictHero verdict={verdict} hour={hour} swapKey={swapKey} onOpenScore={() => setScoreOpen(true)}/>
 
-        {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} onClose={() => setScoreOpen(false)}/>}
+        {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} onClose={() => setScoreOpen(false)}/>}
 
         <div className="lvl-inline rise-3">
           <button className="lvl-me-btn" onClick={onOpenLevel}>
@@ -694,7 +718,7 @@ function Loaded({
 
         <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx}/>
 
-        <LevelMatrix hour={hour}/>
+        <LevelMatrix hour={hour} spot={effectiveSpot}/>
 
         <Footer/>
       </div>
