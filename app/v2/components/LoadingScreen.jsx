@@ -1,7 +1,7 @@
 "use client";
 
 // v2 LoadingScreen — splash that fits inside the Phone frame on desktop
-// (390×844) and fills the screen on mobile. /assets/surfer.mp4 loops
+// (390×844) and fills the screen on mobile. /assets/surfer2.mp4 loops
 // muted under a pale-blue veil; italic-serif "Should You Surf?" wordmark,
 // animated SVG wave, pulsing dots, uppercase tagline.
 // Gracefully degrades to a solid ocean-blue bg if the video file is missing.
@@ -14,7 +14,7 @@ export default function LoadingScreen({ tagline = "Reading the ocean…" }) {
       <div className="v2-ls">
         <video
           className="v2-ls-video"
-          src="/assets/surfer.mp4"
+          src="/assets/surfer2.mp4"
           autoPlay
           muted
           loop
