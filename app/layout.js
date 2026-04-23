@@ -187,7 +187,7 @@ export default function RootLayout({ children }) {
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            var MIN_SHOW = 2500;  // 2.5s so the video has enough time to play
+            var MIN_SHOW = 1500;  // 1.5s — enough to see the video start without feeling long
             function hide() {
               if (hidden) return;
               hidden = true;
