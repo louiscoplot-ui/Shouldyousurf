@@ -311,13 +311,13 @@ export function classifyConditions(userLevel, h, spot) {
 
   // Wind thresholds aligned with scoreSurf's onshore classification
   // (20 km/h = n_on_blown) so the label never contradicts the score number.
-  // Early-learners get tighter thresholds because they haven't built the
-  // paddling / duck-diving chops yet. Early_int is included in the wind
-  // tolerance check (they still struggle with moderate onshore chop).
+  // Only first_timer + beginner get the tighter 18 km/h threshold — they
+  // haven't built the paddling / duck-diving chops yet. Early_int uses the
+  // same 20 km/h as intermediate; they're between beginner and intermediate
+  // in skill and the verdict ladder must stay monotonic.
   const isEarlyLearner = userLevel === "first_timer" || userLevel === "beginner";
-  const isWindSensitive = isEarlyLearner || userLevel === "early_int";
-  const blownNonOffshore = isWindSensitive ? 18 : 20;
-  const galeOffshore     = isWindSensitive ? 45 : 55;
+  const blownNonOffshore = isEarlyLearner ? 18 : 20;
+  const galeOffshore     = isEarlyLearner ? 45 : 55;
 
   let wind;
   if ((isOffshore && kmh < 25) || kmh < 8) wind = "clean";
@@ -518,10 +518,12 @@ export function getPersonalVerdict(userLevel, h, spot) {
   if (wind === "blown") {
     if (size === "upper") return "no";
     if (size === "too_small") return "no";
-    // Safety-first: blown wind + learner = HARD no, no matter the size.
-    // Onshore chop beyond the waist is genuinely dangerous for people
-    // still working on paddling / duck-diving / getting back out.
-    if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
+    // Safety-first: blown wind + foamie-eligible learner (first_timer /
+    // beginner) = HARD no. They can't punch through chop yet — the inside
+    // reform rescue above already covers their fall-back. Early_int drops
+    // through to "ok" like intermediate, since they're on a mid-length or
+    // shortboard and can handle moderate blown conditions at the right size.
+    if (userLevel === "first_timer" || userLevel === "beginner") return "no";
     return "ok";
   }
   if (size === "too_small") {
