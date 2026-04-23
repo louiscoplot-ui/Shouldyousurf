@@ -28,6 +28,7 @@ import CustomLangModal from "./CustomLangModal";
 import FaqSheet from "./FaqSheet";
 import OnboardingModal from "./OnboardingModal";
 import PwaInstallPrompt from "./PwaInstallPrompt";
+import LoadingScreen from "./LoadingScreen";
 import { useSwapKey, fmtHour } from "../lib/hooks";
 import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
@@ -241,31 +242,7 @@ export default function MainScreen({ theme, setTheme }) {
   }
 
   if (!payload) {
-    return (
-      <Phone>
-        <div className="v2-loading">
-          <div className="v2-loading-brand serif">{t("brand") || "should you surf?"}</div>
-          <svg className="v2-loading-wave" viewBox="0 0 180 40" preserveAspectRatio="none">
-            <path d="M0,20 Q22.5,5 45,20 T90,20 T135,20 T180,20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <animate attributeName="d" dur="3.2s" repeatCount="indefinite"
-                values="M0,20 Q22.5,5 45,20 T90,20 T135,20 T180,20;
-                        M0,20 Q22.5,35 45,20 T90,20 T135,20 T180,20;
-                        M0,20 Q22.5,5 45,20 T90,20 T135,20 T180,20"/>
-            </path>
-            <path d="M0,28 Q22.5,18 45,28 T90,28 T135,28 T180,28" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.45">
-              <animate attributeName="d" dur="4.4s" repeatCount="indefinite"
-                values="M0,28 Q22.5,38 45,28 T90,28 T135,28 T180,28;
-                        M0,28 Q22.5,18 45,28 T90,28 T135,28 T180,28;
-                        M0,28 Q22.5,38 45,28 T90,28 T135,28 T180,28"/>
-            </path>
-          </svg>
-          <div className="v2-loading-dots">
-            <span/><span/><span/>
-          </div>
-          <div className="v2-loading-text mono">{t("loading") || "Reading the ocean…"}</div>
-        </div>
-      </Phone>
-    );
+    return <LoadingScreen tagline={t("loading") || "Reading the ocean…"}/>;
   }
 
   return (
