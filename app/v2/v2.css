@@ -1886,15 +1886,12 @@ button, input, select { font-family: inherit; color: inherit; }
    in terracotta, Small in coral, Great/Pumping in jade — same palette
    as the card tones. */
 .hly-bar--blown   { background: linear-gradient(to top, #7a2d24, #b54c3f); }
-.hly-bar--flat    { background: linear-gradient(to top, #7a2d24, #b54c3f); }
-.hly-bar--skip    { background: linear-gradient(to top, #7a2d24, #b54c3f); }
-.hly-bar--small   { background: linear-gradient(to top, #a04833, #d47559); }
-.hly-bar--junky   { background: linear-gradient(to top, #a04833, #d47559); }
-.hly-bar--blown   { background: linear-gradient(to top, #7a2d24, #b54c3f); }
-.hly-bar--fun     { background: linear-gradient(to top, #74753a, #a4a558); }
-.hly-bar--good    { background: linear-gradient(to top, #3a7a3f, #62a06a); }
-.hly-bar--great   { background: linear-gradient(to top, #1d6a5b, #2d9178); }
-.hly-bar--pumping { background: linear-gradient(to top, #0f4a3e, #1d6a5b); }
+.hly-bar--skip      { background: linear-gradient(to top, #7a2d24, #b54c3f); }
+.hly-bar--poor      { background: linear-gradient(to top, #a04833, #d47559); }
+.hly-bar--fair      { background: linear-gradient(to top, #74753a, #a4a558); }
+.hly-bar--good      { background: linear-gradient(to top, #3a7a3f, #62a06a); }
+.hly-bar--excellent { background: linear-gradient(to top, #1d6a5b, #2d9178); }
+.hly-bar--unreal    { background: linear-gradient(to top, #0f4a3e, #1d6a5b); }
 
 @keyframes hly-bars-rise {
   from { transform: scaleY(0); }

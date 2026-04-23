@@ -149,8 +149,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
             const past = h.hour < currentHour;
             const selected = selectedIdx === i;
             const tone =
-              v.key === "pumping" || v.key === "great" ? "good"
-              : v.key === "good" || v.key === "fun"   ? "ok"
+              v.key === "unreal" || v.key === "excellent" ? "good"
+              : v.key === "good" || v.key === "fair"      ? "ok"
               : "bad";
             return (
               <button
