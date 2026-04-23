@@ -413,6 +413,26 @@ export function getSessionNotes(userLevel, h, dayHours, spot) {
   return out;
 }
 
+// Looks ahead in `hours` from `sel` and returns the first upcoming flip of
+// windType (offshore / cross-shore / onshore). Scans up to 6 hours ahead.
+// Returns { turnsTo, inHours } or null if the wind holds for the rest of
+// the scan window. Used by HourlyList to render a lightweight "→ offshore
+// in 2h"-style forecast next to the current windType label.
+export function getWindTrend(sel, hours) {
+  if (!sel || !hours || !sel.windType) return null;
+  const idx = hours.indexOf(sel);
+  if (idx < 0) return null;
+  const MAX_LOOKAHEAD = 6;
+  const end = Math.min(hours.length, idx + 1 + MAX_LOOKAHEAD);
+  for (let i = idx + 1; i < end; i++) {
+    const nxt = hours[i];
+    if (nxt?.windType && nxt.windType !== sel.windType) {
+      return { turnsTo: nxt.windType, inHours: i - idx };
+    }
+  }
+  return null;
+}
+
 export function getTideModifier(sel, hours) {
   if (!sel || sel.tideM == null || !hours) return null;
   const trend = tideTrend(hours, sel);

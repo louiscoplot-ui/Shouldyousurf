@@ -1882,6 +1882,11 @@ button, input, select { font-family: inherit; color: inherit; }
   opacity: 0.52; color: var(--text);
   margin-top: 2px; line-height: 1.3;
 }
+.hly-cp-wind-trend {
+  font-style: italic; font-weight: 500;
+  opacity: 0.85;
+  color: var(--hly-cp-color, var(--accent));
+}
 
 /* ── List row verdict label — per patch, JetBrains Mono 7.5px ── */
 .hly-list .hly-lverd {

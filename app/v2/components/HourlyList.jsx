@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { coherentVerdict } from "../lib/verdict";
-import { degToCompass } from "../lib/prodScoring";
+import { degToCompass, getWindTrend } from "../lib/prodScoring";
 import { fmtHour } from "../lib/hooks";
 
 const WaveIcon = () => (
@@ -217,6 +217,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         const v = coherentVerdict(h);
         const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
         const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
+        const windTrend = getWindTrend(h, hours);
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
         const dayKey   = h.time?.split("T")?.[0];
         const sun      = sunByDay ? sunByDay[dayKey] : null;
@@ -244,7 +245,10 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
                 <div className="hly-cp-cell-val">{Math.round(h.windKmh)}<span className="hly-cp-cell-unit">km/h</span></div>
-                <div className="hly-cp-cell-sub">{windDir} · {h.windType}</div>
+                <div className="hly-cp-cell-sub">
+                  {windDir} · {h.windType}
+                  {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
+                </div>
               </div>
               <div className={`hly-cp-cell ${h.tideM == null ? "hly-cp-cell--no-data" : ""}`}>
                 <div className="hly-cp-cell-lbl">Tide</div>
@@ -335,6 +339,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                         const rise = fmtTimeShort(sun?.sunrise, tz);
                         const set  = fmtTimeShort(sun?.sunset, tz);
                         const curKmh = h.currentVel != null ? (h.currentVel * 3.6) : null;
+                        const windTrend = getWindTrend(h, hours);
                         return (
                           <div className="hly-xgrid">
                             {/* Row 1 — Swell · Wind · Tide */}
@@ -346,7 +351,10 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Wind</div>
                               <div className="hly-xval" style={{ color: v.color }}>{Math.round(h.windKmh)}<span className="hly-xunit">km/h</span></div>
-                              <div className="hly-xsub">{windDir} · {h.windType}</div>
+                              <div className="hly-xsub">
+                                {windDir} · {h.windType}
+                                {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
+                              </div>
                             </div>
                             <div className={`hly-xcell ${h.tideM == null ? "hly-xcell--no-data" : ""}`}>
                               <div className="hly-xsub-top">Tide</div>
