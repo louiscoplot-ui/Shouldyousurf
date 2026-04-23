@@ -316,7 +316,12 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                 </div>
                 <div className={`hly-lexpand ${isOpen ? "open" : ""}`}>
                   {isOpen && (
-                    <div className="hly-lexpand-inner">
+                    <div className="hly-lexpand-inner" style={{ "--hly-cp-color": v.color }}>
+                      {reasonText && (
+                        <div className="hly-cp-reason">
+                          <div className="hly-cp-reason-main">{reasonText}</div>
+                        </div>
+                      )}
                       <div className="hly-xface">
                         <span className="hly-xface-val" style={{ color: v.color }}>
                           {h.faceFtLow}–{h.faceFtHigh}<span style={{ fontSize: 13, fontWeight: 500, marginLeft: 3, opacity: 0.7 }}>ft</span>
