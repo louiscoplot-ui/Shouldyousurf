@@ -141,7 +141,7 @@ button, input, select { font-family: inherit; color: inherit; }
 
 /* ───────────── Verdict hero ───────────── */
 .verdict-row { display: flex; align-items: baseline; gap: 12px; margin-top: 18px; flex-wrap: nowrap; }
-.verdict-word { font-family:'Fraunces',serif; font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: -0.03em; font-variation-settings:"SOFT" 80,"opsz" 144; transition: color 0.3s; white-space: nowrap; }
+.verdict-word { font-family:'Fraunces',serif; font-weight: 500; font-size: 64px; line-height: 1; letter-spacing: -0.035em; font-variation-settings:"SOFT" 80,"opsz" 144; transition: color 0.3s; white-space: nowrap; }
 .score-box { display: inline-flex; align-items: baseline; gap: 4px; padding: 6px 16px 10px; background: var(--paper); border: 1.5px solid currentColor; border-radius: 14px; cursor: pointer; line-height: 1; white-space: nowrap; margin-left: auto; align-self: center; transition: transform 0.15s; }
 .score-box:hover { transform: translateY(-1px); }
 .score-box:active { transform: translateY(0); }
