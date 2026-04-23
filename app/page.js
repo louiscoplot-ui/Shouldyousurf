@@ -36,38 +36,35 @@ export default function Home() {
   };
 
   // Keep iOS Safari status-bar + PWA chrome in sync with the active theme.
-  // Three things combined solve the "white strip above content in nocturnal"
-  // bug: (1) <meta name="theme-color"> for Safari browser chrome, (2)
-  // inline html/body bg so the iOS safe-area-inset-top region adopts the
-  // theme colour (otherwise html keeps its fallback bg and the top strip
-  // stays paper), (3) color-scheme so iOS renders native UI with the
-  // matching palette.
+  // Crucial detail: wait for the #__preload splash to be gone before we
+  // flip theme-color — otherwise iOS paints the top strip with the theme
+  // bg (paper for terracotta) while #__preload below is still dark, and
+  // the user sees a pale strip above the dark splash.
   useEffect(() => {
     if (typeof document === "undefined") return;
     const bg = THEME_COLORS[theme] || THEME_COLORS.terracotta;
     const isDark = theme === "nocturnal";
 
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.setAttribute("name", "theme-color");
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute("content", bg);
+    const applyThemeColor = () => {
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", "theme-color");
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", bg);
+    };
 
-    // Propagate --bg up to <html> + <body> so iOS paints the safe-area
-    // above the app content with the theme colour. Also set an inline
-    // backgroundColor as a belt-and-braces for Safari's behind-the-
-    // status-bar region.
+    // html/body/color-scheme can be set immediately — those only affect
+    // the area behind the splash once it's gone, they don't leak during.
     document.documentElement.style.setProperty("--bg", bg);
     document.documentElement.style.backgroundColor = bg;
     document.body.style.backgroundColor = bg;
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-    // Installed iOS PWA: black-translucent lets the page bg show through
-    // the status-bar strip. Works for every theme — one value, no
-    // mid-session flip needed. (iOS ignores mid-session changes to this
-    // meta anyway, so pick one universally correct value.)
+    // status-bar-style: "black-translucent" lets the page bg show through
+    // — one value works for every theme. iOS caches this at PWA launch
+    // so mid-session flips are ignored anyway.
     let statusMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (!statusMeta) {
       statusMeta = document.createElement("meta");
@@ -75,6 +72,21 @@ export default function Home() {
       document.head.appendChild(statusMeta);
     }
     statusMeta.setAttribute("content", "black-translucent");
+
+    // Defer the theme-color flip until the splash is gone from the DOM.
+    // While #__preload is visible, the meta stays at the dark splash
+    // colour set statically in layout.js viewport config.
+    const preload = document.getElementById("__preload");
+    if (!preload) { applyThemeColor(); return; }
+
+    const obs = new MutationObserver(() => {
+      if (!document.getElementById("__preload")) {
+        obs.disconnect();
+        applyThemeColor();
+      }
+    });
+    obs.observe(document.body, { childList: true });
+    return () => obs.disconnect();
   }, [theme]);
 
   return (

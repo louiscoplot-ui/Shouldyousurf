@@ -18,10 +18,11 @@ export const viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  // themeColor is intentionally OMITTED — set dynamically per active
-  // theme in app/page.js (useEffect on [theme]). A static value here is
-  // what iOS uses on cold load and it stays stuck at paper colour in
-  // dark mode until hydration.
+  // During the splash, iOS chrome should be dark to match the video bg —
+  // otherwise the safe-area-top strip shows paper while #__preload below
+  // is dark teal. The JS useEffect in app/page.js takes over and flips
+  // this to the active theme bg AFTER #__preload fades out.
+  themeColor: "#12303a",
 };
 
 export default function RootLayout({ children }) {
