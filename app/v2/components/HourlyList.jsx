@@ -112,7 +112,6 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
       <div className="hly-h">
         <div className="hly-h-left">
           <span className="t">Hourly</span>
-          <span className="i">ⓘ</span>
         </div>
         {/* Pill toggle: CARDS ↔ LIST */}
         <div className="hly-pill">

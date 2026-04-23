@@ -339,13 +339,10 @@ function Loaded({
 }) {
   const effectiveSpot = rawPayload.effectiveSpot || spot;
 
-  // Quick-picker state — 3-letter codes BEG/E·INT/INT/ADV/EXP. Hoisted here
-  // (above the payload adaptation) so `effectiveLevel` is available before
-  // we reshape scores/bestHour for the user's level.
-  const [userLevelQuick, setUserLevelQuick] = useState(() => userLevel || "int");
-  useEffect(() => { if (userLevel) setUserLevelQuick(userLevel); }, [userLevel]);
-  const QUICK_TO_FULL = { beg: "beginner", eint: "early_int", int: "intermediate", adv: "advanced", exp: "expert" };
-  const effectiveLevel = userLevel || QUICK_TO_FULL[userLevelQuick] || "intermediate";
+  // User level — comes from the sheet picker. Defaults to intermediate so the
+  // per-level score adaptation always has a level to work with, even before
+  // the user picks theirs.
+  const effectiveLevel = userLevel || "intermediate";
 
   // Adapt forecast for the user's level — every hour.score and day.bestHour
   // now reflect "how good this would be FOR THIS USER". A 2m offshore day
@@ -358,9 +355,22 @@ function Loaded({
   );
 
   const days = payload.days;
-  const todayIdxInit = days.findIndex((d) => d.isToday);
-  const [dayIdx, setDayIdx] = useState(todayIdxInit >= 0 ? todayIdxInit : 0);
-  const day = days[dayIdx];
+  const todayIdx = days.findIndex((d) => d.isToday);
+  const firstNonPast = days.findIndex((d) => !d.isPast);
+  const safeInit = todayIdx >= 0 ? todayIdx : (firstNonPast >= 0 ? firstNonPast : 0);
+  const [dayIdx, setDayIdx] = useState(safeInit);
+
+  // Resync dayIdx on payload swap — mock data has today at index 1, real data
+  // has today at index 3 (3 past days + today + 4 future). Without this, the
+  // first render uses mock's index 1, real data lands, and suddenly the user
+  // is looking at "-2d" instead of Today.
+  useEffect(() => {
+    const tIdx = days.findIndex((d) => d.isToday);
+    if (tIdx >= 0 && days[dayIdx]?.isPast) setDayIdx(tIdx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawPayload]);
+
+  const day = days[dayIdx] || days[safeInit];
 
   const currentHour = (() => {
     const h = new Date().getHours();
@@ -645,11 +655,6 @@ function Loaded({
           <button className="lvl-me-btn" onClick={onOpenLevel}>
             {userLevel ? (t("lvl_" + userLevel) || userLevel) : (t("pick_level") || "Your level")} <span className="chev">▾</span>
           </button>
-          <div className="lvl-quick" role="tablist">
-            {[["beg", "BEG"], ["eint", "E·INT"], ["int", "INT"], ["adv", "ADV"], ["exp", "EXP"]].map(([k, lbl]) => (
-              <button key={k} className={userLevelQuick === k ? "on" : ""} onClick={() => setUserLevelQuick(k)}>{lbl}</button>
-            ))}
-          </div>
         </div>
 
         {/* Sentinel — its captured offsetTop is the "lock" threshold. Sits
@@ -689,7 +694,7 @@ function Loaded({
 
         <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx}/>
 
-        <LevelMatrix hour={hour}/>
+        <LevelMatrix hour={hour} onOpenLevel={onOpenLevel}/>
 
         <Footer/>
       </div>
