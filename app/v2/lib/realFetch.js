@@ -41,9 +41,10 @@ function formatDayLabel(isoDate, todayStr) {
   );
   if (diffDays === 0) return { label: "Today", isToday: true, isPast: false };
   if (diffDays === 1) return { label: "Tmrw", isToday: false, isPast: false };
-  if (diffDays === -1) return { label: "Yest.", isToday: false, isPast: true };
-  if (diffDays === -2) return { label: "-2d", isToday: false, isPast: true };
-  if (diffDays === -3) return { label: "-3d", isToday: false, isPast: true };
+  // Past days now show the weekday name (Mon / Tue / …) instead of generic
+  // offsets like "-2d" or "-3d" — so the user can actually tell which day
+  // it was. The jj/mm dateLabel stays on the tab so the exact date is
+  // always visible alongside.
   const dayName = dayDate.toLocaleDateString("en-AU", { weekday: "short", timeZone: "UTC" });
   return { label: dayName, isToday: false, isPast: diffDays < 0 };
 }
