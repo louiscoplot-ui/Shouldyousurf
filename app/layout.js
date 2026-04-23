@@ -60,7 +60,10 @@ export default function RootLayout({ children }) {
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             gap: 20px; padding: 0 24px; text-align: center;
-            background: #0b2233;
+            /* Fallback bg: coral-to-teal vertical gradient (matches the
+               sunset → water palette of the video) so the split-second
+               before <video> paints isn't a colour-mismatch flash. */
+            background: linear-gradient(180deg, #4a2341 0%, #2a3f50 35%, #12303a 100%);
             overflow: hidden;
             transition: opacity 180ms ease-out;
           }
@@ -73,9 +76,15 @@ export default function RootLayout({ children }) {
           }
           #__preload .pl-veil {
             position: absolute; inset: 0;
+            /* 4-stop veil — coral warmth at the top (sunset), cyan-teal
+               at the wave barrel, deep navy at the water. Keeps text
+               legible without killing the neon vibe of the video. */
             background:
-              linear-gradient(180deg, rgba(173,202,224,0.45) 0%, rgba(118,164,200,0.55) 60%, rgba(60,108,148,0.6) 100%),
-              rgba(150,190,220,0.18);
+              linear-gradient(180deg,
+                rgba(232,120,160,0.22) 0%,
+                rgba(93,200,212,0.18) 40%,
+                rgba(18,65,82,0.35) 75%,
+                rgba(8,32,42,0.55) 100%);
             pointer-events: none;
           }
           #__preload .pl-brand,
@@ -86,21 +95,24 @@ export default function RootLayout({ children }) {
             font-style: italic;
             font-weight: 500; font-size: 44px; line-height: 1.1;
             letter-spacing: -0.025em;
-            color: #fbfaf6;
-            text-shadow: 0 2px 14px rgba(10,30,48,0.35);
+            color: #f0fdfd;              /* pale cyan-white — picks up the neon glow */
+            text-shadow:
+              0 0 18px rgba(93,212,214,0.45),
+              0 2px 14px rgba(8,32,42,0.55);
           }
-          #__preload .pl-dots { display: flex; gap: 7px; }
+          #__preload .pl-dots { display: flex; gap: 9px; }
           #__preload .pl-dots span {
             width: 8px; height: 8px; border-radius: 50%;
-            background: #f0b27a;
+            background: #5dd4d6;           /* teal */
+            box-shadow: 0 0 10px rgba(93,212,214,0.75);
             animation: pl-bounce 1.2s infinite ease-in-out both;
           }
-          #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #fbfaf6; }
-          #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s; background: #8fc0d8; }
+          #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #eafafa; box-shadow: 0 0 8px rgba(234,250,250,0.55); }
+          #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s;  background: #e87ca0; box-shadow: 0 0 10px rgba(232,124,160,0.6); }
           #__preload .pl-text {
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 11px; color: rgba(251,250,246,0.75);
-            letter-spacing: 0.2em; text-transform: uppercase;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-size: 11px; color: rgba(234,250,250,0.85);
+            letter-spacing: 0.28em; text-transform: uppercase;
             font-weight: 500; margin: 0;
           }
           @keyframes pl-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
