@@ -177,6 +177,16 @@ export default function MainScreen({ theme, setTheme }) {
     try { localStorage.setItem("surf-pwa-shown", "1"); } catch {}
   }
 
+  // Minimum display time for the LoadingScreen so the splash actually
+  // plays (video + wave animation + dots). Without this the mock data
+  // seed below makes payload truthy within one frame and the user never
+  // sees the splash. 1.8s gives the wave one full cycle + dots one pulse.
+  const [splashReady, setSplashReady] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setSplashReady(true), 1800);
+    return () => clearTimeout(id);
+  }, []);
+
   // Fetch forecast whenever the spot changes.
   // Strategy: show mock data IMMEDIATELY so the UI is never stuck on the
   // loading splash, then upgrade to real data when it arrives. If the real
@@ -241,7 +251,7 @@ export default function MainScreen({ theme, setTheme }) {
     }
   }
 
-  if (!payload) {
+  if (!payload || !splashReady) {
     return <LoadingScreen tagline={t("loading") || "Reading the ocean…"}/>;
   }
 
