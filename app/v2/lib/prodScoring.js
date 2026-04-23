@@ -557,6 +557,18 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
 // value, and each day.bestHour is recomputed from that adjusted set. Safe
 // to call on every userLevel change — O(days × hours), hundreds of ops.
 // Returns a shallow-cloned payload so React sees new refs.
+// Mirrors the verdict.js SCORE_SCALE — used by the day-tab dot, which only
+// cares about the .color field. Kept inline here to avoid a cross-file
+// import cycle inside the scoring module.
+function scoreBandFromScore(s) {
+  if (s >= 75) return { color: "#1d6a5b" };
+  if (s >= 55) return { color: "#2d9178" };
+  if (s >= 45) return { color: "#62a06a" };
+  if (s >= 35) return { color: "#a4a558" };
+  if (s >= 15) return { color: "#d47559" };
+  return           { color: "#b54c3f" };
+}
+
 export function adaptForecastToLevel(payload, userLevel, spot) {
   if (!payload || !payload.days) return payload;
   if (!userLevel) return payload;
@@ -569,7 +581,7 @@ export function adaptForecastToLevel(payload, userLevel, spot) {
     });
     let best = hours[0];
     for (const hh of hours) if (hh.score > best.score) best = hh;
-    const bestLevel = getLevel(best.score, best, spot);
+    const bestLevel = scoreBandFromScore(best.score);
     return { ...d, hours, bestHour: best, bestLevel };
   });
   return { ...payload, days };
