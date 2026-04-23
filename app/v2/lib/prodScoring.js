@@ -3,7 +3,6 @@
 // from the canonical surf logic. Any update to the scoring rules must land in
 // both files (or be extracted to a third shared module) — for now we copy.
 
-export const TZ_DEFAULT = "Australia/Perth";
 export const mToFt = m => m * 3.281;
 export const knToKmh = kn => kn * 1.852;
 
@@ -98,72 +97,6 @@ export function scoreSurf(h, spot, tideCtx) {
   return { score: Math.max(0, Math.min(100, s)), notes };
 }
 
-export function surfabilityByLevel(h, spot) {
-  const face = estimateFaceHeight(h.swellHeight, h.swellPeriod);
-  const faceFt = mToFt(face);
-  const kmh = knToKmh(h.windSpeedKn);
-  const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
-  const isOffshore = windDelta <= 45;
-  const isOnshore = windDelta >= 90;
-  const windIsClean = (isOffshore && kmh < 25) || kmh < 10;
-
-  const levels = [
-    { nameKey: "beginner" },
-    { nameKey: "intermediate" },
-    { nameKey: "advanced" },
-    { nameKey: "expert" },
-  ];
-
-  if (faceFt < 1) { levels[0].verdict = "no"; levels[0].reasonKey = "r_too_flat"; }
-  else if (faceFt > 6) { levels[0].verdict = "no"; levels[0].reasonKey = "r_too_big"; }
-  else if (faceFt > 4 && spot.type !== "reef" && !spot.heavy) { levels[0].verdict = "ok"; levels[0].reasonKey = "r_beg_inside"; }
-  else if (faceFt > 4) { levels[0].verdict = "no"; levels[0].reasonKey = "r_too_big"; }
-  else if (isOnshore && kmh > 20) { levels[0].verdict = "no"; levels[0].reasonKey = "r_on_strong"; }
-  else if (spot.heavy || spot.type === "reef") { levels[0].verdict = "no"; levels[0].reasonKey = "r_reef_beg"; }
-  else if (faceFt >= 1 && faceFt <= 2.5 && windIsClean) { levels[0].verdict = "yes"; levels[0].reasonKey = "r_small_clean"; }
-  else if (faceFt >= 1 && faceFt <= 2.5) { levels[0].verdict = "ok"; levels[0].reasonKey = "r_small_windy"; }
-  else { levels[0].verdict = "ok"; levels[0].reasonKey = "r_manageable"; }
-
-  if (faceFt < 1.5) { levels[1].verdict = "no"; levels[1].reasonKey = "r_too_small"; }
-  else if (faceFt > 6) { levels[1].verdict = "no"; levels[1].reasonKey = "r_too_big_i"; }
-  else if (isOnshore && kmh > 30) { levels[1].verdict = "no"; levels[1].reasonKey = "r_blown"; }
-  else if (faceFt >= 2 && faceFt <= 4 && windIsClean) { levels[1].verdict = "yes"; levels[1].reasonKey = "r_great"; }
-  else if (faceFt >= 1.5 && faceFt <= 5) { levels[1].verdict = "ok"; levels[1].reasonKey = isOnshore && kmh > 20 ? "r_bumpy" : "r_workable"; }
-  else { levels[1].verdict = "ok"; levels[1].reasonKey = "r_bigger"; }
-
-  if (faceFt < 2) { levels[2].verdict = "no"; levels[2].reasonKey = "r_tiny_adv"; }
-  else if (faceFt > 10) { levels[2].verdict = "ok"; levels[2].reasonKey = "r_gun"; }
-  else if (isOnshore && kmh > 40) { levels[2].verdict = "no"; levels[2].reasonKey = "r_unride"; }
-  else if (faceFt >= 3 && faceFt <= 8 && windIsClean) { levels[2].verdict = "yes"; levels[2].reasonKey = "r_proper"; }
-  else { levels[2].verdict = "ok"; levels[2].reasonKey = isOnshore ? "r_messy" : "r_solid_s"; }
-
-  if (faceFt < 2.5) { levels[3].verdict = "no"; levels[3].reasonKey = "r_nothing"; }
-  else if (faceFt >= 4 && windIsClean) { levels[3].verdict = "yes"; levels[3].reasonKey = "r_prime"; }
-  else if (faceFt >= 4) { levels[3].verdict = "ok"; levels[3].reasonKey = isOnshore ? "r_big_messy" : "r_size_wind"; }
-  else { levels[3].verdict = "ok"; levels[3].reasonKey = "r_fun_below"; }
-
-  return levels;
-}
-
-export function getDayTip(levelMatrix, h, spot) {
-  if (!levelMatrix) return null;
-  const v = levelMatrix.map(l => l.verdict);
-  const [beg, int, adv, exp] = v;
-  const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
-  const yesCount = v.filter(x => x === "yes").length;
-  const noCount = v.filter(x => x === "no").length;
-  if (noCount >= 3) return "tip_skip_all";
-  if (yesCount === 4) return "tip_all_levels";
-  if (beg === "no" && (adv === "yes" || exp === "yes")) {
-    return faceFt >= 4 ? "tip_advanced" : "tip_int_adv";
-  }
-  if (beg === "ok" && (int === "yes" || adv === "yes")) return "tip_inside_split";
-  if (beg === "yes" && int !== "yes" && adv !== "yes") return "tip_beginner";
-  if (int === "yes" && beg !== "yes") return "tip_int_adv";
-  if (beg === "yes" && (int === "yes" || int === "ok")) return "tip_all_levels";
-  return "tip_marginal";
-}
-
 export function findNextTideEvent(hours, fromTime) {
   if (!hours || hours.length < 3) return null;
   const fromIdx = hours.findIndex(h => h.time === fromTime);
@@ -212,39 +145,9 @@ export function getWindTypeKey(sel, spot) {
   return "cross_shore";
 }
 
-export function getLevel(s, h, spot) {
-  if (h && spot) {
-    const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
-    const kmh = knToKmh(h.windSpeedKn);
-    const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
-    const isOffshore = windDelta <= 45;
-
-    if (faceFt < 1) {
-      return { labelKey: "score_flat", subKey: "score_flat_sub", color: "#dc2626" };
-    }
-    const blownOut = (!isOffshore && kmh >= 25) || kmh >= 40 || (isOffshore && kmh >= 55);
-    if (blownOut && s < 75) {
-      return { labelKey: "score_blown", subKey: "score_blown_sub", color: "#dc2626" };
-    }
-  }
-
-  if (s >= 75) return { labelKey: "score_75_100", subKey: "score_75_100_sub", color: "#0b6e2e" };
-  if (s >= 65) return { labelKey: "score_65_74",  subKey: "score_65_74_sub",  color: "#15803d" };
-  if (s >= 55) return { labelKey: "score_55_64",  subKey: "score_55_64_sub",  color: "#16a34a" };
-  if (s >= 45) return { labelKey: "score_35_54",  subKey: "score_35_54_sub",  color: "#65a30d" };
-  if (s >= 35) return { labelKey: "score_35_44",  subKey: "score_35_44_sub",  color: "#84cc16" };
-  if (s >= 15) return { labelKey: "score_15_34",  subKey: "score_15_34_sub",  color: "#ea580c" };
-  return       { labelKey: "score_0_14",   subKey: "score_0_14_sub",   color: "#dc2626" };
-}
-
 export function degToCompass(deg) {
   const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
   return dirs[Math.round(deg / 22.5) % 16];
-}
-
-export function fmtHour(iso, tz) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz }).toLowerCase().replace(" ", "");
 }
 
 export function fmtLongDay(isoDate, tz, t) {
@@ -265,25 +168,8 @@ export function offsetDate(isoDate, n) {
   return dt.toISOString().slice(0, 10);
 }
 
-export function unifiedTabLabel(isoDate, tz, t) {
-  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
-  const [y, mo, d] = isoDate.split("-").map(Number);
-  const dayDate = new Date(Date.UTC(y, mo - 1, d, 12));
-  const diffDays = Math.round((dayDate.getTime() - new Date(todayStr + "T12:00:00Z").getTime()) / (1000*60*60*24));
-  const dateStr = `${d}/${mo}`;
-  if (diffDays <= -3) return { label: `-${Math.abs(diffDays)}d`, date: dateStr };
-  if (diffDays === -2) return { label: "-2d", date: dateStr };
-  if (diffDays === -1) return { label: t("yest"), date: dateStr };
-  if (diffDays === 0)  return { label: t("today"), date: dateStr };
-  if (diffDays === 1)  return { label: t("tmrw"), date: dateStr };
-  const dayName = dayDate.toLocaleDateString("en-AU", { weekday: "short", timeZone: "UTC" });
-  return { label: dayName, date: dateStr };
-}
-
 // ── Per-user-level advice ──────────────────────────────────────────────
 export const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediate", "advanced", "expert"];
-export const USER_LEVEL_TO_MATRIX = { first_timer: 0, beginner: 0, early_int: 1, intermediate: 1, advanced: 2, expert: 3 };
-export const USER_LEVEL_BIAS = { first_timer: "down", early_int: "down" };
 
 export const USER_LEVEL_ZONES = {
   first_timer:  { min: 0.3, sweetLo: 0.6, sweetHi: 1.5, upperMax: 2.2 },
