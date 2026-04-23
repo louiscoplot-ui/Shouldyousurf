@@ -36,9 +36,17 @@ export default function Home() {
   };
 
   // Keep iOS Safari status-bar + PWA chrome in sync with the active theme.
+  // Three things combined solve the "white strip above content in nocturnal"
+  // bug: (1) <meta name="theme-color"> for Safari browser chrome, (2)
+  // inline html/body bg so the iOS safe-area-inset-top region adopts the
+  // theme colour (otherwise html keeps its fallback bg and the top strip
+  // stays paper), (3) color-scheme so iOS renders native UI with the
+  // matching palette.
   useEffect(() => {
     if (typeof document === "undefined") return;
     const bg = THEME_COLORS[theme] || THEME_COLORS.terracotta;
+    const isDark = theme === "nocturnal";
+
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) {
       meta = document.createElement("meta");
@@ -47,14 +55,26 @@ export default function Home() {
     }
     meta.setAttribute("content", bg);
 
-    const isDark = theme === "nocturnal";
+    // Propagate --bg up to <html> + <body> so iOS paints the safe-area
+    // above the app content with the theme colour. Also set an inline
+    // backgroundColor as a belt-and-braces for Safari's behind-the-
+    // status-bar region.
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+
+    // Installed iOS PWA: black-translucent lets the page bg show through
+    // the status-bar strip. Works for every theme — one value, no
+    // mid-session flip needed. (iOS ignores mid-session changes to this
+    // meta anyway, so pick one universally correct value.)
     let statusMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (!statusMeta) {
       statusMeta = document.createElement("meta");
       statusMeta.setAttribute("name", "apple-mobile-web-app-status-bar-style");
       document.head.appendChild(statusMeta);
     }
-    statusMeta.setAttribute("content", isDark ? "black-translucent" : "default");
+    statusMeta.setAttribute("content", "black-translucent");
   }, [theme]);
 
   return (

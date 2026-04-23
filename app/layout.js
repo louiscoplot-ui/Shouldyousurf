@@ -4,7 +4,10 @@ export const metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    // statusBarStyle is intentionally OMITTED — the <meta> tag is managed
+    // dynamically from app/page.js's theme useEffect, because hardcoding a
+    // value here locks iOS PWA to a single bar style at launch and the
+    // subsequent JS updates are ignored.
     title: "Should You Surf?",
   },
 };
@@ -15,7 +18,10 @@ export const viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  themeColor: "#eef4f8",
+  // themeColor is intentionally OMITTED — set dynamically per active
+  // theme in app/page.js (useEffect on [theme]). A static value here is
+  // what iOS uses on cold load and it stays stuck at paper colour in
+  // dark mode until hydration.
 };
 
 export default function RootLayout({ children }) {
@@ -27,7 +33,8 @@ export default function RootLayout({ children }) {
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        {/* apple-mobile-web-app-status-bar-style written by app/page.js —
+            avoids a static "default" that locks iOS PWA to a light strip. */}
         {/* Apple touch startup images — shown BEFORE the HTML loads on iOS
             PWA cold start. Without these, iOS defaults to a black splash.
             Matched per device resolution so iOS picks the right one. */}
@@ -45,9 +52,14 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600&family=Inter:wght@400;500;600&display=swap" />
         <style>{`
-          html { background: #eef4f8; color-scheme: light; }
+          /* html/body bg inherit a CSS var that app/page.js sets inline on
+             <html> whenever the theme changes. Falls back to paper so the
+             first paint before hydration still looks reasonable, but the
+             var will flip to #10161a on nocturnal and propagate to the
+             iOS safe-area-inset-top region. */
+          html { background: var(--bg, #f5ede1); color-scheme: light dark; }
           html, body { margin: 0; font-family: 'Inter', system-ui, sans-serif; color: var(--text, #0f1e2e); }
-          body { background: var(--bg, #eef4f8); }
+          body { background: var(--bg, #f5ede1); }
           /* ── Preload splash ──────────────────────────────────────────
              Rendered as static HTML at the top of <body>. Appears the
              instant the browser parses the first line of body — before
