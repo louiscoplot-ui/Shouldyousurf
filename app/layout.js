@@ -60,29 +60,29 @@ export default function RootLayout({ children }) {
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             gap: 20px; padding: 0 24px; text-align: center;
-            background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%);
+            background: #0b2233;
             transition: opacity 180ms ease-out;
           }
           #__preload.gone { opacity: 0; pointer-events: none; }
           #__preload .pl-brand {
             font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+            font-style: italic;
             font-weight: 500; font-size: 44px; line-height: 1.1;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent; color: #0c2a5e;
+            letter-spacing: -0.025em;
+            color: #fbfaf6;
+            text-shadow: 0 2px 14px rgba(10,30,48,0.35);
           }
           #__preload .pl-dots { display: flex; gap: 7px; }
           #__preload .pl-dots span {
             width: 8px; height: 8px; border-radius: 50%;
-            background: #f59e0b;
+            background: #f0b27a;
             animation: pl-bounce 1.2s infinite ease-in-out both;
           }
-          #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
-          #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s; }
+          #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #fbfaf6; }
+          #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s; background: #8fc0d8; }
           #__preload .pl-text {
             font-family: system-ui, -apple-system, sans-serif;
-            font-size: 11px; color: #f59e0b;
+            font-size: 11px; color: rgba(251,250,246,0.75);
             letter-spacing: 0.2em; text-transform: uppercase;
             font-weight: 500; margin: 0;
           }
