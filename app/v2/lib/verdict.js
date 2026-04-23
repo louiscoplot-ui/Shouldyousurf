@@ -96,7 +96,13 @@ function shortReason(userLevel, cls, foamie, period) {
   if (currentHazard === "dangerous") return "Dangerous rip — stay out";
   if (reefTooMuch) return "Reef / heavy spot — too risky";
   if (foamie && (size === "too_big" || size === "upper" || wind === "blown") && faceFt <= 10 && faceFt >= 0.3) {
-    return "Foamie inside only — ride the reform";
+    // "foamie" is actually `hasInsideReform` since we passed hasInsideReform
+    // in from LevelMatrix — so this fires for first_timer/beginner AND
+    // early_int. The inside reform is the escape for all three.
+    if (userLevel === "first_timer" || userLevel === "beginner") {
+      return "Foamie inside — ride the reform";
+    }
+    return "Bail the peak — take the inside reform";
   }
   if (size === "too_small") return "Too small — not enough push";
   if (size === "too_big") return faceFt > 12 ? "Way over your head" : "Too big for this level";
@@ -124,7 +130,7 @@ export function levelMatrixFor(hour, spot, fns) {
     { key: "exp",      name: "Expert",       level: "expert" },
   ];
 
-  if (!fns || !fns.classifyConditions || !fns.getPersonalVerdict || !fns.isFoamieFriendly || !spot) {
+  if (!fns || !fns.classifyConditions || !fns.getPersonalVerdict || !fns.hasInsideReform || !spot) {
     const face = (hour.faceFtLow + hour.faceFtHigh) / 2;
     return rows.map((r) => ({
       ...r,
@@ -133,12 +139,15 @@ export function levelMatrixFor(hour, spot, fns) {
     }));
   }
 
-  const { classifyConditions, getPersonalVerdict, isFoamieFriendly } = fns;
+  const { classifyConditions, getPersonalVerdict, hasInsideReform } = fns;
   const hDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
   return rows.map((r) => {
     const cls = classifyConditions(r.level, hDeg, spot);
     const verdict = getPersonalVerdict(r.level, hDeg, spot);
-    const foamie = isFoamieFriendly(r.level, spot);
+    // Pass hasInsideReform as the "foamie" flag — shortReason treats it
+    // as "can use the inside-reform rescue", which covers first_timer,
+    // beginner AND early_int (not just the foamie-eligible subset).
+    const foamie = hasInsideReform(r.level, cls.faceFt, spot);
     const reason = shortReason(r.level, cls, foamie, hDeg.swellPeriod || 0);
     return { ...r, verdict, reason };
   });

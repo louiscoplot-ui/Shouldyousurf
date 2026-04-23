@@ -9,10 +9,10 @@ import { levelMatrixFor } from "../lib/verdict";
 import {
   classifyConditions,
   getPersonalVerdict,
-  isFoamieFriendly,
+  hasInsideReform,
 } from "../lib/prodScoring";
 
-const FNS = { classifyConditions, getPersonalVerdict, isFoamieFriendly };
+const FNS = { classifyConditions, getPersonalVerdict, hasInsideReform };
 
 export default function LevelMatrix({ hour, spot }) {
   const m = levelMatrixFor(hour, spot, FNS);

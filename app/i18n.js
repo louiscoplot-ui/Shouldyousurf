@@ -111,6 +111,7 @@ const T = {
     tip_beginner_blown_sweet: "There's swell but the wind is killing it. Not worth paddling out.",
     tip_beginner_blown_upper: "Blown out and too big — stay out.",
     tip_beginner_inside: "The main break further out isn't for you today — too big, windy or messy. But smaller waves keep re-forming closer to the beach — on a foamie you'll still get rides. Stay close to shore and pick the smaller ones.",
+    tip_early_int_inside: "Outside is too much right now — too big, windy or blown out for your level. But the inside reform keeps pushing smaller clean walls to the beach. Bail the peak, paddle inside, take the cleaner smaller sets. Still a real session, just safer and simpler.",
 
     tip_early_int_too_small: "Nothing much to ride — save your energy for a better day.",
     tip_early_int_too_big: "Too heavy for where you're at — watch and learn.",
@@ -398,6 +399,7 @@ const T = {
     tip_beginner_blown_sweet: "Il y a de la houle mais le vent la démolit. Ça vaut pas le paddle.",
     tip_beginner_blown_upper: "Démonté et trop gros — reste au sec.",
     tip_beginner_inside: "Plus au large c'est pas pour toi aujourd'hui — trop gros, venteux ou brouillon. Mais les vagues se re-forment en plus petites près du bord — en planche mousse tu auras toujours des rides. Reste près de la plage, vise les plus petites.",
+    tip_early_int_inside: "Au large c'est trop pour toi aujourd'hui — trop gros, venteux ou blown out. Mais à l'intérieur, les vagues se re-forment en plus petites, plus propres. Quitte le peak, rame à l'intérieur, prends les sets plus petits et plus réguliers. Ça reste une vraie session, juste plus safe et plus simple.",
 
     tip_early_int_too_small: "Rien à surfer — garde l'énergie pour un meilleur jour.",
     tip_early_int_too_big: "Trop lourd pour ton niveau — observe et apprends.",

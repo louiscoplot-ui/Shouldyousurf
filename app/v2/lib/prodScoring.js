@@ -336,13 +336,25 @@ export function classifyConditions(userLevel, h, spot) {
   return { size, wind, reefTooMuch, faceFt, currentHazard };
 }
 
+// isFoamieFriendly — the subset of users who should literally be riding a
+// foamie (soft-top) as their primary board. First-timer + beginner only.
+// Used by the board recommendation logic.
 export function isFoamieFriendly(userLevel, spot) {
   return (userLevel === "first_timer" || userLevel === "beginner")
     && spot.type !== "reef" && !spot.heavy;
 }
 
+// hasInsideReform — the BROADER group that can fall back to the inside
+// reform (smaller re-formed waves closer to shore) when the main peak is
+// too big, too messy or blown out. Includes early_int: they paddle a
+// mid-length, not a foamie, but they can still bail the outside and
+// surf whitewater / inside walls when conditions demand it. Beach breaks
+// only — heavy or reef spots don't offer this escape.
 export function hasInsideReform(userLevel, faceFt, spot) {
-  return isFoamieFriendly(userLevel, spot) && faceFt <= 10;
+  const eligible = userLevel === "first_timer"
+                || userLevel === "beginner"
+                || userLevel === "early_int";
+  return eligible && spot.type !== "reef" && !spot.heavy && faceFt <= 10;
 }
 
 export function getPersonalAdviceKey(userLevel, h, spot) {
@@ -509,9 +521,8 @@ export function getPersonalVerdict(userLevel, h, spot) {
   // MAYBE below (never lets a learner see GO on a rippy day).
   if (currentHazard === "dangerous") return "no";
   if (reefTooMuch) return "no";
-  if (isFoamieFriendly(userLevel, spot)) {
+  if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
-    if (faceFt > 10) return "no";
     if (size === "sweet" && wind === "clean") return "yes";
     return "ok";
   }
