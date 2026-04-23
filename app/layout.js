@@ -61,9 +61,26 @@ export default function RootLayout({ children }) {
             align-items: center; justify-content: center;
             gap: 20px; padding: 0 24px; text-align: center;
             background: #0b2233;
+            overflow: hidden;
             transition: opacity 180ms ease-out;
           }
           #__preload.gone { opacity: 0; pointer-events: none; }
+          #__preload .pl-video {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+          }
+          #__preload .pl-veil {
+            position: absolute; inset: 0;
+            background:
+              linear-gradient(180deg, rgba(173,202,224,0.45) 0%, rgba(118,164,200,0.55) 60%, rgba(60,108,148,0.6) 100%),
+              rgba(150,190,220,0.18);
+            pointer-events: none;
+          }
+          #__preload .pl-brand,
+          #__preload .pl-dots,
+          #__preload .pl-text { position: relative; z-index: 1; }
           #__preload .pl-brand {
             font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
             font-style: italic;
@@ -134,8 +151,21 @@ export default function RootLayout({ children }) {
       <body>
         {/* Static preload splash — appears the INSTANT the HTML parses,
             before React hydrates / Google Fonts load. Hidden once the
-            React app signals window.__appReady from page.js. */}
+            React app signals window.__appReady from page.js.
+            The <video> is HTML-native (not React) so it starts loading
+            with the HTML rather than after hydration. */}
         <div id="__preload">
+          <video
+            className="pl-video"
+            src="/assets/surfer.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+          />
+          <div className="pl-veil" aria-hidden="true"/>
           <div className="pl-brand">Should You Surf?</div>
           <div className="pl-dots"><span/><span/><span/></div>
           <p className="pl-text">Reading the ocean…</p>
@@ -145,7 +175,7 @@ export default function RootLayout({ children }) {
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            var MIN_SHOW = 1500;  // min 1.5s on screen so the wave + dots actually have time to play
+            var MIN_SHOW = 2500;  // 2.5s so the video has enough time to play
             function hide() {
               if (hidden) return;
               hidden = true;
