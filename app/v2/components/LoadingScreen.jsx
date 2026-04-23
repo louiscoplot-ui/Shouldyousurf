@@ -4,11 +4,28 @@
 // (390×844) and fills the screen on mobile. /assets/surfer.mp4 loops
 // muted under a pale-blue veil; italic-serif "Should You Surf?" wordmark,
 // animated SVG wave, pulsing dots, uppercase tagline.
-// Gracefully degrades to a solid ocean-blue bg if the video file is missing.
+// Also tears down the static #__preload splash from layout.js the moment
+// React hydrates so this splash is what the user actually sees (otherwise
+// the static preload sits on top for ~1.5s and the video gets maybe 800ms
+// of screen time before the app appears).
 
+import { useEffect } from "react";
 import Phone from "./Phone";
 
 export default function LoadingScreen({ tagline = "Reading the ocean…" }) {
+  useEffect(() => {
+    // Nuke the layout.js static preload as soon as we mount.
+    // Belt-and-braces: add .gone for the CSS fade, signal __appReady so the
+    // inline poller inside layout.js doesn't try to reattach it, then yank
+    // the node out of the DOM after the fade completes.
+    const preload = document.getElementById("__preload");
+    if (preload) {
+      preload.classList.add("gone");
+      setTimeout(() => preload.parentNode && preload.parentNode.removeChild(preload), 240);
+    }
+    if (typeof window !== "undefined") window.__appReady = true;
+  }, []);
+
   return (
     <Phone>
       <div className="v2-ls">

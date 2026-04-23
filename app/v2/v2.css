@@ -1187,7 +1187,7 @@ button, input, select { font-family: inherit; color: inherit; }
   .v2-ls {
     position: fixed; inset: 0;
     margin-top: 0; padding-top: 0;
-    z-index: 9500;
+    z-index: 10100;                    /* above layout.js #__preload (9999) */
   }
 }
 .v2-ls-video {
