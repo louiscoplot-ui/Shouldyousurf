@@ -648,18 +648,10 @@ function Loaded({
         </div>
 
         <div className="rise-2" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <button
-            className="time-pill"
-            onClick={() => {
-              const el = hlyWrapRef.current;
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            title="Jump to hourly forecast"
-          >
+          <div className="time-pill">
             <span className="dayw">{days[dayIdx].label}</span>
             <span className="hr">{fmtHour(hour.hour)}</span>
-            <span style={{ color: "var(--text-dim)" }}>▾</span>
-          </button>
+          </div>
           <span className="mono" style={{ fontSize: 9.5, color: "var(--text-dim)", letterSpacing: "0.12em" }}>
             UPDATED {ago}M AGO
           </span>
