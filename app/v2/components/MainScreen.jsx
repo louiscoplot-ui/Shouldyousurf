@@ -180,10 +180,10 @@ export default function MainScreen({ theme, setTheme }) {
   // Minimum display time for the LoadingScreen so the splash actually
   // plays (video + wave animation + dots). Without this the mock data
   // seed below makes payload truthy within one frame and the user never
-  // sees the splash. 1.8s gives the wave one full cycle + dots one pulse.
+  // sees the splash.
   const [splashReady, setSplashReady] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setSplashReady(true), 1800);
+    const id = setTimeout(() => setSplashReady(true), 2500);
     return () => clearTimeout(id);
   }, []);
 
