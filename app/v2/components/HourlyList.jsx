@@ -324,7 +324,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                       )}
                       <div className="hly-xface">
                         <span className="hly-xface-val" style={{ color: v.color }}>
-                          {h.faceFtLow}–{h.faceFtHigh}<span style={{ fontSize: 13, fontWeight: 500, marginLeft: 3, opacity: 0.7 }}>ft</span>
+                          {h.faceFtLow}–{h.faceFtHigh}<span style={{ fontSize: 18, fontWeight: 500, marginLeft: 4, opacity: 0.7 }}>ft</span>
                         </span>
                         <span className="hly-xface-sub">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
                       </div>
