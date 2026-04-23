@@ -49,44 +49,31 @@ export default function RootLayout({ children }) {
           html, body { margin: 0; font-family: 'Inter', system-ui, sans-serif; color: var(--text, #0f1e2e); }
           body { background: var(--bg, #eef4f8); }
           /* ── Preload splash ──────────────────────────────────────────
-             Rendered as static HTML at the top of <body>. Appears the
-             instant the browser parses the first line of body — before
-             React hydrates, before Google Fonts load, before Open-Meteo
-             answers. Uses system serif (Georgia) so there's ZERO font-
-             download wait. Removed by a tiny script once the React app
-             signals window.__appReady. */
+             Rendered as static HTML at the top of <body>. Styled to match
+             the React LoadingScreen (same dark-blue bg + italic serif
+             title) so when React hydrates and LoadingScreen takes over
+             the transition is seamless — user sees ONE continuous splash,
+             not a paper screen then a video screen. */
           #__preload {
             position: fixed; inset: 0; z-index: 9999;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            gap: 20px; padding: 0 24px; text-align: center;
-            background: linear-gradient(180deg, #eef4f8 0%, #dde7ee 100%);
-            transition: opacity 180ms ease-out;
+            padding: 0 24px; text-align: center;
+            background: #0b2233;
+            color: #fbfaf6;
+            transition: opacity 200ms ease-out;
           }
           #__preload.gone { opacity: 0; pointer-events: none; }
           #__preload .pl-brand {
             font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
-            font-weight: 500; font-size: 44px; line-height: 1.1;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent; color: #0c2a5e;
+            font-style: italic;
+            font-weight: 500;
+            font-size: clamp(38px, 9vw, 60px);
+            line-height: 1.05;
+            letter-spacing: -0.025em;
+            color: #fbfaf6;
+            text-shadow: 0 2px 14px rgba(10,30,48,0.35);
           }
-          #__preload .pl-dots { display: flex; gap: 7px; }
-          #__preload .pl-dots span {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #f59e0b;
-            animation: pl-bounce 1.2s infinite ease-in-out both;
-          }
-          #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
-          #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s; }
-          #__preload .pl-text {
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 11px; color: #f59e0b;
-            letter-spacing: 0.2em; text-transform: uppercase;
-            font-weight: 500; margin: 0;
-          }
-          @keyframes pl-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
           /* React's .load-wrap (from page.js) sits under the preload
              splash at z-index:1 — invisible to the user while preload
              is on top. Kept as safety net in case the preload has been
@@ -132,20 +119,19 @@ export default function RootLayout({ children }) {
         `}} />
       </head>
       <body>
-        {/* Static preload splash — appears the INSTANT the HTML parses,
-            before React hydrates / Google Fonts load. Hidden once the
-            React app signals window.__appReady from page.js. */}
+        {/* Static preload splash — matches the React LoadingScreen's
+            blue + italic wordmark so the hand-off is seamless. Hidden
+            by the React LoadingScreen on mount (which also sets
+            window.__appReady). */}
         <div id="__preload">
           <div className="pl-brand">Should You Surf?</div>
-          <div className="pl-dots"><span/><span/><span/></div>
-          <p className="pl-text">Reading the ocean…</p>
         </div>
         {children}
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            var MIN_SHOW = 1500;  // min 1.5s on screen so the wave + dots actually have time to play
+            var MIN_SHOW = 0;  // LoadingScreen owns the minimum-display timing now; fade this preload as soon as React hydrates so we don't double up
             function hide() {
               if (hidden) return;
               hidden = true;

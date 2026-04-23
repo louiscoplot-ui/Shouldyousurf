@@ -182,15 +182,11 @@ export default function MainScreen({ theme, setTheme }) {
     try { localStorage.setItem("surf-pwa-shown", "1"); } catch {}
   }
 
-  // Minimum display time for the LoadingScreen so the splash actually
-  // plays (video + wave animation + dots). Without this the mock data
-  // seed below makes payload truthy within one frame and the user never
-  // sees the splash.
+  // splashReady flips true when LoadingScreen fires onReady — that's
+  // either 2.5s after the video actually started playing, or the 5s
+  // hard ceiling (network / video failure). Timer-start-on-playing
+  // means a slow-to-start video still gets its full play time on screen.
   const [splashReady, setSplashReady] = useState(false);
-  useEffect(() => {
-    const id = setTimeout(() => setSplashReady(true), 2500);
-    return () => clearTimeout(id);
-  }, []);
 
   // Fetch forecast whenever the spot changes.
   // Strategy: show mock data IMMEDIATELY so the UI is never stuck on the
