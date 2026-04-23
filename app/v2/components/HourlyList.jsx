@@ -267,7 +267,12 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                 <div className="hly-cp-cell-val">{curKmh != null && curKmh >= 0.18 ? <>{curKmh.toFixed(1)}<span className="hly-cp-cell-unit">km/h</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
                 <div className="hly-cp-cell-sub">{(curKmh != null && curKmh >= 0.18 && h.currentDir != null) ? (typeof h.currentDir === "string" ? h.currentDir : degToCompass(h.currentDir)) : " "}</div>
               </div>
-              {/* Row 3 — Daylight full-width */}
+              {/* Row 3 — Rain % (1 col) + Daylight (2 cols) */}
+              <div className={`hly-cp-cell ${h.rainProb == null ? "hly-cp-cell--no-data" : ""}`}>
+                <div className="hly-cp-cell-lbl">Rain</div>
+                <div className="hly-cp-cell-val">{h.rainProb != null ? <>{Math.round(h.rainProb)}<span className="hly-cp-cell-unit">%</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
+                <div className="hly-cp-cell-sub">&nbsp;</div>
+              </div>
               {(rise || set) && (
                 <div className="hly-cp-cell hly-cp-cell--daylight">
                   <div className="hly-cp-cell-lbl">Daylight</div>
