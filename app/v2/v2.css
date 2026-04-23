@@ -1845,7 +1845,7 @@ button, input, select { font-family: inherit; color: inherit; }
 .hly-cp-cell:nth-child(3n) { border-right: none; }
 .hly-cp-cell:last-child, .hly-cp-cell--daylight { border-bottom: none; }
 .hly-cp-cell--daylight {
-  grid-column: span 2;  /* row 3 shares with Rain (1 col) + Daylight (2 cols) */
+  grid-column: 1 / -1;
   border-right: none;
 }
 .hly-cp-cell--daylight .hly-cp-cell-val {
