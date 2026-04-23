@@ -523,15 +523,15 @@ export function getPersonalVerdict(userLevel, h, spot) {
   if (reefTooMuch) return "no";
   if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
-    // Even the inside reform is chop when the wind is hammering the beach.
-    // Beach-break reality check: at 25+ km/h onshore the shorebreak is
-    // whitewater washing-machine, no clean inside walls left to take.
-    // Gale at 40+ km/h any direction = stay out regardless.
+    // Unified wind cap for the inside-reform rescue: 25 km/h in ANY
+    // direction = SKIP. The levels that use this rescue (first-timer,
+    // beginner, early_int) are all on foamies or mid-lengths with low
+    // wind tolerance — 25+ onshore is shorebreak chop, 25+ cross is
+    // side-chop, 25+ offshore picks them off their boards. No exception
+    // by direction — the reform is just water surface, and 25 km/h
+    // makes it unrideable at this skill range regardless.
     const kmh = knToKmh(h.windSpeedKn);
-    const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
-    const isOffshore = windDelta <= 45;
-    if (!isOffshore && kmh >= 25) return "no";
-    if (kmh >= 40) return "no";
+    if (kmh >= 25) return "no";
     if (size === "sweet" && wind === "clean") return "yes";
     return "ok";
   }
