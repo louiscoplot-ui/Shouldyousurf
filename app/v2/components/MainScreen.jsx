@@ -31,6 +31,7 @@ import PwaInstallPrompt from "./PwaInstallPrompt";
 import LoadingScreen from "./LoadingScreen";
 import { useSwapKey, fmtHour } from "../lib/hooks";
 import { track } from "../../lib/analytics";
+import { startVersionCheck } from "../../lib/versionCheck";
 import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
 import { fetchRealForecast } from "../lib/realFetch";
@@ -82,6 +83,10 @@ export default function MainScreen({ theme, setTheme }) {
     window.addEventListener("appinstalled", h);
     return () => window.removeEventListener("appinstalled", h);
   }, []);
+
+  // Poll /version.json so a deploy reaches cached iOS PWAs within ~1 min
+  // — no "please reinstall the app" message ever needed.
+  useEffect(() => { startVersionCheck(); }, []);
 
   // Lang change tracking — skip initial mount, only fire on user action
   const prevLangRef = useRef(null);
