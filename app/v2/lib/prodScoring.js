@@ -357,19 +357,46 @@ export function hasInsideReform(userLevel, faceFt, spot) {
   return eligible && spot.type !== "reef" && !spot.heavy && faceFt <= 10;
 }
 
+// Advice key is verdict-aware: the tip must always match the SKIP / MAYBE /
+// GO decision. Previously the tip path and the verdict path ran
+// independently so you could get "SKIP" with a "go surf the inside" tip
+// when the wind was too strong even for the inside reform. Now the
+// verdict gates which branch the tip is picked from.
 export function getPersonalAdviceKey(userLevel, h, spot) {
-  const { size, wind, reefTooMuch, faceFt } = classifyConditions(userLevel, h, spot);
-  if (reefTooMuch) return "tip_" + userLevel + "_reef";
+  const { size, wind, reefTooMuch, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const verdict = getPersonalVerdict(userLevel, h, spot);
   const foamie = hasInsideReform(userLevel, faceFt, spot);
-  if (foamie) {
+  const { kmh } = windContext(h, spot);
+  const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
+
+  // ── SKIP branch — explain why it's a no ─────────────────────────────
+  if (verdict === "no") {
+    if (currentHazard === "dangerous" && isLearner) return "tip_" + userLevel + "_current";
+    if (reefTooMuch) return "tip_" + userLevel + "_reef";
+    // Gale wind trumps everything else — unsurfable for any reason.
+    if (kmh >= 35) return "tip_" + userLevel + "_gale";
     if (faceFt < 0.3) return "tip_" + userLevel + "_too_small";
-    if (size === "too_big")               return "tip_" + userLevel + "_inside";
-    if (wind === "blown")                 return "tip_" + userLevel + "_inside";
-    if (size === "upper")                 return "tip_" + userLevel + "_inside";
+    if (size === "too_big") return "tip_" + userLevel + "_too_big";
+    if (size === "too_small") return "tip_" + userLevel + "_too_small";
+    if (wind === "blown") return "tip_" + userLevel + "_blown_" + (size === "too_small" ? "small" : size === "too_big" ? "upper" : size);
+    return "tip_" + userLevel + "_upper_bumpy"; // catch-all for edge cases
   }
-  if (size === "too_small") return "tip_" + userLevel + "_too_small";
-  if (size === "too_big")   return "tip_" + userLevel + "_too_big";
-  if (wind === "blown")     return "tip_" + userLevel + "_blown_" + size;
+
+  // ── MAYBE branch — surfable with caveats ────────────────────────────
+  if (verdict === "ok") {
+    // Learner rescue: outside is out of reach but the inside still offers
+    // rideable reforms. Only reached when wind < 25 km/h (the learner cap
+    // in getPersonalVerdict), so this tip is always truthful.
+    if (foamie && (size === "too_big" || size === "upper" || wind === "blown")) {
+      return "tip_" + userLevel + "_inside";
+    }
+    if (size === "too_big") return "tip_" + userLevel + "_too_big";
+    if (size === "too_small") return "tip_" + userLevel + "_too_small";
+    if (wind === "blown") return "tip_" + userLevel + "_blown_" + size;
+    return "tip_" + userLevel + "_" + size + "_" + wind;
+  }
+
+  // ── GO branch — send it ─────────────────────────────────────────────
   return "tip_" + userLevel + "_" + size + "_" + wind;
 }
 
@@ -514,6 +541,30 @@ export function getTideModifier(sel, hours) {
   return null;
 }
 
+// Wind "flavor" relative to the spot: direction class + kmh in one call.
+// Keeps the universal-gale logic below from repeating itself.
+function windContext(h, spot) {
+  const kmh = knToKmh(h.windSpeedKn);
+  const delta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
+  const dir = delta <= 45 ? "offshore" : delta >= 135 ? "onshore" : "cross";
+  return { kmh, dir };
+}
+
+// Universal gale cap — a full-on windy day kills a session at any skill
+// level at a beach break. Onshore is the strictest (sets get shredded
+// before they form), cross-shore next (sideways chop), offshore the most
+// permissive (experts can still score if the swell is there, but they
+// get picked off their boards).
+function galeKills(userLevel, kmh, dir) {
+  const isPro = userLevel === "advanced" || userLevel === "expert";
+  if (dir === "onshore" && kmh >= 35) return true;
+  if (dir === "cross"   && kmh >= 40 && !isPro) return true;
+  if (dir === "cross"   && kmh >= 50) return true;
+  if (dir === "offshore" && kmh >= 50 && !isPro) return true;
+  if (dir === "offshore" && kmh >= 65) return true;
+  return false;
+}
+
 export function getPersonalVerdict(userLevel, h, spot) {
   const { size, wind, reefTooMuch, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   // Current safety — overrides everything for learners who can't paddle
@@ -521,16 +572,19 @@ export function getPersonalVerdict(userLevel, h, spot) {
   // MAYBE below (never lets a learner see GO on a rippy day).
   if (currentHazard === "dangerous") return "no";
   if (reefTooMuch) return "no";
+
+  const { kmh, dir } = windContext(h, spot);
+  // Universal gale cap — applies to all levels. Even advanced/expert
+  // don't get a rideable session at a beach break in a gale onshore.
+  if (galeKills(userLevel, kmh, dir)) return "no";
+
   if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
-    // Unified wind cap for the inside-reform rescue: 25 km/h in ANY
-    // direction = SKIP. The levels that use this rescue (first-timer,
-    // beginner, early_int) are all on foamies or mid-lengths with low
-    // wind tolerance — 25+ onshore is shorebreak chop, 25+ cross is
-    // side-chop, 25+ offshore picks them off their boards. No exception
-    // by direction — the reform is just water surface, and 25 km/h
-    // makes it unrideable at this skill range regardless.
-    const kmh = knToKmh(h.windSpeedKn);
+    // Learner-specific inside-reform cap: 25 km/h any direction. The
+    // foamie/mid-length group can't handle more than that — 25+ onshore
+    // is shorebreak chop, 25+ cross is side-chop, 25+ offshore picks them
+    // off their boards. The universal cap above already handles the
+    // harder gale range; this is the tighter learner-only threshold.
     if (kmh >= 25) return "no";
     if (size === "sweet" && wind === "clean") return "yes";
     return "ok";
