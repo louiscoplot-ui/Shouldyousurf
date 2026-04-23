@@ -654,6 +654,7 @@ button, input, select { font-family: inherit; color: inherit; }
 
 .sheet-bars { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .sf-row { display: flex; flex-direction: column; gap: 6px; }
+.sf-row--adjust { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
 .sf-top { display: flex; align-items: baseline; gap: 8px; }
 .sf-label { font-size: 13px; font-weight: 600; color: var(--text); flex: 0 0 auto; }
 .sf-value { font-size: 11px; color: var(--text-mu); margin-left: 2px; }

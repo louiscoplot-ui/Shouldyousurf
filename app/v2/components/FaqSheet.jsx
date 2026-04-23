@@ -14,6 +14,9 @@ const FAQ_KEYS = [
   { q: "faq_q7", a: "faq_a7" },
   { q: "faq_q8", a: "faq_a8" },
   { q: "faq_q9", a: "faq_a9" },
+  { q: "faq_q10", a: "faq_a10" },
+  { q: "faq_q11", a: "faq_a11" },
+  { q: "faq_q12", a: "faq_a12" },
 ];
 
 export default function FaqSheet({ onClose, t }) {

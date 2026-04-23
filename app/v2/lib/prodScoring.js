@@ -531,7 +531,12 @@ export function getPersonalVerdict(userLevel, h, spot) {
     return "ok";
   }
   if (size === "too_big") {
-    if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
+    // Foamie-eligible learners (first_timer / beginner) get the inside-
+    // reform rescue above and never fall through to here. Early_int is
+    // NOT on a foamie but they have enough paddle/duck-dive skill to
+    // attempt — "ok" (MAYBE) instead of hard-no keeps the level ladder
+    // monotonic (never stricter than beginner).
+    if (userLevel === "first_timer" || userLevel === "beginner") return "no";
     return "ok";
   }
   const cap = currentHazard === "strong" ? "ok" : null;

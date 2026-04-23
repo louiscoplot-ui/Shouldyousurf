@@ -85,6 +85,31 @@ export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec
               <div className="sf-note">{f.note}</div>
             </div>
           ))}
+          {/* Level adjustment — the 4 bars above describe the ocean; this
+              row reconciles their sum with the displayed score. If you're
+              under-levelled for the size, or wind is tough for your skill,
+              this number swings the final result. Without it users see
+              bars summing to e.g. 74 but a final score of 1 and are
+              (rightly) confused. */}
+          {(() => {
+            const oceanSum = bd.total;
+            const levelAdjust = displayScore - oceanSum;
+            if (levelAdjust === 0) return null;
+            const sign = levelAdjust > 0 ? "+" : "";
+            const note = levelAdjust < 0
+              ? `Conditions are tough for ${levelLabel.toLowerCase()} — size, wind or current are beyond your comfort. Score capped accordingly.`
+              : `Conditions happen to suit ${levelLabel.toLowerCase()} — size zone, clean wind. Score lifted.`;
+            return (
+              <div className="sf-row sf-row--adjust">
+                <div className="sf-top">
+                  <span className="sf-label">For your level</span>
+                  <span className="sf-value mono">{levelLabel}</span>
+                  <span className="sf-pts mono" style={{ color: verdict.color }}><b>{sign}{levelAdjust}</b></span>
+                </div>
+                <div className="sf-note">{note}</div>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="sheet-scale">
