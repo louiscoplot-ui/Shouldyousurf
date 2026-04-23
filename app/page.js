@@ -7,9 +7,10 @@
 // paints its status-bar area to match the active theme (otherwise the top
 // of the screen stays a fixed paper colour even in dark mode).
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./v2/v2.css";
 import MainScreen from "./v2/components/MainScreen";
+import { track } from "./lib/analytics";
 
 const THEME_KEY = "sys-theme-v1";
 
@@ -30,10 +31,18 @@ export default function Home() {
       if (saved) setTheme(saved);
     } catch {}
   }, []);
+  const prevThemeRef = useRef(null);
   const pickTheme = (next) => {
     setTheme(next);
     try { localStorage.setItem(THEME_KEY, next); } catch {}
+    track("theme_changed", { theme: next });
   };
+  // Track the initial theme once (picked from localStorage)
+  useEffect(() => {
+    if (prevThemeRef.current === null) {
+      prevThemeRef.current = theme;
+    }
+  }, [theme]);
 
   // Keep iOS Safari status-bar + PWA chrome in sync with the active theme.
   // Crucial detail: wait for the #__preload splash to be gone before we

@@ -30,6 +30,7 @@ import OnboardingModal from "./OnboardingModal";
 import PwaInstallPrompt from "./PwaInstallPrompt";
 import LoadingScreen from "./LoadingScreen";
 import { useSwapKey, fmtHour } from "../lib/hooks";
+import { track } from "../../lib/analytics";
 import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
 import { fetchRealForecast } from "../lib/realFetch";
@@ -73,6 +74,23 @@ export default function MainScreen({ theme, setTheme }) {
 
   const customLangDict = customLangs.find((c) => c.code === lang)?.translations;
   const t = getT(lang, customLangDict);
+
+  // PWA install event — fires when user accepts the install prompt
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = () => track("pwa_installed");
+    window.addEventListener("appinstalled", h);
+    return () => window.removeEventListener("appinstalled", h);
+  }, []);
+
+  // Lang change tracking — skip initial mount, only fire on user action
+  const prevLangRef = useRef(null);
+  useEffect(() => {
+    if (prevLangRef.current !== null && prevLangRef.current !== lang) {
+      track("language_changed", { from: prevLangRef.current, to: lang });
+    }
+    prevLangRef.current = lang;
+  }, [lang]);
 
   // Load persisted state + shared-URL params
   useEffect(() => {
@@ -124,16 +142,18 @@ export default function MainScreen({ theme, setTheme }) {
     setShowPwa(true);
   }, []);
 
-  // Persist spot + favourites
+  // Persist spot + favourites + analytics
   useEffect(() => {
     try {
       if (spot.id.startsWith("custom-")) {
         localStorage.setItem("surf-last-break-custom", JSON.stringify(spot));
         localStorage.removeItem("surf-last-break");
+        track("custom_spot_added", { lat: spot.lat, lng: spot.lng });
       } else {
         localStorage.setItem("surf-last-break", spot.id);
         localStorage.removeItem("surf-last-break-custom");
       }
+      track("spot_selected", { id: spot.id, name: spot.name, country: spot.country, type: spot.type });
     } catch {}
   }, [spot]);
   useEffect(() => {
@@ -142,6 +162,7 @@ export default function MainScreen({ theme, setTheme }) {
 
   function saveUserLevel(lvl) {
     setUserLevel(lvl);
+    if (lvl) track("level_picked", { level: lvl });
     try {
       if (lvl) localStorage.setItem("surf-user-level", lvl);
       else localStorage.removeItem("surf-user-level");
@@ -153,7 +174,11 @@ export default function MainScreen({ theme, setTheme }) {
     try { localStorage.setItem("surf-onboarded-v2", "1"); } catch {}
   }
   function toggleFav(id) {
-    setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
+    setFavorites((f) => {
+      const has = f.includes(id);
+      track(has ? "favorite_removed" : "favorite_added", { spotId: id });
+      return has ? f.filter((x) => x !== id) : [...f, id];
+    });
   }
   function saveCountry(code) {
     setCountry(code);
@@ -236,6 +261,7 @@ export default function MainScreen({ theme, setTheme }) {
     if (notifOptIn) {
       try { localStorage.removeItem("surf-notif-opt-in"); } catch {}
       setNotifOptIn(false);
+      track("notif_opted_in", { state: false });
       return;
     }
     let perm = Notification.permission;
@@ -243,6 +269,7 @@ export default function MainScreen({ theme, setTheme }) {
     if (perm !== "granted") { alert(t("notif_denied")); return; }
     try { localStorage.setItem("surf-notif-opt-in", "1"); } catch {}
     setNotifOptIn(true);
+    track("notif_opted_in", { state: true });
     if (!payload) return;
     const now = Date.now();
     let best = null;
@@ -285,7 +312,7 @@ export default function MainScreen({ theme, setTheme }) {
         onOpenPicker={() => setPickerOpen(true)}
         onOpenLevel={() => setLevelPickerOpen(true)}
         onOpenLang={() => setLangOpen(true)}
-        onOpenFaq={() => setFaqOpen(true)}
+        onOpenFaq={() => { track("faq_opened"); setFaqOpen(true); }}
       />
       {pickerOpen && (
         <BreakPicker
@@ -553,6 +580,7 @@ function Loaded({
 
   async function shareSpot() {
     const url = `${window.location.origin}/v2?spot=${encodeURIComponent(spot.id)}`;
+    track("share_clicked", { spotId: spot.id });
     try {
       if (navigator.share) {
         await navigator.share({ title: spot.name, text: `${t("brand") || "should you surf?"} — ${spot.name}`, url });
@@ -612,6 +640,7 @@ function Loaded({
                 key={i}
                 onClick={(e) => {
                   setDayIdx(i);
+                  track("day_switched", { dayIdx: i, label: d.label });
                   // v1 behavior: smoothly scroll the clicked tab toward the
                   // centre of the tab bar so the neighbouring days become
                   // visible — same as app/page.js handleTabClick().
@@ -653,7 +682,7 @@ function Loaded({
           </span>
         </div>
 
-        <VerdictHero verdict={verdict} hour={hour} swapKey={swapKey} onOpenScore={() => setScoreOpen(true)}/>
+        <VerdictHero verdict={verdict} hour={hour} swapKey={swapKey} onOpenScore={() => { track("score_sheet_opened", { score: hour.score, verdict: verdict.key }); setScoreOpen(true); }}/>
 
         {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} onClose={() => setScoreOpen(false)}/>}
 
@@ -690,7 +719,7 @@ function Loaded({
           <HourlyList
             hours={day.hours}
             selectedIdx={selectedIdx}
-            onSelect={setSelectedIdx}
+            onSelect={(idx) => { setSelectedIdx(idx); const h = day.hours[idx]; if (h) track("hour_selected", { hour: h.hour, score: h.score }); }}
             currentHour={currentHour}
             sunByDay={payload.sunByDay}
             tz={spot.timezone || "Australia/Perth"}
