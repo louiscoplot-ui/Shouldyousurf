@@ -438,7 +438,16 @@ function Loaded({
     const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
     const modifierKey = getPersonalModifier(effectiveLevel, hourDeg, effectiveSpot);
     const tideModKey = getTideModifier(hour, day.hours);
-    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    // Verdict label is derived from the displayed score — same single source
+    // of truth as the big Hero score/band at the top. scoreForLevel already
+    // caps the score to agree with getPersonalVerdict (≤38 for SKIP, ≤70 for
+    // MAYBE), so reading the band back out of the score guarantees this row
+    // can never contradict the Hero (e.g. "0/100 SKIP" up top + "WORTH IT"
+    // down here). Falls back to getPersonalVerdict only if score is missing.
+    const score = hour.score;
+    const pv = score != null
+      ? (score >= 71 ? "yes" : score >= 39 ? "ok" : "no")
+      : getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
     const tipRaw = t(adviceKey);
     const tipText = (!tipRaw || tipRaw === adviceKey || tipRaw.startsWith("tip_")) ? verdict.sub : tipRaw;
     const levelLabel = t("lvl_" + effectiveLevel) || effectiveLevel;
@@ -483,7 +492,13 @@ function Loaded({
   // short always-visible line; detail expands on tap.
   const danger = useMemo(() => {
     const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
-    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    // Same score-derived verdict rule as personalReason above — keeps the
+    // danger banner, the personal tip line, and the Hero score band in lock
+    // step. Score < 39 ⇒ "no" ⇒ banner shown for learners.
+    const score = hour.score;
+    const pv = score != null
+      ? (score >= 71 ? "yes" : score >= 39 ? "ok" : "no")
+      : getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
     const isLearner = effectiveLevel === "first_timer" || effectiveLevel === "beginner" || effectiveLevel === "early_int";
     if (!(isLearner && pv === "no")) return null;
     const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
