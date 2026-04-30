@@ -440,19 +440,21 @@ function Loaded({
     // hour carries them as cardinal strings for display, so rebuild the raw
     // view from the *Deg fields before calling them.
     const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
-    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
-    const modifierKey = getPersonalModifier(effectiveLevel, hourDeg, effectiveSpot);
-    const tideModKey = getTideModifier(hour, day.hours);
     // Verdict label is derived from the displayed score — same single source
-    // of truth as the big Hero score/band at the top. scoreForLevel already
-    // caps the score to agree with getPersonalVerdict (≤38 for SKIP, ≤70 for
-    // MAYBE), so reading the band back out of the score guarantees this row
-    // can never contradict the Hero (e.g. "0/100 SKIP" up top + "WORTH IT"
-    // down here). Falls back to getPersonalVerdict only if score is missing.
+    // of truth as the big Hero score/band at the top. scoreForLevel bounds
+    // the score to agree with getPersonalVerdict (SKIP ≤38, MAYBE ∈ [39,70],
+    // GO ≥71), so reading the band back out of the score guarantees this row
+    // can never contradict the Hero. Falls back to getPersonalVerdict only
+    // if score is missing. We then PASS pv to getPersonalAdviceKey so the
+    // tip is locked to the same branch — kills any drift risk between the
+    // label and the tip.
     const score = hour.score;
     const pv = score != null
       ? (score >= 71 ? "yes" : score >= 39 ? "ok" : "no")
       : getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot, pv);
+    const modifierKey = getPersonalModifier(effectiveLevel, hourDeg, effectiveSpot);
+    const tideModKey = getTideModifier(hour, day.hours);
     const tipRaw = t(adviceKey);
     const tipText = (!tipRaw || tipRaw === adviceKey || tipRaw.startsWith("tip_")) ? verdict.sub : tipRaw;
     const levelLabel = t("lvl_" + effectiveLevel) || effectiveLevel;
@@ -506,7 +508,9 @@ function Loaded({
       : getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
     const isLearner = effectiveLevel === "first_timer" || effectiveLevel === "beginner" || effectiveLevel === "early_int";
     if (!(isLearner && pv === "no")) return null;
-    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot);
+    // Pass pv so the tip is locked to the SKIP branch — same band as the
+    // banner trigger, so message + detail can never disagree.
+    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot, pv);
     const raw = t(adviceKey);
     const tip = (!raw || raw === adviceKey || raw.startsWith("tip_")) ? verdict.sub : raw;
     return {

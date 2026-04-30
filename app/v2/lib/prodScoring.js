@@ -244,13 +244,14 @@ export function hasInsideReform(userLevel, faceFt, spot) {
 }
 
 // Advice key is verdict-aware: the tip must always match the SKIP / MAYBE /
-// GO decision. Previously the tip path and the verdict path ran
-// independently so you could get "SKIP" with a "go surf the inside" tip
-// when the wind was too strong even for the inside reform. Now the
-// verdict gates which branch the tip is picked from.
-export function getPersonalAdviceKey(userLevel, h, spot) {
+// GO decision. The optional `displayedVerdict` arg lets the caller pass the
+// score-derived band ("yes"/"ok"/"no") so the tip branch is locked to the
+// label the user actually sees on screen — single source of truth, no risk
+// of drift between this function and scoreForLevel's bounds. Falls back to
+// recomputing via getPersonalVerdict when the caller doesn't have the score.
+export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
   const { size, wind, reefTooMuch, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
-  const verdict = getPersonalVerdict(userLevel, h, spot);
+  const verdict = displayedVerdict || getPersonalVerdict(userLevel, h, spot);
   const foamie = hasInsideReform(userLevel, faceFt, spot);
   const { kmh } = windContext(h, spot);
   const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
