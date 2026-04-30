@@ -7,7 +7,7 @@
 // server version moves forward — so a bug fix reaches users within ~1 min
 // without them re-installing anything.
 
-const POLL_MS = 60_000;
+const POLL_MS = 20_000;
 let startedAt = null;
 let seenVersion = null;
 let reloading = false;
@@ -48,11 +48,11 @@ export function startVersionCheck() {
   setInterval(() => { if (document.visibilityState === "visible") check(); }, POLL_MS);
 
   // Also check every time the PWA comes back to foreground — that's the
-  // most common moment users encounter a stale cache.
+  // most common moment users encounter a stale cache. Always run (no
+  // mount-age threshold): the seenVersion guard inside check() already
+  // prevents an instant reload on fresh opens (first call just records
+  // the version, only subsequent calls compare).
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      // Skip if we just mounted — avoids an instant reload on fresh opens.
-      if (Date.now() - startedAt > 5000) check();
-    }
+    if (document.visibilityState === "visible") check();
   });
 }
