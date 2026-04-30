@@ -1817,18 +1817,19 @@ button, input, select { font-family: inherit; color: inherit; }
 }
 .hly-cp-face-unit {
   font-size: 20px; font-weight: 500;
-  opacity: 0.7; margin-left: 4px;
+  margin-left: 4px;
+  color: var(--text);
 }
 .hly-cp-face-conv {
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 12px; font-weight: 500;
-  color: var(--text-mu);
+  color: var(--text);
 }
 .hly-cp-hint {
   padding: 2px 14px 6px;
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 13px; font-style: italic;
-  color: var(--text-mu); line-height: 1.45;
+  color: var(--text); line-height: 1.45;
 }
 
 /* ── 3-col grid ───────────────────────────────────────────────── */
@@ -1860,9 +1861,9 @@ button, input, select { font-family: inherit; color: inherit; }
 }
 .hly-cp-cell-lbl {
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 8.5px; font-weight: 600;
+  font-size: 9.5px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase;
-  opacity: 0.42; color: var(--text);
+  color: var(--text);
   margin-bottom: 3px;
 }
 .hly-cp-cell-val {
@@ -1873,13 +1874,14 @@ button, input, select { font-family: inherit; color: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .hly-cp-cell-unit {
-  font-size: 10px; font-weight: 600;
-  opacity: 0.65; margin-left: 2px;
+  font-size: 11px; font-weight: 600;
+  margin-left: 2px;
+  color: var(--text);
 }
 .hly-cp-cell-sub {
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 9.5px; font-weight: 500;
-  opacity: 0.52; color: var(--text);
+  font-size: 11px; font-weight: 500;
+  color: var(--text);
   margin-top: 2px; line-height: 1.3;
 }
 .hly-cp-wind-trend {
