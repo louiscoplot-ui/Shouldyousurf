@@ -1802,8 +1802,8 @@ button, input, select { font-family: inherit; color: inherit; }
 .hly-cp-reason-main strong { font-weight: 700; }
 .hly-cp-reason-main .C-reason-mod {
   display: block; margin-top: 3px;
-  font-size: 10.5px; font-style: italic;
-  opacity: 0.62; line-height: 1.4;
+  font-size: 12px; font-style: italic;
+  color: var(--text-dim); line-height: 1.4;
 }
 .hly-cp-face {
   display: flex; align-items: baseline; gap: 10px;
@@ -1826,9 +1826,8 @@ button, input, select { font-family: inherit; color: inherit; }
 .hly-cp-hint {
   padding: 0 14px 5px;
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 10px; font-style: italic;
-  opacity: 0.52; line-height: 1.4;
-  color: var(--text);
+  font-size: 12px; font-style: italic;
+  color: var(--text-dim); line-height: 1.4;
 }
 
 /* ── 3-col grid ───────────────────────────────────────────────── */
