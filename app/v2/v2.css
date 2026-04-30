@@ -803,7 +803,10 @@ button, input, select { font-family: inherit; color: inherit; }
    !important wins over any leftover opacity / inherited rule. */
 .v2-stage[data-theme="nocturnal"] .hly-cp-face-conv,
 .v2-stage[data-theme="nocturnal"] .hly-cp-hint,
-.v2-stage[data-theme="nocturnal"] .hly-cp-cell--daylight .hly-cp-cell-val {
+.v2-stage[data-theme="nocturnal"] .hly-cp-cell--daylight .hly-cp-cell-val,
+.v2-stage[data-theme="nocturnal"] .hly-xface-sub,
+.v2-stage[data-theme="nocturnal"] .hly-xhint,
+.v2-stage[data-theme="nocturnal"] .hly-xcell--daylight .hly-xval {
   color: #f5efe0 !important;
   opacity: 1 !important;
 }
