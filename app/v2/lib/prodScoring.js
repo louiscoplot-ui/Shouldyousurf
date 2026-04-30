@@ -564,15 +564,16 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
   if (currentHazard === "dangerous") adj -= 50;
   else if (currentHazard === "strong") adj -= 15;
 
-  // Verdict-aware bounds — the numeric score must agree with the verdict
-  // label the user sees. MainScreen reverse-derives the label from the
-  // score (<39 = SKIP, <71 = MAYBE, ≥71 = GO), so we need both a ceiling
-  // AND a floor for each band, otherwise low-but-rideable conditions
-  // (small + clean for an early_int) get capped to ~30 and read as SKIP
-  // up top while the tip text still says "great practice day".
+  // Verdict-aware ceiling only — never floor. The score is an honest
+  // measure of conditions; the SKIP/MAYBE/GO label is a separate decision
+  // for the user's level. They CAN differ (a Poor 31/100 day can still be
+  // a MAYBE for an early_int who wants to practise on small clean) and
+  // that's the point. We only cap the score from above so a "great
+  // numeric score with a red SKIP label" can't happen — that combo is
+  // confusing UX. Flooring would destroy the score's resolution (a flat
+  // 5/100 day and a marginal 38/100 day would both read 39).
   if (verdict === "no") adj = Math.min(adj, 38);
-  else if (verdict === "ok") adj = Math.max(39, Math.min(adj, 70));
-  else if (verdict === "yes") adj = Math.max(71, adj);
+  else if (verdict === "ok") adj = Math.min(adj, 70);
 
   return { score: Math.max(0, Math.min(100, Math.round(adj))), notes: base.notes };
 }

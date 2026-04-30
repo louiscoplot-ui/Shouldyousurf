@@ -440,18 +440,14 @@ function Loaded({
     // hour carries them as cardinal strings for display, so rebuild the raw
     // view from the *Deg fields before calling them.
     const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
-    // Verdict label is derived from the displayed score — same single source
-    // of truth as the big Hero score/band at the top. scoreForLevel bounds
-    // the score to agree with getPersonalVerdict (SKIP ≤38, MAYBE ∈ [39,70],
-    // GO ≥71), so reading the band back out of the score guarantees this row
-    // can never contradict the Hero. Falls back to getPersonalVerdict only
-    // if score is missing. We then PASS pv to getPersonalAdviceKey so the
-    // tip is locked to the same branch — kills any drift risk between the
-    // label and the tip.
-    const score = hour.score;
-    const pv = score != null
-      ? (score >= 71 ? "yes" : score >= 39 ? "ok" : "no")
-      : getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    // SKIP / MAYBE / GO comes from getPersonalVerdict — the actual decision
+    // for this user's level. The Hero score band ("Poor / Fair / Good…") is
+    // a separate dimension (objective conditions quality) and can legitimately
+    // differ (e.g. "Poor 31/100" objectively + "MAYBE" personally for an
+    // early_int on small + clean = good practice day). We pass pv straight
+    // into getPersonalAdviceKey so the tip branch is locked to the same
+    // verdict — label and tip can never disagree.
+    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
     const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot, pv);
     const modifierKey = getPersonalModifier(effectiveLevel, hourDeg, effectiveSpot);
     const tideModKey = getTideModifier(hour, day.hours);
@@ -499,13 +495,11 @@ function Loaded({
   // short always-visible line; detail expands on tap.
   const danger = useMemo(() => {
     const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
-    // Same score-derived verdict rule as personalReason above — keeps the
-    // danger banner, the personal tip line, and the Hero score band in lock
-    // step. Score < 39 ⇒ "no" ⇒ banner shown for learners.
-    const score = hour.score;
-    const pv = score != null
-      ? (score >= 71 ? "yes" : score >= 39 ? "ok" : "no")
-      : getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
+    // Same source of truth as personalReason above — getPersonalVerdict is
+    // the per-level decision, the banner shows when it's a hard SKIP for
+    // a learner. Score band can disagree with the personal verdict (that's
+    // by design) so we don't read the band here.
+    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
     const isLearner = effectiveLevel === "first_timer" || effectiveLevel === "beginner" || effectiveLevel === "early_int";
     if (!(isLearner && pv === "no")) return null;
     // Pass pv so the tip is locked to the SKIP branch — same band as the
