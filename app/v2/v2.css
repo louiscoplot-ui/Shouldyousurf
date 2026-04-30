@@ -796,6 +796,16 @@ button, input, select { font-family: inherit; color: inherit; }
 .v2-stage[data-theme="nocturnal"] .ibtn:hover { background: rgba(231,226,211,0.14) !important; }
 .v2-stage[data-theme="nocturnal"] .dt.active { background: #273640 !important; }
 .v2-stage[data-theme="nocturnal"] .lvl-quick button.on { background: #273640 !important; }
+/* Nocturnal-specific: force the wave-conv ("0.8 m · 10s") and verdict-sub
+   ("Clean, well-shaped…") lines in the expanded hourly card to pure
+   bright cream. The default var(--text) was reading dim against the
+   accent-soft tinted bg in this theme — user flagged repeatedly.
+   !important wins over any leftover opacity / inherited rule. */
+.v2-stage[data-theme="nocturnal"] .hly-cp-face-conv,
+.v2-stage[data-theme="nocturnal"] .hly-cp-hint {
+  color: #f5efe0 !important;
+  opacity: 1 !important;
+}
 
 /* ─── Theme 4 — Oceanic (cool blues, no warmth) ─── */
 .v2-stage[data-theme="oceanic"] {
