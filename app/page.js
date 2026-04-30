@@ -70,6 +70,11 @@ export default function Home() {
     document.documentElement.style.backgroundColor = bg;
     document.body.style.backgroundColor = bg;
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+    // Mirror data-theme onto <html> so portaled UI (like ScoreSheet) that
+    // lives outside .v2-stage still inherits the right CSS theme vars.
+    // Without this, the sheet falls back to :root defaults (light-theme
+    // deep-teal text) and reads invisible on the nocturnal dark bg.
+    document.documentElement.setAttribute("data-theme", theme);
 
     // status-bar-style: "black-translucent" lets the page bg show through
     // — one value works for every theme. iOS caches this at PWA launch

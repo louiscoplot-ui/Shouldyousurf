@@ -811,6 +811,37 @@ button, input, select { font-family: inherit; color: inherit; }
   opacity: 1 !important;
 }
 
+/* ── ScoreSheet (portaled to document.body, so .v2-stage selectors don't
+      reach it). Mirror the nocturnal theme vars at :root level too so the
+      sheet picks up the correct text colours instead of falling back to
+      :root defaults (deep teal #1a3d3a — invisible on near-black bg).
+      JS in app/page.js sets data-theme on documentElement so this rule
+      activates exactly when the user picks nocturnal. */
+:root[data-theme="nocturnal"] {
+  --bg: #10161a; --bg-el: #1e2a30; --bg-hi: #273640; --bg-card: #1a242a; --paper: #18232a;
+  --border: rgba(231,226,211,0.09); --border-str: rgba(231,226,211,0.22);
+  --text: #e7e2d3; --text-mu: rgba(231,226,211,0.95); --text-dim: rgba(231,226,211,0.88);
+  --accent: #9ad5c1; --accent-soft: rgba(154,213,193,0.11); --accent-ring: rgba(154,213,193,0.25);
+}
+/* Sheet-specific safety net: every dim text class inside the sheet pinned
+   to bright cream when nocturnal is active. Belt-and-braces over the
+   :root vars above so even if a class uses an inline opacity or extra
+   selector, it still reads. */
+:root[data-theme="nocturnal"] .sheet-eyebrow,
+:root[data-theme="nocturnal"] .sheet-level-note,
+:root[data-theme="nocturnal"] .sheet-board-long,
+:root[data-theme="nocturnal"] .sheet-intro,
+:root[data-theme="nocturnal"] .sheet-den,
+:root[data-theme="nocturnal"] .sf-value,
+:root[data-theme="nocturnal"] .sf-pts,
+:root[data-theme="nocturnal"] .sf-max,
+:root[data-theme="nocturnal"] .sf-note,
+:root[data-theme="nocturnal"] .ssc-range,
+:root[data-theme="nocturnal"] .ssc-sub {
+  color: #f5efe0 !important;
+  opacity: 1 !important;
+}
+
 /* ─── Theme 4 — Oceanic (cool blues, no warmth) ─── */
 .v2-stage[data-theme="oceanic"] {
   --bg: #dce6ef; --bg-el: #cfdce8; --bg-hi: #b9cadc; --bg-card: #d5e0ea; --paper: #e8eff6;
