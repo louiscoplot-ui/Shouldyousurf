@@ -1862,7 +1862,7 @@ button, input, select { font-family: inherit; color: inherit; }
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 8.5px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase;
-  opacity: 0.42; color: var(--text);
+  color: var(--text);
   margin-bottom: 3px;
 }
 .hly-cp-cell-val {
