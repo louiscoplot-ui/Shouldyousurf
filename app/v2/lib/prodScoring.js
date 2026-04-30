@@ -258,7 +258,11 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
 
   // ── SKIP branch — explain why it's a no ─────────────────────────────
   if (verdict === "no") {
-    if (currentHazard === "dangerous" && isLearner) return "tip_" + userLevel + "_current";
+    // Current safety wins over wind/size storytelling — a learner with a
+    // strong rip needs to hear about the rip first, even if the wind is
+    // also blowing the surface up. Both "dangerous" and "strong" route
+    // here since both now cap a learner to SKIP.
+    if (currentHazard !== "none" && isLearner) return "tip_" + userLevel + "_current";
     if (reefTooMuch) return "tip_" + userLevel + "_reef";
     // Gale wind trumps everything else — unsurfable for any reason.
     if (kmh >= 35) return "tip_" + userLevel + "_gale";
@@ -487,6 +491,18 @@ export function getPersonalVerdict(userLevel, h, spot) {
 
   if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
+    // Strong current pulls a learner along the beach (or out) faster
+    // than they can paddle back even from the inside. The "dangerous"
+    // tier is already a hard no above; "strong" used to only cap to ok
+    // — promote it to no inside the reform branch since the rescue
+    // depends on staying close to the sand.
+    if (currentHazard === "strong") return "no";
+    // Wind === "blown" already means the surface is shredded enough
+    // that the score collapses to ~0; the inside is just as choppy as
+    // the outside in those conditions. Don't promise a learner an
+    // "inside rescue" that doesn't exist. (For learners "blown" =
+    // ≥18 km/h non-offshore — tighter than the 25 km/h cap below.)
+    if (wind === "blown") return "no";
     // Learner-specific inside-reform cap: 25 km/h any direction. The
     // foamie/mid-length group can't handle more than that — 25+ onshore
     // is shorebreak chop, 25+ cross is side-chop, 25+ offshore picks them
