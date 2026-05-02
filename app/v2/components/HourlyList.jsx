@@ -234,7 +234,6 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               <span className="hly-cp-face-val">{h.faceFtLow}–{h.faceFtHigh}<span className="hly-cp-face-unit"> ft</span></span>
               <span className="hly-cp-face-conv">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
             </div>
-            <div className="hly-cp-hint">{v.sub}</div>
             <div className="hly-cp-grid">
               {/* Row 1 */}
               <div className="hly-cp-cell">
@@ -332,7 +331,6 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                         </span>
                         <span className="hly-xface-sub">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
                       </div>
-                      <div className="hly-xhint">{v.sub}</div>
                       {(() => {
                         const dayKey = h.time?.split("T")?.[0];
                         const sun = sunByDay ? sunByDay[dayKey] : null;
