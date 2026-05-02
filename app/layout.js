@@ -51,7 +51,7 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-640x1136.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600&family=Inter:wght@400;500;600&display=swap" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" />
         <style>{`
           /* html/body bg inherit a CSS var that app/page.js sets inline on
              <html> whenever the theme changes. Falls back to paper so the
@@ -59,7 +59,7 @@ export default function RootLayout({ children }) {
              var will flip to #10161a on nocturnal and propagate to the
              iOS safe-area-inset-top region. */
           html { background: var(--bg, #f5ede1); color-scheme: light dark; }
-          html, body { margin: 0; font-family: 'Inter', system-ui, sans-serif; color: var(--text, #0f1e2e); }
+          html, body { margin: 0; font-family: 'Geist', system-ui, sans-serif; color: var(--text, #0f1e2e); }
           body { background: var(--bg, #f5ede1); }
           /* ── Preload splash ──────────────────────────────────────────
              Rendered as static HTML at the top of <body>. Appears the
@@ -104,10 +104,10 @@ export default function RootLayout({ children }) {
           #__preload .pl-dots,
           #__preload .pl-text { position: relative; z-index: 1; }
           #__preload .pl-brand {
-            font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
-            font-style: italic;
-            font-weight: 500; font-size: 44px; line-height: 1.1;
-            letter-spacing: -0.025em;
+            font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+            font-weight: 600; font-size: 44px; line-height: 1.1;
+            letter-spacing: -0.035em;
+            font-variation-settings: "opsz" 96;
             color: #f0fdfd;              /* pale cyan-white — picks up the neon glow */
             text-shadow:
               0 0 18px rgba(93,212,214,0.45),
@@ -123,7 +123,7 @@ export default function RootLayout({ children }) {
           #__preload .pl-dots span:nth-child(2) { animation-delay: 0.15s; background: #eafafa; box-shadow: 0 0 8px rgba(234,250,250,0.55); }
           #__preload .pl-dots span:nth-child(3) { animation-delay: 0.3s;  background: #e87ca0; box-shadow: 0 0 10px rgba(232,124,160,0.6); }
           #__preload .pl-text {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Geist', system-ui, -apple-system, sans-serif;
             font-size: 11px; color: rgba(234,250,250,0.85);
             letter-spacing: 0.28em; text-transform: uppercase;
             font-weight: 500; margin: 0;
@@ -134,8 +134,8 @@ export default function RootLayout({ children }) {
              is on top. Kept as safety net in case the preload has been
              removed but data is still coming. */
           .load-wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 0 24px; text-align: center; background: linear-gradient(180deg, var(--bg, #eef4f8) 0%, var(--bg-el, #dde7ee) 100%); z-index: 1; }
-          .load-brand { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 44px; line-height: 1.1; letter-spacing: -0.03em; background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-          .load-text { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; color: #f59e0b; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500; margin: 0; }
+          .load-brand { font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 600; font-size: 44px; line-height: 1.1; letter-spacing: -0.035em; font-variation-settings: "opsz" 96; background: linear-gradient(135deg, #0c2a5e 0%, #1558b5 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+          .load-text { font-family: 'Geist', system-ui, sans-serif; font-size: 11px; color: #f59e0b; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500; margin: 0; }
           .load-dots { display: flex; gap: 7px; }
           .load-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pl-bounce 1.2s infinite ease-in-out both; }
           .load-dot:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
