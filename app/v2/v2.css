@@ -1162,21 +1162,22 @@ button, input, select { font-family: inherit; color: inherit; }
 .v2-pwa-banner {
   position: fixed; bottom: 0; left: 0; right: 0;
   z-index: 400;
-  background: var(--paper); border-top: 1px solid var(--border-str);
-  padding: 14px 22px calc(14px + env(safe-area-inset-bottom));
-  display: flex; align-items: center; gap: 12px;
-  animation: slideUp 0.3s ease both;
-  box-shadow: 0 -4px 24px rgba(26,61,58,0.12);
+  background: var(--paper); border-top: 2px solid var(--accent);
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: 14px;
+  animation: slideUp 0.45s cubic-bezier(.2,.85,.3,1) both;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.32);
   color: var(--text);
 }
-.v2-pwa-icon { font-size: 28px; flex-shrink: 0; }
+.v2-pwa-icon { font-size: 32px; flex-shrink: 0; }
 .v2-pwa-content { flex: 1; min-width: 0; }
 .v2-pwa-title {
-  font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-style: italic;
-  font-weight: 500; font-size: 17px; line-height: 1.2;
-  letter-spacing: -0.01em; color: var(--text); margin-bottom: 4px;
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 600; font-size: 17px; line-height: 1.2;
+  letter-spacing: -0.015em; color: var(--text); margin-bottom: 5px;
 }
-.v2-pwa-instructions { font-size: 13px; color: var(--text-mu); line-height: 1.45; }
+.v2-pwa-instructions { font-size: 13.5px; color: var(--text-mu); line-height: 1.5; }
+.v2-pwa-instructions b { color: var(--accent); font-weight: 600; }
 .v2-pwa-close {
   background: none; border: 1px solid var(--border); border-radius: 999px;
   width: 30px; height: 30px; flex-shrink: 0; cursor: pointer;

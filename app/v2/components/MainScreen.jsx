@@ -136,15 +136,26 @@ export default function MainScreen({ theme, setTheme }) {
     }
   }, []);
 
-  // PWA install banner (mobile, non-standalone, not previously dismissed)
+  // PWA install banner (mobile, non-standalone, not recently dismissed).
+  // Re-shows 7 days after dismiss so a single accidental ✕ doesn't silence
+  // it forever — until the user actually installs (then standalone = true
+  // and we skip permanently). Storage key was renamed from the old hard
+  // "surf-pwa-shown" boolean so existing users get one fresh prompt.
   useEffect(() => {
     const isStandalone = typeof window !== "undefined" &&
       (window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches);
     if (isStandalone) return;
     const isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent || "");
     if (!isMobile) return;
-    try { if (localStorage.getItem("surf-pwa-shown")) return; } catch {}
-    setShowPwa(true);
+    try {
+      const dismissedAt = parseInt(localStorage.getItem("surf-pwa-dismissed-at") || "0", 10);
+      const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+      if (dismissedAt && Date.now() - dismissedAt < SEVEN_DAYS) return;
+    } catch {}
+    // Slight delay so the page paints first, then the banner slides up —
+    // catches the eye instead of being ignored as part of initial render.
+    const timer = setTimeout(() => setShowPwa(true), 800);
+    return () => clearTimeout(timer);
   }, []);
 
   // Persist spot + favourites + analytics
@@ -209,7 +220,7 @@ export default function MainScreen({ theme, setTheme }) {
   }
   function dismissPwa() {
     setShowPwa(false);
-    try { localStorage.setItem("surf-pwa-shown", "1"); } catch {}
+    try { localStorage.setItem("surf-pwa-dismissed-at", String(Date.now())); } catch {}
   }
 
   // Minimum display time for the LoadingScreen so the splash actually
