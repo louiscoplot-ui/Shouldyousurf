@@ -166,8 +166,8 @@ export async function fetchRealForecast(spot) {
       windDirDeg,
       windKmh: knToKmh(raw.windSpeedKn),
       windType: classifyWind(windDirDeg, effectiveSpot.offshoreWindDir),
-      faceFtLow: Math.max(1, Math.floor(faceFt - 0.5)),
-      faceFtHigh: Math.ceil(faceFt + 0.5),
+      faceFtLow: Math.max(0, Math.floor(faceFt - 0.5)),
+      faceFtHigh: Math.max(1, Math.ceil(faceFt + 0.5)),
       score,
       notes,
     };
