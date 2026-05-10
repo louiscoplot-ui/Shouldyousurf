@@ -17,7 +17,7 @@ const FACTOR_LABEL_KEY = {
   tide: "sheet_tide_label",
 };
 
-export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec, sessionNotes, spot, t }) {
+export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec, sessionNotes, spot, tideCtx, t }) {
   // i18n fallback : si t() ne reçoit pas de key (consommateur sans i18n
   // wrapper) on retombe sur la chaîne brute. Toutes les copies du sheet
   // passent par tt() qui combine t + interpolation.
@@ -27,7 +27,7 @@ export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec
     return Object.keys(vars).reduce((acc, k) => acc.replaceAll(`{${k}}`, vars[k]), raw);
   };
 
-  const bd = useMemo(() => scoreBreakdown(hour, spot, userLevel), [hour, spot, userLevel]);
+  const bd = useMemo(() => scoreBreakdown(hour, spot, userLevel, tideCtx), [hour, spot, userLevel, tideCtx]);
   const scale = SCORE_SCALE;
   // bd.total est déjà le score scoreV2 pour ce niveau (sans le verdict
   // ceiling de scoreForLevel). hour.score peut différer de bd.total à
