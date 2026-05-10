@@ -233,12 +233,15 @@ export default function MainScreen({ theme, setTheme }) {
     return () => clearTimeout(id);
   }, []);
 
-  // Fetch forecast whenever the spot changes.
+  // Fetch forecast whenever the spot changes — and refetch when the user
+  // returns to the tab so the displayed data isn't stale.
+  //
   // Strategy: show mock data IMMEDIATELY so the UI is never stuck on the
   // loading splash, then upgrade to real data when it arrives. If the real
   // fetch takes more than 8s we just stay on mock (with the "live data
   // unavailable" badge). This keeps the preview interactive even if the
   // user's network blocks Open-Meteo.
+  const [lastFetchAt, setLastFetchAt] = useState(0);
   useEffect(() => {
     let cancelled = false;
     // Seed with mock right away — no loading screen deadlock.
@@ -257,6 +260,7 @@ export default function MainScreen({ theme, setTheme }) {
         if (real && real.days && real.days.length) {
           setPayload(real);
           setDataSource("live");
+          setLastFetchAt(Date.now());
         }
       } catch (e) {
         if (cancelled) return;
@@ -273,6 +277,33 @@ export default function MainScreen({ theme, setTheme }) {
     })();
     return () => { cancelled = true; };
   }, [spot]);
+
+  // Refetch when the tab regains focus AND it's been > 5 minutes since the
+  // last successful real fetch. Without this the user could leave the app
+  // open in the morning, paddle out, come back at lunch and still see the
+  // 7am scores. The "UPDATED Xm ago" badge resets to 0 on a successful
+  // refetch.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const STALE_MS = 5 * 60 * 1000;
+    const onVisible = async () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastFetchAt < STALE_MS) return;
+      try {
+        const real = await fetchRealForecast(spot);
+        if (real && real.days && real.days.length) {
+          setPayload(real);
+          setDataSource("live");
+          setFetchError(null);
+          setLastFetchAt(Date.now());
+        }
+      } catch (e) {
+        console.warn("[v2] visibility refetch failed:", e);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [spot, lastFetchAt]);
 
   async function toggleNotifications() {
     if (typeof Notification === "undefined") { alert(t("notif_unsupported")); return; }
@@ -440,11 +471,17 @@ function Loaded({
     if (el) el.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [selectedIdx]);
 
+  // "UPDATED Xm AGO" — derived from lastFetchAt (the outer MainScreen's
+  // timestamp of the most recent successful real fetch). Increments live
+  // every 30s, resets to 0 the moment a fresh visibilitychange refetch
+  // lands. Prevents the lie of "0M AGO" sticking forever after the initial
+  // mount even though no refetch happened.
   const [ago, setAgo] = useState(0);
   useEffect(() => {
+    setAgo(0);
     const tick = setInterval(() => setAgo((a) => a + 1), 60000);
     return () => clearInterval(tick);
-  }, []);
+  }, [rawPayload]);
 
   const verdict = coherentVerdict(hour);
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -668,12 +705,12 @@ function Loaded({
           </button>
           <div className="spot-region">
             {spot.region} · {t(spot.type || "beach")}
-            {dataSource === "mock" && (
-              <span style={{ marginLeft: 8, color: "var(--coral)", fontStyle: "italic", letterSpacing: 0 }}>
-                · live data unavailable · showing mock
-              </span>
-            )}
           </div>
+          {dataSource === "mock" && (
+            <div className="mock-banner" role="status">
+              ⚠ Live forecast unavailable — showing sample data. Check your connection.
+            </div>
+          )}
         </div>
 
         <div className="rise-2">
