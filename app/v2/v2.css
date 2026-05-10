@@ -823,6 +823,34 @@ button, input, select { font-family: inherit; color: inherit; }
   --text: #e7e2d3; --text-mu: rgba(231,226,211,0.95); --text-dim: rgba(231,226,211,0.88);
   --accent: #9ad5c1; --accent-soft: rgba(154,213,193,0.11); --accent-ring: rgba(154,213,193,0.25);
 }
+/* Same mirror for the other 4 themes so portaled UI (ScoreSheet) reads
+   correctly on every theme, not just nocturnal. Without these blocks the
+   sheet inherits :root defaults (terracotta-ish) and the dim text classes
+   end up readable on the wrong palette. */
+:root[data-theme="terracotta"] {
+  --bg: #f5ede1; --bg-el: #ede1cd; --bg-hi: #e2d2b7; --bg-card: #efe5d3; --paper: #fbf5ea;
+  --border: rgba(26,61,58,0.10); --border-str: rgba(26,61,58,0.22);
+  --text: #1a3d3a; --text-mu: rgba(26,61,58,0.98); --text-dim: rgba(26,61,58,0.88);
+  --accent: #2d7a6e; --accent-soft: rgba(45,122,110,0.10); --accent-ring: rgba(45,122,110,0.25);
+}
+:root[data-theme="burgundy"] {
+  --bg: #ecdcb8; --bg-el: #e1cfa6; --bg-hi: #d4c090; --bg-card: #e7d7ae; --paper: #f2e5c2;
+  --border: rgba(58,29,31,0.11); --border-str: rgba(58,29,31,0.24);
+  --text: #3a1d1f; --text-mu: rgba(58,29,31,0.98); --text-dim: rgba(58,29,31,0.85);
+  --accent: #7a2a2b; --accent-soft: rgba(122,42,43,0.11); --accent-ring: rgba(122,42,43,0.28);
+}
+:root[data-theme="oceanic"] {
+  --bg: #dce6ef; --bg-el: #cfdce8; --bg-hi: #b9cadc; --bg-card: #d5e0ea; --paper: #e8eff6;
+  --border: rgba(20,44,78,0.11); --border-str: rgba(20,44,78,0.24);
+  --text: #142c4e; --text-mu: rgba(20,44,78,0.98); --text-dim: rgba(20,44,78,0.88);
+  --accent: #2a5a94; --accent-soft: rgba(42,90,148,0.11); --accent-ring: rgba(42,90,148,0.28);
+}
+:root[data-theme="forest"] {
+  --bg: #e8e5cf; --bg-el: #ddd9b9; --bg-hi: #ccc89d; --bg-card: #e0dcbd; --paper: #edebd4;
+  --border: rgba(29,45,28,0.12); --border-str: rgba(29,45,28,0.26);
+  --text: #1d2d1c; --text-mu: rgba(29,45,28,0.98); --text-dim: rgba(29,45,28,0.88);
+  --accent: #3d5a2f; --accent-soft: rgba(61,90,47,0.12); --accent-ring: rgba(61,90,47,0.28);
+}
 /* Sheet-specific safety net: every dim text class inside the sheet pinned
    to bright cream when nocturnal is active. Belt-and-braces over the
    :root vars above so even if a class uses an inline opacity or extra
@@ -1793,9 +1821,11 @@ button, input, select { font-family: inherit; color: inherit; }
    in cards mode. Ported from the user's IIFE patch into scoped CSS.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Danger pill: fully hidden in v2 (the colored SKIP label in the
-      reason card is the only warning surface now). ── */
-.danger-pill { display: none !important; }
+/* ── Danger pill: re-enabled. The coloured SKIP label in the reason
+      card is too discreet for actual safety scenarios (strong rip +
+      blown wind for a learner). The pill carries the rip/wind tip
+      explicitly with collapsible detail — only renders when MainScreen's
+      `danger` useMemo decides it (learner + verdict === "no"). ── */
 
 /* ── Compact spacing on the main page ── */
 .hdr { margin-bottom: 8px !important; }
