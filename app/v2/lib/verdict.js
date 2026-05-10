@@ -1,14 +1,24 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
-import { scoreV2, scoreForLevel, lookupBaseSize, mToFt, estimateFaceHeight } from "./prodScoring";
+import { scoreV2, scoreForLevel, lookupBaseSize, levelPeakBaseSize, mToFt, estimateFaceHeight } from "./prodScoring";
 
+// Bandes recalibrées post-multiplicatif. Distribution analysée sur 4800
+// combinaisons (10 swellH × 5 periods × 4 winds × 4 dir × 6 levels) :
+// l'ancienne échelle additive collait mal, Good (45-54) ne ramassait
+// que 4.6% des cas et Fair (35-44) 12.7%. Nouvelle répartition :
+//   Skip 0-14 (~44% — reflète la diversité levels × conditions)
+//   Poor 15-29  (était 15-34, resserré)
+//   Fair 30-44  (était 35-44, élargi vers le bas → 16.5%)
+//   Good 45-59  (était 45-54, élargi vers le haut → 6.4%)
+//   Excellent 60-74 (était 55-74, resserré)
+//   Unreal 75-100 (inchangé)
 export const SCORE_SCALE = [
   { key: "unreal",    min: 75, max: 100, color: "#1d6a5b", label: "Unreal",    sub: "Prime, memorable conditions — rearrange your day." },
-  { key: "excellent", min: 55, max: 74,  color: "#2d9178", label: "Excellent", sub: "Clean, well-shaped, worth going out of your way." },
-  { key: "good",      min: 45, max: 54,  color: "#62a06a", label: "Good",      sub: "Solid session — you'll enjoy it." },
-  { key: "fair",      min: 35, max: 44,  color: "#a4a558", label: "Fair",      sub: "Surfable but unremarkable." },
-  { key: "poor",      min: 15, max: 34,  color: "#d47559", label: "Poor",      sub: "Marginal — longboard or wait for better." },
+  { key: "excellent", min: 60, max: 74,  color: "#2d9178", label: "Excellent", sub: "Clean, well-shaped, worth going out of your way." },
+  { key: "good",      min: 45, max: 59,  color: "#62a06a", label: "Good",      sub: "Solid session — you'll enjoy it." },
+  { key: "fair",      min: 30, max: 44,  color: "#a4a558", label: "Fair",      sub: "Surfable but unremarkable." },
+  { key: "poor",      min: 15, max: 29,  color: "#d47559", label: "Poor",      sub: "Marginal — longboard or wait for better." },
   { key: "skip",      min: 0,  max: 14,  color: "#b54c3f", label: "Skip",      sub: "Not worth paddling today." },
 ];
 
@@ -98,6 +108,7 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
   return {
     total: v2.score,
     baseSize: v2.baseSize,
+    levelPeak: levelPeakBaseSize(level),
     multipliers: v2.multipliers,
     factors: [
       { key: "size",   label: "Wave size for level",  value: `${sizeFt.toFixed(1)} ft face · ${swellH.toFixed(1)} m swell`, pts: v2.baseSize, max: 100, note: sizeNote },

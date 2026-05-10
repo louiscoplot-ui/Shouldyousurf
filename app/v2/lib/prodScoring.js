@@ -149,6 +149,17 @@ export function lookupBaseSize(swellH, userLevel) {
   return grid[grid.length - 1][1];
 }
 
+// Peak baseSize possible pour un niveau donné — utile pour afficher des
+// barres de progression "X / peak" plutôt que "X / 100" qui font lire
+// au surfeur "il manque 35 points dispos" alors qu'il est literally au
+// sommet de sa grille (first_timer peak = 50, beginner peak = 65, etc.).
+export function levelPeakBaseSize(userLevel) {
+  const grid = BASE_SIZE_GRID[userLevel] || BASE_SIZE_GRID.intermediate;
+  let max = 0;
+  for (const [, s] of grid) if (s > max) max = s;
+  return max;
+}
+
 export function lookupPeriodMult(s) {
   if (s < 6) return 0.62;
   if (s < 8) return 0.80;
@@ -770,12 +781,13 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
 // cares about the .color field. Kept inline here to avoid a cross-file
 // import cycle inside the scoring module.
 function scoreBandFromScore(s) {
-  if (s >= 75) return { color: "#1d6a5b" };
-  if (s >= 55) return { color: "#2d9178" };
-  if (s >= 45) return { color: "#62a06a" };
-  if (s >= 35) return { color: "#a4a558" };
-  if (s >= 15) return { color: "#d47559" };
-  return           { color: "#b54c3f" };
+  // Mirror exact de verdict.js SCORE_SCALE (recalibré post-multiplicatif).
+  if (s >= 75) return { color: "#1d6a5b" };  // unreal
+  if (s >= 60) return { color: "#2d9178" };  // excellent
+  if (s >= 45) return { color: "#62a06a" };  // good
+  if (s >= 30) return { color: "#a4a558" };  // fair
+  if (s >= 15) return { color: "#d47559" };  // poor
+  return           { color: "#b54c3f" };     // skip
 }
 
 export function adaptForecastToLevel(payload, userLevel, spot) {
