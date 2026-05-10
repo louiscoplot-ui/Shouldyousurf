@@ -104,6 +104,157 @@ export function scoreSurf(h, spot, tideCtx) {
   return { score: Math.max(0, Math.min(100, s)), notes };
 }
 
+// ─── V2 multiplicative scoring (skill: surf-scoring-engine) ────────────
+// La taille est souveraine : baseSize(swellH_m, level) * combinedMult.
+// Période + vent + direction + marée ajustent DANS la bande de taille,
+// jamais au-dessus. finalMult clamp [0.40, 1.35] applique la règle
+// "+35% max de bonus combinés" — au-delà ce serait nier la souveraineté
+// de la taille. Ceiling défensif [0, 100] en sortie.
+//
+// Grille baseSize par niveau : keypoints (swellH_m, score) interpolés
+// linéairement. Lit la skill en bandes (ex. early_int 0.85-1.25m peak
+// 65-82) traduites en valeurs médianes aux limites de bande.
+const BASE_SIZE_GRID = {
+  first_timer: [
+    [0, 5], [0.2, 35], [0.3, 50], [0.4, 28], [0.6, 12], [0.8, 5], [10, 5],
+  ],
+  beginner: [
+    [0, 5], [0.25, 25], [0.45, 55], [0.6, 65], [0.75, 55], [1.0, 28], [1.3, 8], [10, 5],
+  ],
+  early_int: [
+    [0, 5], [0.35, 16], [0.55, 30], [0.85, 60], [1.05, 78], [1.25, 60], [1.55, 25], [1.85, 5], [10, 5],
+  ],
+  intermediate: [
+    [0, 5], [0.5, 8], [0.65, 30], [0.8, 38], [1.0, 52], [1.2, 62], [1.5, 78], [1.8, 87], [2.0, 70], [2.5, 42], [3.0, 30], [10, 18],
+  ],
+  advanced: [
+    [0, 8], [0.8, 14], [1.2, 24], [1.5, 38], [1.8, 58], [2.0, 68], [2.15, 76], [2.5, 85], [3.0, 84], [3.5, 92], [4.5, 70], [6.0, 55], [10, 50],
+  ],
+  expert: [
+    [0, 12], [1.0, 40], [1.4, 50], [1.8, 65], [2.5, 85], [3.0, 88], [3.5, 90], [4.0, 92], [5.0, 88], [10, 80],
+  ],
+};
+
+export function lookupBaseSize(swellH, userLevel) {
+  const grid = BASE_SIZE_GRID[userLevel] || BASE_SIZE_GRID.intermediate;
+  if (swellH <= grid[0][0]) return grid[0][1];
+  for (let i = 1; i < grid.length; i++) {
+    if (grid[i][0] >= swellH) {
+      const [m0, s0] = grid[i - 1];
+      const [m1, s1] = grid[i];
+      const ratio = (swellH - m0) / (m1 - m0);
+      return s0 + (s1 - s0) * ratio;
+    }
+  }
+  return grid[grid.length - 1][1];
+}
+
+export function lookupPeriodMult(s) {
+  if (s < 6) return 0.62;
+  if (s < 8) return 0.80;
+  if (s < 10) return 0.95;
+  if (s < 12) return 1.12;
+  if (s < 14) return 1.25;
+  if (s < 16) return 1.35;
+  return 1.42;
+}
+
+// windDelta = |((windDir - offshoreWindDir + 540) % 360) - 180|
+// offshore: ≤45°, cross: 45-135°, onshore: ≥135°
+export function lookupWindMult(windDelta, kmh) {
+  if (windDelta <= 45) {
+    if (kmh < 10) return 1.30;
+    if (kmh < 20) return 1.20;
+    if (kmh < 30) return 1.10;
+    if (kmh < 50) return 0.92;
+    return 0.70;
+  }
+  if (windDelta < 135) {
+    if (kmh < 10) return 1.05;
+    if (kmh < 20) return 0.90;
+    return 0.75;
+  }
+  if (kmh < 10) return 0.72;
+  if (kmh < 20) return 0.58;
+  if (kmh < 30) return 0.45;
+  return 0.30;
+}
+
+export function lookupDirMult(swellDelta) {
+  if (swellDelta <= 20) return 1.22;
+  if (swellDelta <= 40) return 1.10;
+  if (swellDelta <= 60) return 0.95;
+  if (swellDelta <= 80) return 0.75;
+  if (swellDelta <= 100) return 0.50;
+  return 0.25;
+}
+
+export function lookupTideMult(tideCtx, idealTide, tideM) {
+  if (!tideCtx || !idealTide || idealTide === "any" || tideM == null) return 1.00;
+  const range = tideCtx.max - tideCtx.min;
+  if (range <= 0.15) return 1.00;
+  const norm = (tideM - tideCtx.min) / range;
+  const target = TIDE_TARGETS[idealTide];
+  if (target == null) return 1.00;
+  const delta = Math.abs(norm - target);
+  if (delta < 0.15) return 1.06;
+  if (delta < 0.30) return 1.02;
+  if (delta > 0.60) return 0.92;
+  return 1.00;
+}
+
+const FINAL_MULT_MIN = 0.40;
+const FINAL_MULT_MAX = 1.35;
+
+// scoreV2 — la formule multiplicative.
+// Renvoie { score, notes, baseSize, multipliers } pour que ScoreSheet et
+// les diagnostics puissent inspecter la décomposition. Les `notes`
+// (n_long, n_off, …) restent calculées par scoreSurf : drivingChips et
+// les tip selectors les consomment et n'ont pas à changer en PR1.
+export function scoreV2(h, spot, userLevel, tideCtx) {
+  const level = userLevel || "intermediate";
+  const swellH = h.swellHeight || 0;
+  const period = h.swellPeriod || 0;
+  const swellDelta = Math.abs(((h.swellDir - spot.idealSwellDir + 540) % 360) - 180);
+  const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
+  const kmh = knToKmh(h.windSpeedKn || 0);
+
+  const baseSize = lookupBaseSize(swellH, level);
+  const periodMult = lookupPeriodMult(period);
+  const windMult = lookupWindMult(windDelta, kmh);
+  const dirMult = lookupDirMult(swellDelta);
+  const tideMult = lookupTideMult(tideCtx, spot.idealTide, h.tideM);
+
+  const rawCombined = periodMult * windMult * dirMult * tideMult;
+  const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
+  let score = baseSize * finalMult;
+
+  // ── Safety overrides (skill: "Sécurité absolue inviolable") ──────────
+  // La grille baseSize gère déjà la dégringolade hors-zone par niveau,
+  // donc on ne hard-cap PAS sur faceFt > upperMax — laisser le score
+  // descendre naturellement préserve la résolution. On garde ces 3 cas
+  // qui ne sont pas couverts par la grille seule :
+  if (swellH < 0.4) score = Math.min(score, 12);  // micro swell → max Skip
+  else if (swellH < 0.5) score = Math.min(score, 25);  // sub-knee territoire whitewash
+  if (windDelta >= 135 && kmh >= 35) score = Math.min(score, 15);  // gale onshore = junk
+
+  // Notes recyclées de scoreSurf — drivingChips/tips/notes pipeline préservé.
+  const baseRes = scoreSurf(h, spot, tideCtx);
+
+  return {
+    score: Math.max(0, Math.min(100, Math.round(score))),
+    notes: baseRes.notes,
+    baseSize: Math.round(baseSize),
+    multipliers: {
+      period: periodMult,
+      wind: windMult,
+      dir: dirMult,
+      tide: tideMult,
+      combined: finalMult,
+    },
+  };
+}
+
 export function findNextTideEvent(hours, fromTime) {
   if (!hours || hours.length < 3) return null;
   const fromIdx = hours.findIndex(h => h.time === fromTime);
