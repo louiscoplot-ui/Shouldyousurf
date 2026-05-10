@@ -1494,55 +1494,6 @@ button, input, select { font-family: inherit; color: inherit; }
   white-space: nowrap;
 }
 
-/* ── Compact danger banner ─────────────────────────────────────
-   Single 44px-tall pill: ⚠ + clamped message + See more toggle.
-   Click to expand inline and reveal full detail. Replaces v1 prod's
-   two-block stacked alert that was ~150px tall.    */
-.danger-pill {
-  margin: 8px 0;
-  border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent);
-  background: color-mix(in srgb, var(--bad) 10%, var(--paper));
-  border-radius: 10px;
-  overflow: hidden;
-  transition: background-color 200ms ease-out;
-}
-.danger-pill-row {
-  display: flex; align-items: center; gap: 8px;
-  width: 100%; padding: 10px 12px;
-  background: none; border: none; cursor: pointer;
-  font-family: inherit; color: var(--bad);
-  text-align: left;
-}
-.danger-pill-icon { font-size: 14px; line-height: 1; flex-shrink: 0; }
-.danger-pill-msg {
-  flex: 1; min-width: 0;
-  font-size: 12.5px; font-weight: 700; line-height: 1.3;
-  color: var(--bad);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.danger-pill-toggle {
-  flex-shrink: 0;
-  display: inline-flex; align-items: center; gap: 3px;
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 9.5px; letter-spacing: 0.1em;
-  color: var(--bad); opacity: 0.78;
-  text-transform: uppercase; font-weight: 600;
-}
-.danger-pill-chev { font-size: 8px; }
-.danger-pill-row:hover .danger-pill-toggle { opacity: 1; }
-.danger-pill-detail {
-  max-height: 0; overflow: hidden;
-  padding: 0 12px;
-  font-size: 12px; line-height: 1.5;
-  color: var(--text); opacity: 0.92;
-  transition: max-height 280ms cubic-bezier(.4,0,.2,1),
-              padding 280ms cubic-bezier(.4,0,.2,1);
-}
-.danger-pill.open .danger-pill-detail {
-  max-height: 240px; padding: 4px 12px 12px;
-  border-top: 1px dashed color-mix(in srgb, var(--bad) 25%, transparent);
-}
-
 /* ── Hourly section header with pill toggle ───────────────────────
    .hly-h : left group (title + ⓘ) · right pill (Cards | List)
    .hly-pill : a 24px segmented control with a sliding white cursor */

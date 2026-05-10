@@ -547,8 +547,14 @@ export function getPersonalVerdict(userLevel, h, spot) {
     return "ok";
   }
   if (size === "too_small") {
-    if (userLevel === "first_timer" || userLevel === "beginner") return "no";
-    return "ok";
+    // Foamie-eligible learners (first_timer / beginner) are caught earlier
+    // in the hasInsideReform branch and get "ok" for splashing in shore-
+    // break whitewash. Anyone reaching this point (intermediate+) doesn't
+    // have a foamie rescue — sub-level-min is just a swim, no longboard
+    // session worth calling MAYBE. SKIP is the honest call. Used to
+    // return "ok" with a "longboard float" tip, which produced the
+    // nonsense "WORTH IT — Too small — not enough push" matrix row.
+    return "no";
   }
   if (size === "too_big") {
     // Foamie-eligible learners (first_timer / beginner) get the inside-

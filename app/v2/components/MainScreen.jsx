@@ -12,7 +12,6 @@ import { getT } from "../../i18n";
 import Phone from "./Phone";
 import { VerdictHero } from "./Hero";
 import StickyInfoBar from "./StickyInfoBar";
-import DangerBanner from "./DangerBanner";
 import { DrivingChips } from "./MetricCards";
 import BestWindow from "./BestWindow";
 import HourlyList from "./HourlyList";
@@ -546,35 +545,6 @@ function Loaded({
   const faceFtForSheet = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0));
   const boardRecForSheet = getBoardRec(effectiveLevel, faceFtForSheet, hour.swellPeriod || 0, effectiveSpot);
 
-  // Compact danger info — shown only to learners (first_timer / beginner /
-  // early_int) when the per-level verdict is SKIP ("no"). Message is a
-  // short always-visible line; detail expands on tap.
-  const danger = useMemo(() => {
-    const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
-    // Same source of truth as personalReason above — getPersonalVerdict is
-    // the per-level decision, the banner shows when it's a hard SKIP for
-    // a learner. Score band can disagree with the personal verdict (that's
-    // by design) so we don't read the band here.
-    const pv = getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot);
-    const isLearner = effectiveLevel === "first_timer" || effectiveLevel === "beginner" || effectiveLevel === "early_int";
-    if (!(isLearner && pv === "no")) return null;
-    // Pass pv so the tip is locked to the SKIP branch — same band as the
-    // banner trigger, so message + detail can never disagree.
-    const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot, pv);
-    const raw = t(adviceKey);
-    const tip = (!raw || raw === adviceKey || raw.startsWith("tip_")) ? verdict.sub : raw;
-    // Short pill message — pulls from the existing danger_banner string
-    // (which exists in EN/FR i18n) rather than danger_banner_short which
-    // never made it into the translations and was always falling through
-    // to the hardcoded EN fallback.
-    const rawMsg = t("danger_banner");
-    let message = (!rawMsg || rawMsg === "danger_banner") ? "⚠️ Dangerous for your level — check on-site" : rawMsg;
-    // Strip the leading warning emoji from the long banner string so we can
-    // render our own ⚠ icon in the pill chrome without doubling up.
-    message = message.replace(/^[⚠️\s]+/, "").trim();
-    return { message, detail: tip };
-  }, [effectiveLevel, hour, effectiveSpot, t, verdict.sub]);
-
   const sibSentinelRef = useRef(null);
   const [sibStuck, setSibStuck] = useState(false);
 
@@ -775,8 +745,6 @@ function Loaded({
         {/* Sentinel — its captured offsetTop is the "lock" threshold. Sits
             directly above the bar in normal flow. scrollTop ≥ threshold ⇒ stuck. */}
         <div ref={sibSentinelRef} aria-hidden="true" style={{ height: 1, pointerEvents: "none" }}/>
-
-        {danger && <DangerBanner message={danger.message} detail={danger.detail}/>}
 
         <StickyInfoBar
           hour={hour}
