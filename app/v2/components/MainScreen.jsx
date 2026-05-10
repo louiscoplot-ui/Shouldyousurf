@@ -357,6 +357,7 @@ export default function MainScreen({ theme, setTheme }) {
           customLangs={customLangs}
           onDeleteCustom={deleteCustomLang}
           onAddLang={() => setShowAddLang(true)}
+          t={t}
         />
       )}
       {showAddLang && <CustomLangModal onSave={saveCustomLang} onClose={() => setShowAddLang(false)}/>}
@@ -762,9 +763,9 @@ function Loaded({
 
         <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx}/>
 
-        <LevelMatrix hour={hour} spot={effectiveSpot}/>
+        <LevelMatrix hour={hour} spot={effectiveSpot} t={t}/>
 
-        <Footer/>
+        <Footer t={t}/>
       </div>
     </Phone>
   );
