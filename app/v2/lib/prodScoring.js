@@ -7,6 +7,13 @@ export const mToFt = m => m * 3.281;
 export const knToKmh = kn => kn * 1.852;
 
 export function estimateFaceHeight(swellHeight, swellPeriod) {
+  // Period boost reflects how long-period swell builds at the break.
+  // But this only matters when there's enough water mass to build with —
+  // sub-0.5m swells just stay sub-0.5m faces regardless of period
+  // (a 0.3m @ 13s reads as 0.3m at the beach, not 0.5m). Skip the boost
+  // for tiny swells so the displayed face matches what people actually
+  // see in the lineup.
+  if (swellHeight < 0.5) return swellHeight;
   const periodFactor = Math.min(1.8, Math.max(0.7, swellPeriod / 10));
   return swellHeight * periodFactor;
 }
@@ -174,7 +181,7 @@ export const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediat
 export const USER_LEVEL_ZONES = {
   first_timer:  { min: 0.3, sweetLo: 0.6, sweetHi: 1.5, upperMax: 2.2 },
   beginner:     { min: 0.3, sweetLo: 1,   sweetHi: 2,   upperMax: 3 },
-  early_int:    { min: 1.2, sweetLo: 1.8, sweetHi: 3,   upperMax: 4 },
+  early_int:    { min: 1.5, sweetLo: 1.8, sweetHi: 3,   upperMax: 4 },
   intermediate: { min: 1.5, sweetLo: 2.5, sweetHi: 4.5, upperMax: 6 },
   advanced:     { min: 2,   sweetLo: 3,   sweetHi: 7,   upperMax: 10 },
   expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
@@ -509,6 +516,12 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // off their boards. The universal cap above already handles the
     // harder gale range; this is the tighter learner-only threshold.
     if (kmh >= 25) return "no";
+    // Early_int has no inside-reform "swim it out" rescue when there's
+    // literally no wave (face below their min = 1.5ft). They're past
+    // the foamie-whitewash phase and ride a longboard / mid-length —
+    // sub-1.5ft is just a swim, not a session. First_timer / beginner
+    // can still splash in the shorebreak so the "ok" path stays for them.
+    if (size === "too_small" && userLevel === "early_int") return "no";
     if (size === "sweet" && wind === "clean") return "yes";
     return "ok";
   }
