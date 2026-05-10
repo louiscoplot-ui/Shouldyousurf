@@ -18,6 +18,14 @@ export default function V2Page() {
       if (saved) setTheme(saved);
     } catch {}
   }, []);
+  // Mirror data-theme onto <html> so portaled UI (ScoreSheet) that lives
+  // outside .v2-stage still inherits the right CSS theme vars. Without this,
+  // the sheet falls back to :root defaults and reads invisible on non-default
+  // themes. Same logic as app/page.js.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
   const pickTheme = (next) => {
     setTheme(next);
     try { localStorage.setItem(THEME_KEY, next); } catch {}
