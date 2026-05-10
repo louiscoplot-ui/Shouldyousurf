@@ -320,9 +320,16 @@ export default function MainScreen({ theme, setTheme }) {
     setNotifOptIn(true);
     track("notif_opted_in", { state: true });
     if (!payload) return;
+    // Notification "best window" doit utiliser les scores LEVEL-ADAPTÉS,
+    // pas les scores baseline intermediate du payload raw. Sinon un user
+    // early_int est notifié pour une heure scorée 67 baseline mais 38
+    // adapted (verdict no → cap) pour son niveau (audit CONTRADICTION #2).
+    const effectiveSpotForNotif = payload.effectiveSpot || spot;
+    const effectiveLevel = userLevel || "intermediate";
+    const adapted = adaptForecastToLevel(payload, effectiveLevel, effectiveSpotForNotif);
     const now = Date.now();
     let best = null;
-    for (const d of payload.days) {
+    for (const d of adapted.days) {
       if (d.isPast) continue;
       for (const h of d.hours) {
         if (new Date(h.time).getTime() < now) continue;

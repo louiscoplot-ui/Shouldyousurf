@@ -7,7 +7,7 @@
 // lock-step with the canonical verdict logic while evolving the visual design.
 
 import {
-  scoreSurf,
+  scoreV2,
   estimateFaceHeight,
   dayTideCtx,
   mToFt,
@@ -179,7 +179,14 @@ export async function fetchRealForecast(spot) {
     const faceFt = mToFt(faceM);
     // Score with the prod engine using the raw degrees — BEFORE we overwrite
     // swellDir/windDir below with the cardinal string the v2 components want.
-    const { score, notes } = scoreSurf(raw, effectiveSpot, tideCtx);
+    // scoreV2 niveau "intermediate" comme baseline level-agnostic : c'est
+    // le niveau "session moyenne" affiché avant que l'utilisateur pick son
+    // niveau, et c'est ce que adaptForecastToLevel surchargera dès que
+    // userLevel arrive (toujours non-null via effectiveLevel || "intermediate"
+    // dans MainScreen). Pré-FIX 4, ce calcul utilisait scoreSurf additif
+    // → bestHour/bestLevel et notifications "best window" lisaient un
+    // score qui ne matchait plus le scoring affiché.
+    const { score, notes } = scoreV2(raw, effectiveSpot, "intermediate", tideCtx);
     const swellDirDeg = raw.swellDir;
     const windDirDeg = raw.windDir;
     return {
