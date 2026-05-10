@@ -767,12 +767,13 @@ function Loaded({
           effectiveSpot={effectiveSpot}
         />
 
-        <DrivingChips hour={hour} spot={effectiveSpot}/>
+        <DrivingChips hour={hour} spot={effectiveSpot} userLevel={effectiveLevel}/>
 
         <BestWindow day={day}/>
 
         <div ref={hlyWrapRef}>
           <HourlyList
+            key={effectiveLevel}
             hours={day.hours}
             selectedIdx={selectedIdx}
             onSelect={(idx) => { setSelectedIdx(idx); const h = day.hours[idx]; if (h) track("hour_selected", { hour: h.hour, score: h.score }); }}
@@ -785,7 +786,7 @@ function Loaded({
 
         <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx} tz={effectiveSpot.timezone || spot.timezone || "Australia/Perth"}/>
 
-        <LevelMatrix hour={hour} spot={effectiveSpot} t={t}/>
+        <LevelMatrix hour={hour} spot={effectiveSpot} userLevel={userLevel} t={t}/>
 
         <Footer t={t}/>
       </div>
