@@ -723,55 +723,27 @@ export function getPersonalVerdict(userLevel, h, spot) {
   return "ok";
 }
 
-// Per-level score — adjusts the baseline scoreSurf value so a single /100
-// reflects how good the session would be FOR THIS USER. A 2m offshore day
-// is pumping for an intermediate but too-big for a first-timer — baseline
-// would give them both ~85; this shifts the first-timer's view down to ~35.
-// The LevelMatrix row at the bottom of the app still shows the absolute
-// per-level verdict (GO/MAYBE/SKIP) unchanged, so users can see where their
-// day sits relative to others.
+// Per-level score — utilise la formule multiplicative scoreV2 + un
+// ceiling verdict-aware. La grille baseSize(swellH_m, level) encode déjà
+// la perception par niveau (peak vs out-of-range), donc plus besoin
+// d'additif size/wind par-dessus : tout est dans baseSize × multiplicateurs.
+// Le ceiling SKIP/MAYBE garde la cohérence label↔score (pas de "score 80
+// avec verdict no"), et c'est la même politique que la version additive.
+// Sans userLevel passé, on tombe sur scoreV2 niveau intermediate (le
+// baseline level-agnostic affiché avant que l'utilisateur choisisse).
 export function scoreForLevel(h, spot, userLevel, tideCtx) {
-  const base = scoreSurf(h, spot, tideCtx);
-  if (!userLevel) return base;
-  const { size, wind, reefTooMuch, currentHazard } = classifyConditions(userLevel, h, spot);
+  const v2 = scoreV2(h, spot, userLevel || "intermediate", tideCtx);
+  if (!userLevel) return v2;
   const verdict = getPersonalVerdict(userLevel, h, spot);
-
-  let adj = base.score;
-
-  // Size zone relative to the user's level.
-  if (size === "too_small") adj -= 22;
-  else if (size === "small") adj -= 8;
-  else if (size === "sweet") adj += 10;
-  else if (size === "upper") adj -= 6;
-  else if (size === "too_big") adj -= 40;
-
-  // Wind quality on top of size. "blown" stacks hard for learners because
-  // classifyConditions already uses a lower threshold (18 km/h non-offshore).
-  if (wind === "blown") {
-    const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
-    adj -= isLearner ? 30 : 18;
-  } else if (wind === "bumpy") {
-    adj -= 5;
-  } else if (wind === "clean") {
-    adj += 4;
-  }
-
-  if (reefTooMuch) adj -= 30;
-  if (currentHazard === "dangerous") adj -= 50;
-  else if (currentHazard === "strong") adj -= 15;
-
-  // Verdict-aware ceiling only — never floor. The score is an honest
-  // measure of conditions; the SKIP/MAYBE/GO label is a separate decision
-  // for the user's level. They CAN differ (a Poor 31/100 day can still be
-  // a MAYBE for an early_int who wants to practise on small clean) and
-  // that's the point. We only cap the score from above so a "great
-  // numeric score with a red SKIP label" can't happen — that combo is
-  // confusing UX. Flooring would destroy the score's resolution (a flat
-  // 5/100 day and a marginal 38/100 day would both read 39).
+  let adj = v2.score;
   if (verdict === "no") adj = Math.min(adj, 38);
   else if (verdict === "ok") adj = Math.min(adj, 70);
-
-  return { score: Math.max(0, Math.min(100, Math.round(adj))), notes: base.notes };
+  return {
+    score: Math.max(0, Math.min(100, Math.round(adj))),
+    notes: v2.notes,
+    baseSize: v2.baseSize,
+    multipliers: v2.multipliers,
+  };
 }
 
 // Rebuilds a forecast payload so every hour.score is the level-adjusted
