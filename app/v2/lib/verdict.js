@@ -1,7 +1,7 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
-import { scoreV2, scoreForLevel, mToFt, estimateFaceHeight } from "./prodScoring";
+import { scoreV2, scoreForLevel, lookupBaseSize, mToFt, estimateFaceHeight } from "./prodScoring";
 
 export const SCORE_SCALE = [
   { key: "unreal",    min: 75, max: 100, color: "#1d6a5b", label: "Unreal",    sub: "Prime, memorable conditions — rearrange your day." },
@@ -109,12 +109,24 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
   };
 }
 
-export function drivingChipsFor(h, spot) {
+export function drivingChipsFor(h, spot, userLevel) {
   const chips = [];
   if (h.swellPeriod < 9) chips.push({ t: "Short-period swell", k: "neg" });
   else if (h.swellPeriod >= 12) chips.push({ t: "Long-period groundswell", k: "pos" });
-  if (h.swellHeight >= 0.9 && h.swellHeight <= 2.0) chips.push({ t: "Good size", k: "pos" });
-  else if (h.swellHeight < 0.6) chips.push({ t: "Small swell", k: "neg" });
+  // Size chip lit la grille baseSize du niveau au lieu d'un seuil
+  // 0.9-2.0m hardcodé. Pre-FIX 5, un beginner sur 0.85m voyait "Small
+  // swell" en rouge alors que son score était au peak — confusion
+  // visuelle "pourquoi le score est élevé si swell small ?". Maintenant
+  // chip pos quand la taille est dans la sweet zone du niveau, neg
+  // seulement quand vraiment under-sized pour ce niveau.
+  if (Number.isFinite(h.swellHeight) && userLevel) {
+    const bs = lookupBaseSize(h.swellHeight, userLevel);
+    if (bs >= 60) chips.push({ t: "Good size for level", k: "pos" });
+    else if (bs <= 18) chips.push({ t: "Too small for level", k: "neg" });
+  } else {
+    if (h.swellHeight >= 0.9 && h.swellHeight <= 2.0) chips.push({ t: "Good size", k: "pos" });
+    else if (h.swellHeight < 0.6) chips.push({ t: "Small swell", k: "neg" });
+  }
   // Spot-aware direction. Uses idealSwellDir when available (so Bondi
   // gets credit for SE swell and Hossegor for W swell). Falls back to
   // the legacy WA-only list if no spot is given — shouldn't happen in
