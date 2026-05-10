@@ -63,8 +63,8 @@ export function WaveGlyph({ heightFt }) {
 
 export function FaceHeightHero({ hour, swapKey }) {
   const low = hour.faceFtLow, high = hour.faceFtHigh;
-  const midM = hour.swellHeight.toFixed(1);
-  const per = Math.round(hour.swellPeriod);
+  const midM = typeof hour.swellHeight === "number" ? hour.swellHeight.toFixed(1) : "—";
+  const per = typeof hour.swellPeriod === "number" ? Math.round(hour.swellPeriod) : "—";
   const descriptors = [
     { max: 1.5, text: "Knee- to waist-high — beginner or longboard." },
     { max: 3,   text: "Waist to chest-high — easy, rolling waves." },
@@ -78,7 +78,7 @@ export function FaceHeightHero({ hour, swapKey }) {
       <div className="fh-lbl">Expected face height</div>
       <div className="fh-val">{low}–{high}<span className="unit">ft</span></div>
       <WaveGlyph heightFt={(low + high) / 2}/>
-      <div className="fh-conv">{midM} m · {(hour.swellHeight * 0.9).toFixed(1)}m @ {per}s</div>
+      <div className="fh-conv">{midM} m · {typeof hour.swellHeight === "number" ? (hour.swellHeight * 0.9).toFixed(1) : "—"}m @ {per}s</div>
       <div className="fh-trans">{trans}</div>
     </div>
   );

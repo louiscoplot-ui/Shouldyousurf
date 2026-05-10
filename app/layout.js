@@ -151,12 +151,24 @@ export default function RootLayout({ children }) {
           // 12s (window.__appReady = true, set from page.js after first
           // data fetch completes OR the error screen renders), we assume
           // the user is stuck on a corrupt cached bundle / stale SW and
-          // clear everything + reload. One-shot, per page load.
+          // clear everything + reload.
+          //
+          // sessionStorage flag prevents reload loops on slow connections:
+          // if 12s isn't enough on the first visit, the kill-switch fires
+          // once, clears caches, reloads, and on the second pass the flag
+          // is already set so we never reload again in the same session.
+          // The user lands on a freshly-loaded app (worst case still slow,
+          // but never stuck in an infinite loop).
           (function() {
             var bailedAlready = false;
+            var KEY = "syssurf-killswitch-fired";
+            var fired = false;
+            try { fired = sessionStorage.getItem(KEY) === "1"; } catch(e) {}
+            if (fired) return; // already used the one-shot recovery this session
             setTimeout(function(){
               if (window.__appReady || bailedAlready) return;
               bailedAlready = true;
+              try { sessionStorage.setItem(KEY, "1"); } catch(e) {}
               try {
                 if ("serviceWorker" in navigator) {
                   navigator.serviceWorker.getRegistrations().then(function(regs){
