@@ -28,8 +28,8 @@ L'app se lance fullscreen comme une vraie app native.
 
 ## ✨ Features
 
-- 27 breaks australiens pré-chargés (Perth, Gold Coast, Sydney, Byron, Torquay, Margaret River...)
-- Recherche de n'importe quelle plage d'Australie
+- 90+ breaks pré-chargés à travers 24 pays (Perth, Gold Coast, Sydney, Byron, Hossegor, Pipeline, Bali, Mundaka, Jeffreys Bay, Nazaré...)
+- Recherche de n'importe quelle plage du monde via géocoding Open-Meteo
 - Scoring adapté à chaque break (direction idéale de swell + vent offshore)
 - Favoris sauvegardés
 - Meilleure fenêtre du jour mise en avant

@@ -49,7 +49,7 @@ It tells you:
 ✅ What's driving the conditions (swell period, wind direction, size)
 ✅ The best window to paddle out
 
-Covers 27 breaks across WA, NSW, QLD, VIC, SA and Tasmania.
+Covers 30+ breaks across WA, NSW, QLD, VIC, SA and Tasmania (90+ globally).
 No signup. No ads. Free.
 
 Works on phone — add it to your home screen for quick morning checks.
@@ -81,7 +81,7 @@ My morning routine: wake up, open shouldyousurf.com, decide in 10 seconds.
 
 Built it because I was sick of cross-referencing 3 different sites before knowing whether to bother driving to the beach.
 
-Covers 27 Aus breaks, hourly scores, swell + wind breakdown.
+Covers 30+ Aus breaks (90+ worldwide), hourly scores, swell + wind breakdown.
 Free. No login. Add to home screen and it works like an app.
 
 shouldyousurf.com — happy to hear feedback from local surfers 🤙
