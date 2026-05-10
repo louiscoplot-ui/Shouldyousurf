@@ -761,7 +761,7 @@ function Loaded({
           />
         </div>
 
-        <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx}/>
+        <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx} tz={spot.timezone || "Australia/Perth"}/>
 
         <LevelMatrix hour={hour} spot={effectiveSpot} t={t}/>
 
