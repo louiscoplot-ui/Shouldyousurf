@@ -134,7 +134,11 @@ Tip selector : `currentHazard !== "none"` pour learner → `tip_<level>_current`
 4. `git add` les fichiers spécifiques (pas `-A`)
 5. Commit avec body clair sur le POURQUOI
 6. Push : `git push origin main` ; si 403 → `git push origin main:claude/resume-session-2pbVi`
-7. Si critique pour la prod, donner à Louis le lien de merge
+7. **Auto-merge obligatoire** après chaque push sur `claude/resume-session-2pbVi` :
+   - Créer PR : `gh pr create --fill --base main --head claude/resume-session-2pbVi` (ou MCP `create_pull_request`)
+   - Merger : `gh pr merge --auto --merge` (ou MCP `merge_pull_request`)
+   - Ne JAMAIS demander à Louis de merger manuellement.
+8. Pull `origin/main` après le merge pour aligner le local.
 
 ### Style commit
 Préfixes : `fix:` `feat:` `perf:` `ux:` `sec:` `chore:` `verdict:` `scoring:` `ui:` `pwa:` `auto-update:` `typography:`
