@@ -46,8 +46,11 @@ function buildDay(seed, dayIdx, peakHour, peakScore, spread) {
       windKmh,
       windDir: ["E", "ESE", "SE", "NE"][h % 4],
       windType: windKmh < 15 ? "offshore" : windKmh < 25 ? "cross-shore" : "onshore",
-      faceFtLow: Math.max(1, Math.floor(faceFt - 0.5)),
-      faceFtHigh: Math.ceil(faceFt + 0.5),
+      // Match realFetch — faceFtLow can be 0 on a tiny day. Keep faceFtHigh
+      // at minimum 1 so we never display "0–0 ft" (cosmetic, the high band
+      // is what reads as the "size" in the UI).
+      faceFtLow: Math.max(0, Math.floor(faceFt - 0.5)),
+      faceFtHigh: Math.max(1, Math.ceil(faceFt + 0.5)),
       airTemp: 22 + Math.round(r() * 5),
       seaTemp: 19 + Math.round(r() * 3),
       notes: (() => {

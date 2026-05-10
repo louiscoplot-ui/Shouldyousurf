@@ -265,7 +265,7 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
   const { size, wind, reefTooMuch, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   const verdict = displayedVerdict || getPersonalVerdict(userLevel, h, spot);
   const foamie = hasInsideReform(userLevel, faceFt, spot);
-  const { kmh } = windContext(h, spot);
+  const { kmh, dir } = windContext(h, spot);
   const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
 
   // ── SKIP branch — explain why it's a no ─────────────────────────────
@@ -276,8 +276,13 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // here since both now cap a learner to SKIP.
     if (currentHazard !== "none" && isLearner) return "tip_" + userLevel + "_current";
     if (reefTooMuch) return "tip_" + userLevel + "_reef";
-    // Gale wind trumps everything else — unsurfable for any reason.
-    if (kmh >= 35) return "tip_" + userLevel + "_gale";
+    // Gale tip — only fire when wind is actually shredding the face.
+    // Used to fire at kmh >= 35 unconditionally, but 35-40 km/h offshore
+    // for an advanced/expert is still surfable — galeKills() doesn't
+    // even trigger until 50+ offshore. The tip was misnaming the
+    // problem. Now requires non-offshore (where 35 km/h IS shredding)
+    // OR a true offshore-gale floor (≥50 km/h cross/offshore).
+    if ((dir !== "offshore" && kmh >= 35) || kmh >= 50) return "tip_" + userLevel + "_gale";
     if (faceFt < 0.3) return "tip_" + userLevel + "_too_small";
     if (size === "too_big") return "tip_" + userLevel + "_too_big";
     if (size === "too_small") return "tip_" + userLevel + "_too_small";

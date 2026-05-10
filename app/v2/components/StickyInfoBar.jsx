@@ -48,10 +48,15 @@ export default function StickyInfoBar({
     windDir:  sel.windDirDeg  ?? sel.windDir,
   };
 
-  // Face height — same math as v1
+  // Face height. Read sel.faceFtLow / sel.faceFtHigh directly when realFetch
+  // already shaped them — that's the single source of truth and lets faceFtLow
+  // be 0 honestly on tiny days. Recompute locally only as a fallback (mock
+  // hours that were built without the shaped fields). Avoids the divergence
+  // we used to have where the sticky bar said "1–1 ft" while the cards said
+  // "0–1 ft" for the same hour.
   const faceM = estimateFaceHeight(sel.swellHeight, sel.swellPeriod);
-  const faceFtLow  = Math.max(1, Math.floor(mToFt(faceM) - 0.5));
-  const faceFtHigh = Math.ceil(mToFt(faceM) + 0.5);
+  const faceFtLow  = sel.faceFtLow != null ? sel.faceFtLow : Math.max(0, Math.floor(mToFt(faceM) - 0.5));
+  const faceFtHigh = sel.faceFtHigh != null ? sel.faceFtHigh : Math.max(1, Math.ceil(mToFt(faceM) + 0.5));
 
   // Wind kmh + trend arrow (same logic as v1 Loaded section)
   const windKmh = Math.round(knToKmh(sel.windSpeedKn));
