@@ -171,7 +171,13 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
                       name: r.name,
                       region: [regionLabel, ccode].filter(Boolean).join(", ") || r.name,
                       lat: r.latitude, lng: r.longitude,
-                      idealSwellDir: 225, offshoreWindDir: 90, type: "beach",
+                      // PAS de idealSwellDir/offshoreWindDir hardcodés —
+                      // realFetch.js détecte leur absence et appelle
+                      // inferSpotProfile sur les vraies données swell de
+                      // ce spot. Avant le fix, 225/90 (WA-only) écrasait
+                      // l'inférence et donnait "Skip" sur les bons spots
+                      // hors Australie occidentale.
+                      type: "beach",
                     })}>
                       <div className="v2-break-row-title">{r.name} <span className="v2-break-row-flag">{ccode}</span></div>
                       <div className="v2-break-row-sub">{regionLabel || "—"}</div>

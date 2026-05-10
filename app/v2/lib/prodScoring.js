@@ -812,16 +812,36 @@ export function adaptForecastToLevel(payload, userLevel, spot) {
   return { ...payload, days };
 }
 
+// Spot profile inference — pour les spots géocodés sans idealSwellDir
+// pré-renseigné dans breaks.js. Utilise la moyenne pondérée des
+// directions swell observées sur la fenêtre de fetch (passé + futur).
+//
+// Améliorations vs version naïve :
+// 1) Pondère chaque sample par swellHeight² — les gros jours de houle
+//    arrivent avec une direction "vraie" (long fetch open-ocean), les
+//    micros sont du chop local bruité. Sans pondération, 24×0.2m de
+//    chop random tirait la moyenne hors de la vraie exposition.
+// 2) Filtre les sub-0.3m → trop bruité, dir Open-Meteo peu fiable.
+// 3) Offshore présumé à 180° opposé : approximation "côte simple" qui
+//    marche pour la majorité des beach breaks. Pour les spots en baie
+//    abritée ou derrière headland, le user devra le détecter à l'usage
+//    et on ajoutera une table régionale plus tard si besoin.
 export function inferSpotProfile(allHours) {
   if (!allHours || allHours.length < 5) return null;
-  const dirs = allHours.map(h => h.swellDir).filter(d => d != null && d >= 0);
-  if (dirs.length < 5) return null;
-  let sumX = 0, sumY = 0;
-  for (const d of dirs) {
-    sumX += Math.cos(d * Math.PI / 180);
-    sumY += Math.sin(d * Math.PI / 180);
+  const samples = allHours.filter(h =>
+    Number.isFinite(h.swellDir) && h.swellDir >= 0 &&
+    Number.isFinite(h.swellHeight) && h.swellHeight >= 0.3
+  );
+  if (samples.length < 5) return null;
+  let sumX = 0, sumY = 0, totalW = 0;
+  for (const h of samples) {
+    const w = h.swellHeight * h.swellHeight;  // pondération quadratique
+    sumX += Math.cos(h.swellDir * Math.PI / 180) * w;
+    sumY += Math.sin(h.swellDir * Math.PI / 180) * w;
+    totalW += w;
   }
-  const avg = (Math.atan2(sumY, sumX) * 180 / Math.PI + 360) % 360;
+  if (totalW < 0.5) return null;
+  const avg = (Math.atan2(sumY / totalW, sumX / totalW) * 180 / Math.PI + 360) % 360;
   return { idealSwellDir: avg, offshoreWindDir: (avg + 180) % 360 };
 }
 
