@@ -3,3 +3,12 @@ node_modules
 .env*.local
 .DS_Store
 *.log
+
+# Bash whitelist API test artifacts (curl outputs from .claude/settings.local.json)
+caps.xml
+anmn.json
+nrt_wave.json
+icon_s.json
+e1.json
+e2.json
+erddap.json
