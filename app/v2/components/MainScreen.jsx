@@ -45,6 +45,7 @@ import {
   getSessionNotes,
   mToFt,
   estimateFaceHeight,
+  dayTideCtx,
 } from "../lib/prodScoring";
 
 const DEFAULT_SPOT = BREAKS.find((b) => b.id === "trigg") || BREAKS[0];
@@ -734,7 +735,7 @@ function Loaded({
 
         <VerdictHero verdict={verdict} hour={hour} swapKey={swapKey} onOpenScore={() => { track("score_sheet_opened", { score: hour.score, verdict: verdict.key }); setScoreOpen(true); }}/>
 
-        {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} spot={effectiveSpot} t={t} onClose={() => setScoreOpen(false)}/>}
+        {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} spot={effectiveSpot} tideCtx={day.tideCtx || dayTideCtx(day.hours)} t={t} onClose={() => setScoreOpen(false)}/>}
 
         <div className="lvl-inline rise-3">
           <button className="lvl-me-btn" onClick={onOpenLevel}>

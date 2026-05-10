@@ -1,7 +1,7 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
-import { scoreV2, mToFt, estimateFaceHeight } from "./prodScoring";
+import { scoreV2, scoreForLevel, mToFt, estimateFaceHeight } from "./prodScoring";
 
 export const SCORE_SCALE = [
   { key: "unreal",    min: 75, max: 100, color: "#1d6a5b", label: "Unreal",    sub: "Prime, memorable conditions — rearrange your day." },
@@ -32,11 +32,20 @@ export function coherentVerdict(h) {
 // × tideMult, finalMult clamp [0.40, 1.35]. ScoreSheet rend baseSize en
 // barre principale + 4 lignes de multiplicateurs (×ratio) au lieu des
 // 4 bullets additifs sommant à 100 qui ne reflétaient plus le vrai calcul
-// depuis le passage au multiplicatif (PR2). Le total renvoyé == score réel.
-export function scoreBreakdown(h, spot, userLevel) {
+// depuis le passage au multiplicatif (PR2).
+//
+// Reçoit `tideCtx` du jour pour que le tideMult exposé soit le VRAI ×1.06
+// / ×0.92 utilisé par le score affiché (sans, le sheet montrait
+// constamment "Tide ×1.00" même quand la marée bonifiait/pénalisait
+// le score réel). Appelle `scoreForLevel` (pas scoreV2 direct) pour
+// que `total` consomme aussi le verdict ceiling — sinon le sheet
+// affichait 67 quand le hero affichait 38 (audit CALCUL #4).
+export function scoreBreakdown(h, spot, userLevel, tideCtx) {
   const level = userLevel || "intermediate";
   const hDeg = { ...h, swellDir: h.swellDirDeg ?? h.swellDir, windDir: h.windDirDeg ?? h.windDir };
-  const v2 = scoreV2(hDeg, spot, level, null);
+  // scoreForLevel délègue à scoreV2 + applique le verdict ceiling.
+  // Sa signature retourne aussi baseSize/multipliers depuis PR2.
+  const v2 = scoreForLevel(hDeg, spot, level, tideCtx);
 
   const period = typeof h.swellPeriod === "number" ? h.swellPeriod : 0;
   const windKmh = typeof h.windKmh === "number" ? h.windKmh : 0;
