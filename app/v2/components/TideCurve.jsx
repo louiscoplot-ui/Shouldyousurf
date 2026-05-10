@@ -6,7 +6,7 @@
 // the curve and H/L peaks were a sin function of the hour — totally decoupled
 // from actual water height.
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { fmtHour } from "../lib/hooks";
 
 // Locale-aware short hour for axis labels (4am / 12pm / 8pm). Falls back to
@@ -26,64 +26,60 @@ function fmtAxisHour(hr, tz) {
 
 export default function TideCurve({ hours, selectedIdx, onSelect, tz }) {
   const W = 340, H = 110, pad = 14;
-  if (!hours || !hours.length) return null;
 
-  const base = hours[0].hour;
-  const span = hours[hours.length - 1].hour - base || 1;
-  const xs = (hr) => pad + ((hr - base) / span) * (W - pad * 2);
-
-  // Real tide — pull tideM from each hour. Decide which path we're on:
-  // - "real": at least 2 hours have a real tideM → use those, normalize on
-  //   the day's min/max so the curve fills the chart regardless of the
-  //   absolute meters number (a 0.4–0.6m day still draws a full curve).
-  // - "mock": fallback to a sin so the demo + offline mode still look like
-  //   something. Marked visually with a subtle "(estimated)" sub.
-  const realValues = hours.map((h) => (typeof h?.tideM === "number" ? h.tideM : null));
-  const realCount = realValues.filter((v) => v != null).length;
-  const useReal = realCount >= 2;
-
-  let normalized;
-  let isMock = false;
-  if (useReal) {
-    const valid = realValues.filter((v) => v != null);
-    const min = Math.min(...valid);
-    const max = Math.max(...valid);
-    const range = max - min || 1;
-    normalized = realValues.map((v, i) => {
-      // Linear interp across gaps so a single-hour null doesn't break the line.
-      if (v != null) return (v - min) / range;
-      // Find nearest non-null neighbours on either side.
-      let lo = i - 1, hi = i + 1;
-      while (lo >= 0 && realValues[lo] == null) lo--;
-      while (hi < realValues.length && realValues[hi] == null) hi++;
-      const loV = lo >= 0 ? realValues[lo] : (hi < realValues.length ? realValues[hi] : min);
-      const hiV = hi < realValues.length ? realValues[hi] : loV;
-      const t = lo === hi ? 0 : (i - lo) / (hi - lo);
-      const interp = loV + (hiV - loV) * t;
-      return (interp - min) / range;
-    });
-  } else {
-    isMock = true;
-    normalized = hours.map((h) => 0.5 + 0.45 * Math.sin(((h.hour - 5) / 24) * Math.PI * 2));
-  }
-
-  const ys = (v) => H - 20 - v * (H - 36);
-  const pts = hours.map((h, i) => [xs(h.hour), ys(normalized[i])]);
-  const d = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-  const area = d + ` L ${pts[pts.length - 1][0]},${H - 16} L ${pts[0][0]},${H - 16} Z`;
-  const sel = pts[selectedIdx] || pts[0];
-
-  // Peak detection — adjacent comparison on the normalized curve. Same shape
-  // detector for both real and mock paths.
-  const peaks = [];
-  for (let i = 1; i < hours.length - 1; i++) {
-    const v0 = normalized[i - 1];
-    const v1 = normalized[i];
-    const v2 = normalized[i + 1];
-    if ((v1 > v0 && v1 >= v2) || (v1 < v0 && v1 <= v2)) {
-      peaks.push({ idx: i, hi: v1 > v0 });
+  // Memoise tout le calcul interpolation + path + peaks sur `hours` —
+  // re-déclenché par chaque tick scroll/ago du parent (audit PERF #9).
+  // ~100 ops par render évitées tant que les hours du jour courant ne
+  // changent pas.
+  const tide = useMemo(() => {
+    if (!hours || !hours.length) return null;
+    const base = hours[0].hour;
+    const span = hours[hours.length - 1].hour - base || 1;
+    const xs = (hr) => pad + ((hr - base) / span) * (W - pad * 2);
+    const realValues = hours.map((h) => (typeof h?.tideM === "number" ? h.tideM : null));
+    const realCount = realValues.filter((v) => v != null).length;
+    const useReal = realCount >= 2;
+    let normalized;
+    let isMock = false;
+    if (useReal) {
+      const valid = realValues.filter((v) => v != null);
+      const min = Math.min(...valid);
+      const max = Math.max(...valid);
+      const range = max - min || 1;
+      normalized = realValues.map((v, i) => {
+        if (v != null) return (v - min) / range;
+        let lo = i - 1, hi = i + 1;
+        while (lo >= 0 && realValues[lo] == null) lo--;
+        while (hi < realValues.length && realValues[hi] == null) hi++;
+        const loV = lo >= 0 ? realValues[lo] : (hi < realValues.length ? realValues[hi] : min);
+        const hiV = hi < realValues.length ? realValues[hi] : loV;
+        const t = lo === hi ? 0 : (i - lo) / (hi - lo);
+        const interp = loV + (hiV - loV) * t;
+        return (interp - min) / range;
+      });
+    } else {
+      isMock = true;
+      normalized = hours.map((h) => 0.5 + 0.45 * Math.sin(((h.hour - 5) / 24) * Math.PI * 2));
     }
-  }
+    const ys = (v) => H - 20 - v * (H - 36);
+    const pts = hours.map((h, i) => [xs(h.hour), ys(normalized[i])]);
+    const d = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    const area = d + ` L ${pts[pts.length - 1][0]},${H - 16} L ${pts[0][0]},${H - 16} Z`;
+    const peaks = [];
+    for (let i = 1; i < hours.length - 1; i++) {
+      const v0 = normalized[i - 1];
+      const v1 = normalized[i];
+      const v2 = normalized[i + 1];
+      if ((v1 > v0 && v1 >= v2) || (v1 < v0 && v1 <= v2)) {
+        peaks.push({ idx: i, hi: v1 > v0 });
+      }
+    }
+    return { pts, d, area, peaks, isMock, xs };
+  }, [hours]);
+
+  if (!tide) return null;
+  const { pts, d, area, peaks, isMock, xs } = tide;
+  const sel = pts[selectedIdx] || pts[0];
 
   const svgRef = useRef(null);
   const handleDrag = (e) => {

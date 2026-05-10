@@ -84,18 +84,28 @@ export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec
         <div className="sheet-intro">{tt("sheet_intro")}</div>
 
         <div className="sheet-bars">
-          {/* Size base — barre pleine /100 calibrée pour le niveau */}
-          <div key={sizeFactor.key} className="sf-row">
-            <div className="sf-top">
-              <span className="sf-label">{tt(FACTOR_LABEL_KEY.size)}</span>
-              <span className="sf-value mono">{sizeFactor.value}</span>
-              <span className="sf-pts mono"><b>{sizeFactor.pts}</b><span className="sf-max">/100</span></span>
-            </div>
-            <div className="sf-bar">
-              <div className="sf-fill" style={{ width: `${sizeFactor.pts}%`, background: verdict.color }}/>
-            </div>
-            <div className="sf-note">{sizeFactor.note}</div>
-          </div>
+          {/* Size base — barre /levelPeak (le baseSize max possible
+              pour ce niveau). Avant le fix, on affichait /100 → un
+              first_timer à son peak voyait 50/100 et croyait qu'il
+              manquait 50 points dispos, alors que 50 EST le sommet pour
+              lui. Maintenant 50/50 = peak full, plus de fausse marge. */}
+          {(() => {
+            const peak = bd.levelPeak || 100;
+            const pct = Math.max(0, Math.min(100, (sizeFactor.pts / peak) * 100));
+            return (
+              <div key={sizeFactor.key} className="sf-row">
+                <div className="sf-top">
+                  <span className="sf-label">{tt(FACTOR_LABEL_KEY.size)}</span>
+                  <span className="sf-value mono">{sizeFactor.value}</span>
+                  <span className="sf-pts mono"><b>{sizeFactor.pts}</b><span className="sf-max">/{peak}</span></span>
+                </div>
+                <div className="sf-bar">
+                  <div className="sf-fill" style={{ width: `${pct}%`, background: verdict.color }}/>
+                </div>
+                <div className="sf-note">{sizeFactor.note}</div>
+              </div>
+            );
+          })()}
 
           {/* Multiplicateurs : period / dir / wind / tide. Chaque ligne
               affiche le ratio en pourcentage signé (ex. "+25% boost",

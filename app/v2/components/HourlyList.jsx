@@ -5,7 +5,7 @@
 // Pill toggle in the section header switches between them. Selection
 // is always shared with the StickyInfoBar above via onSelect.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { coherentVerdict } from "../lib/verdict";
 import { degToCompass, getWindTrend } from "../lib/prodScoring";
 import { fmtHour } from "../lib/hooks";
@@ -44,6 +44,11 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
   const scrollerRef = useRef(null);
   const barsRef = useRef(null);
   const cardRefs = useRef([]);
+  // coherentVerdict était calculé inline 4× par hour (cards, bars,
+  // selected, list) × 24 hours = jusqu'à 96 appels par render. Le
+  // composant re-render à chaque tick scroll/ago du parent — memoize
+  // une seule fois sur `hours` (audit PERF #10).
+  const verdicts = useMemo(() => hours.map(coherentVerdict), [hours]);
 
   // Scrub gesture on the bar chart: tap or drag horizontally across
   // the bars and the card row above tracks to the matching hour. The
@@ -152,7 +157,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         // left rise-in animation on each day change AND on first paint.
         <div className="hly-cards" ref={scrollerRef} key={`cards-${hours[0]?.time?.split("T")?.[0] || "day"}`}>
           {hours.map((h, i) => {
-            const v = coherentVerdict(h);
+            const v = verdicts[i];
             const past = h.hour < currentHour;
             const selected = selectedIdx === i;
             const tone =
@@ -199,7 +204,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           aria-valuenow={selectedIdx}
         >
           {hours.map((h, i) => {
-            const v = coherentVerdict(h);
+            const v = verdicts[i];
             const selected = selectedIdx === i;
             return (
               <div
@@ -221,7 +226,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           Always reflects the currently selected hour. */}
       {viewMode === "cards" && hours[selectedIdx] && (() => {
         const h = hours[selectedIdx];
-        const v = coherentVerdict(h);
+        const v = verdicts[selectedIdx];
         const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
         const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
         const windTrend = getWindTrend(h, hours);
@@ -296,7 +301,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
       {viewMode === "list" && (
         <div className="hly-list">
           {hours.map((h, i) => {
-            const v = coherentVerdict(h);
+            const v = verdicts[i];
             const past = h.hour < currentHour;
             const selected = selectedIdx === i;
             const isOpen = openIdx === i;
@@ -319,7 +324,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                     <span className="hly-lverd"  style={{ color: v.color }}>{v.label.toUpperCase()}</span>
                   </div>
                   <div className="hly-lstats">
-                    <span className="hly-lstat"><WaveIcon/>{h.faceFtLow}–{h.faceFtHigh}ft</span>
+                    <span className="hly-lstat"><WaveIcon/>{h.faceFtLow}–{h.faceFtHigh}ft · {fmt1(h.swellHeight)}m</span>
                     <span className="hly-lstat-sep">·</span>
                     <span className="hly-lstat"><WindIcon/>{Math.round(h.windKmh)}km/h</span>
                   </div>
