@@ -36,6 +36,7 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const [countryOpen, setCountryOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
@@ -72,14 +73,20 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
 
   async function geoSearch(q) {
     const term = (q ?? query).trim();
-    if (!term) { setSearchResults([]); return; }
+    if (!term) { setSearchResults([]); setSearchError(null); return; }
     setSearching(true);
+    setSearchError(null);
     try {
       const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&language=en&format=json`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
       const data = await res.json();
       setSearchResults(data.results || []);
-    } catch {} finally { setSearching(false); }
+    } catch (e) {
+      console.warn("[v2] geocoding search failed:", e);
+      setSearchResults([]);
+      setSearchError(e?.message || "Search unavailable — check your connection");
+    } finally { setSearching(false); }
   }
 
   const currentCountry = COUNTRIES.find(c => c.code === country) || COUNTRIES[0];
@@ -172,8 +179,11 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
                   </div>
                 );
               })}
-              {!searching && searchResults.length === 0 && localMatches.length === 0 && (
+              {!searching && searchResults.length === 0 && localMatches.length === 0 && !searchError && (
                 <div className="v2-break-empty mono">{t("search_none")}</div>
+              )}
+              {!searching && searchError && (
+                <div className="v2-break-empty mono" style={{ color: "var(--bad)" }}>{searchError}</div>
               )}
             </>
           )}

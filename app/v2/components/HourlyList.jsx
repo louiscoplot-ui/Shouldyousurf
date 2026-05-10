@@ -31,6 +31,13 @@ function fmtTimeShort(iso, tz) {
   } catch { return ""; }
 }
 
+// Defensive numeric formatters — every shaped hour SHOULD have these
+// fields, but a partial API response (windswell-only spot, brand-new
+// custom geocoded coordinate, mid-flight refetch) could leave nulls
+// through. Avoid crashing the whole panel for one missing decimal.
+const fmt1 = (v) => typeof v === "number" ? v.toFixed(1) : "—";
+const fmt0 = (v) => typeof v === "number" ? Math.round(v) : "—";
+
 export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, tz, reasonText }) {
   const [viewMode, setViewMode] = useState("cards");
   const [openIdx, setOpenIdx] = useState(null);
@@ -232,14 +239,14 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
             )}
             <div className="hly-cp-face">
               <span className="hly-cp-face-val">{h.faceFtLow}–{h.faceFtHigh}<span className="hly-cp-face-unit"> ft</span></span>
-              <span className="hly-cp-face-conv">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
+              <span className="hly-cp-face-conv">{fmt1(h.swellHeight)} m · {fmt0(h.swellPeriod)}s</span>
             </div>
             <div className="hly-cp-grid">
               {/* Row 1 */}
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Swell</div>
-                <div className="hly-cp-cell-val">{h.swellHeight.toFixed(1)}<span className="hly-cp-cell-unit">m</span></div>
-                <div className="hly-cp-cell-sub">{swellDir} · {Math.round(h.swellPeriod)}s</div>
+                <div className="hly-cp-cell-val">{fmt1(h.swellHeight)}<span className="hly-cp-cell-unit">m</span></div>
+                <div className="hly-cp-cell-sub">{swellDir} · {fmt0(h.swellPeriod)}s</div>
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
@@ -329,7 +336,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                         <span className="hly-xface-val" style={{ color: v.color }}>
                           {h.faceFtLow}–{h.faceFtHigh}<span style={{ fontSize: 18, fontWeight: 500, marginLeft: 4, opacity: 0.7 }}>ft</span>
                         </span>
-                        <span className="hly-xface-sub">{h.swellHeight.toFixed(1)} m · {Math.round(h.swellPeriod)}s</span>
+                        <span className="hly-xface-sub">{fmt1(h.swellHeight)} m · {fmt0(h.swellPeriod)}s</span>
                       </div>
                       {(() => {
                         const dayKey = h.time?.split("T")?.[0];
@@ -343,8 +350,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             {/* Row 1 — Swell · Wind · Tide */}
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Swell</div>
-                              <div className="hly-xval" style={{ color: v.color }}>{h.swellHeight.toFixed(1)}<span className="hly-xunit">m</span></div>
-                              <div className="hly-xsub">{swellDir} · {Math.round(h.swellPeriod)}s</div>
+                              <div className="hly-xval" style={{ color: v.color }}>{fmt1(h.swellHeight)}<span className="hly-xunit">m</span></div>
+                              <div className="hly-xsub">{swellDir} · {fmt0(h.swellPeriod)}s</div>
                             </div>
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Wind</div>

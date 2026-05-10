@@ -260,8 +260,10 @@ export default function MainScreen({ theme, setTheme }) {
         }
       } catch (e) {
         if (cancelled) return;
+        const msg = e?.message || String(e);
         console.warn("[v2] real forecast failed, staying on mock:", e);
-        setFetchError(e.message || String(e));
+        setFetchError(msg);
+        track("forecast_fetch_failed", { error: msg, spotId: spot.id });
       } finally {
         // Signal to the static preload splash in layout.js that the app has
         // finished its first data attempt. The splash's poller watches this
@@ -524,10 +526,16 @@ function Loaded({
     const adviceKey = getPersonalAdviceKey(effectiveLevel, hourDeg, effectiveSpot, pv);
     const raw = t(adviceKey);
     const tip = (!raw || raw === adviceKey || raw.startsWith("tip_")) ? verdict.sub : raw;
-    return {
-      message: t("danger_banner_short") || "Dangerous for your level",
-      detail: tip,
-    };
+    // Short pill message — pulls from the existing danger_banner string
+    // (which exists in EN/FR i18n) rather than danger_banner_short which
+    // never made it into the translations and was always falling through
+    // to the hardcoded EN fallback.
+    const rawMsg = t("danger_banner");
+    let message = (!rawMsg || rawMsg === "danger_banner") ? "⚠️ Dangerous for your level — check on-site" : rawMsg;
+    // Strip the leading warning emoji from the long banner string so we can
+    // render our own ⚠ icon in the pill chrome without doubling up.
+    message = message.replace(/^[⚠️\s]+/, "").trim();
+    return { message, detail: tip };
   }, [effectiveLevel, hour, effectiveSpot, t, verdict.sub]);
 
   const sibSentinelRef = useRef(null);

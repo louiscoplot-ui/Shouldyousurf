@@ -83,9 +83,14 @@ export default function StickyInfoBar({
   const sunrise = sun ? fmtTime(sun.sunrise) : null;
   const sunset  = sun ? fmtTime(sun.sunset)  : null;
 
-  // Temps + current
+  // Temps + current. seaTemp uses the selected hour first, falling back to
+  // the first non-null in the day if the API didn't fill that hour. Sea
+  // temp moves slowly across the day so the fallback is rarely visibly
+  // different — but reading sel.seaTemp first makes the value honest.
   const airTemp = sel.airTemp != null ? Math.round(sel.airTemp) : null;
-  const seaTemp = dayHours.find(h => h.seaTemp != null)?.seaTemp ?? null;
+  const seaTemp = sel.seaTemp != null
+    ? sel.seaTemp
+    : (dayHours.find(h => h.seaTemp != null)?.seaTemp ?? null);
   const curVel  = sel.currentVel;
 
   // Translator fallback — if parent forgot to pass `t`, return the key.

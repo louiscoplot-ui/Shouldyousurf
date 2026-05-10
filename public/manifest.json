@@ -4,8 +4,8 @@
   "description": "Should you surf today? Live conditions for any beach worldwide.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#eef4f8",
-  "theme_color": "#eef4f8",
+  "background_color": "#12303a",
+  "theme_color": "#12303a",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
