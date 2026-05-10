@@ -193,7 +193,11 @@ export function classifyConditions(userLevel, h, spot) {
   const kmh = knToKmh(h.windSpeedKn);
   const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
   const isOffshore = windDelta <= 45;
-  const isOnshore = windDelta >= 90;
+  // Note: we don't compute isOnshore here. The wind label only branches on
+  // (isOffshore | !isOffshore) — anything that's not clearly offshore gets
+  // the same blown threshold. scoreSurf has its own isOnshore (>=135) for
+  // the score calculation; the two stay decoupled on purpose because the
+  // label only needs the binary "is this offshore or not".
 
   const z = USER_LEVEL_ZONES[userLevel] || USER_LEVEL_ZONES.intermediate;
   let size;

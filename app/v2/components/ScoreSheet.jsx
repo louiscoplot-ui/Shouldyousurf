@@ -14,8 +14,8 @@ const LEVEL_LABELS = {
   intermediate: "Intermediate", advanced: "Advanced", expert: "Expert",
 };
 
-export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec, sessionNotes }) {
-  const bd = scoreBreakdown(hour);
+export default function ScoreSheet({ hour, verdict, onClose, userLevel, boardRec, sessionNotes, spot }) {
+  const bd = scoreBreakdown(hour, spot);
   const scale = SCORE_SCALE;
   // Use the score actually shown on the main card (level-adjusted) rather
   // than the raw scoreBreakdown total, so the number here matches what the
