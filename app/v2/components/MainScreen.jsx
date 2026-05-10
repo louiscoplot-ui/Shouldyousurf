@@ -308,6 +308,10 @@ export default function MainScreen({ theme, setTheme }) {
     return <LoadingScreen tagline={t("loading") || "Reading the ocean…"}/>;
   }
 
+  if (!payload.days || payload.days.length === 0) {
+    return <LoadingScreen tagline={t("loading") || "Reading the ocean…"}/>;
+  }
+
   return (
     <>
       <Loaded
