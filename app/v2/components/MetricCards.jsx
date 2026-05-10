@@ -2,8 +2,8 @@
 
 import { drivingChipsFor } from "../lib/verdict";
 
-export function DrivingChips({ hour }) {
-  const chips = drivingChipsFor(hour);
+export function DrivingChips({ hour, spot }) {
+  const chips = drivingChipsFor(hour, spot);
   return (
     <div className="drv">
       <div className="drv-h">What's driving the score</div>

@@ -25,12 +25,18 @@ export function coherentVerdict(h) {
   return { key: s.key, label: s.label, color: s.color, sub: s.sub };
 }
 
-// Score breakdown: explains the 0-100 score with weighted factors
-export function scoreBreakdown(h) {
+// Score breakdown: explains the 0-100 score with weighted factors.
+// Takes the spot in argument so the swell-direction bullet can be computed
+// against THIS spot's idealSwellDir instead of a hardcoded SW list — that
+// list was correct for WA but wrong for Bondi (SE), Pipeline (NW), Hossegor
+// (WNW), etc. The modal "How this score is built" now reads the same axis
+// scoreSurf uses, so it can no longer say "off-axis 8/20" on a 80+ score day.
+export function scoreBreakdown(h, spot) {
   const face = (h.faceFtLow + h.faceFtHigh) / 2;
-  const period = h.swellPeriod;
-  const wind = h.windKmh;
-  const dir = h.swellDir;
+  const period = typeof h.swellPeriod === "number" ? h.swellPeriod : 0;
+  const wind = typeof h.windKmh === "number" ? h.windKmh : 0;
+  const dirCardinal = typeof h.swellDir === "string" ? h.swellDir : "—";
+  const dirDeg = h.swellDirDeg != null ? h.swellDirDeg : (typeof h.swellDir === "number" ? h.swellDir : null);
   const type = (h.windType || "").toLowerCase();
 
   let sizePts = 0, sizeNote = "";
@@ -47,11 +53,22 @@ export function scoreBreakdown(h) {
   else if (period < 14) { perPts = 22; perNote = "Decent groundswell"; }
   else                  { perPts = 25; perNote = "Long-period groundswell"; }
 
+  // Direction score — same equation as scoreSurf's swellDelta. ≤30° from
+  // the spot's ideal angle = ideal, ≤60° = workable, beyond = off-axis.
+  // Falls back to the old hardcoded WA list if the spot has no
+  // idealSwellDir at all (very early, pre-inferSpotProfile path).
   let dirPts = 0, dirNote = "";
-  const ideal = ["SW", "WSW", "S", "SSW"];
-  if (ideal.includes(dir)) { dirPts = 20; dirNote = `${dir} — ideal angle`; }
-  else if (["W", "SE"].includes(dir)) { dirPts = 14; dirNote = `${dir} — workable angle`; }
-  else { dirPts = 8; dirNote = `${dir} — off-axis`; }
+  if (spot && spot.idealSwellDir != null && dirDeg != null) {
+    const delta = Math.abs(((dirDeg - spot.idealSwellDir + 540) % 360) - 180);
+    if (delta <= 30) { dirPts = 20; dirNote = `${dirCardinal} — ideal angle`; }
+    else if (delta <= 60) { dirPts = 14; dirNote = `${dirCardinal} — workable angle`; }
+    else { dirPts = 8; dirNote = `${dirCardinal} — off-axis`; }
+  } else {
+    const ideal = ["SW", "WSW", "S", "SSW"];
+    if (ideal.includes(dirCardinal)) { dirPts = 20; dirNote = `${dirCardinal} — ideal angle`; }
+    else if (["W", "SE"].includes(dirCardinal)) { dirPts = 14; dirNote = `${dirCardinal} — workable angle`; }
+    else { dirPts = 8; dirNote = `${dirCardinal} — off-axis`; }
+  }
 
   let windPts = 0, windNote = "";
   if (type.includes("offshore") && wind < 12) { windPts = 25; windNote = "Light offshore — glassy"; }
@@ -68,23 +85,41 @@ export function scoreBreakdown(h) {
     factors: [
       { key: "size",   label: "Wave size",       value: `${h.faceFtLow}–${h.faceFtHigh} ft`, pts: sizePts, max: 30, note: sizeNote },
       { key: "period", label: "Swell period",    value: `${period.toFixed(0)}s`,              pts: perPts,  max: 25, note: perNote  },
-      { key: "dir",    label: "Swell direction", value: dir,                                  pts: dirPts,  max: 20, note: dirNote  },
+      { key: "dir",    label: "Swell direction", value: dirCardinal,                          pts: dirPts,  max: 20, note: dirNote  },
       { key: "wind",   label: "Wind",            value: `${Math.round(wind)} km/h ${type || ""}`.trim(), pts: windPts, max: 25, note: windNote },
     ],
   };
 }
 
-export function drivingChipsFor(h) {
+export function drivingChipsFor(h, spot) {
   const chips = [];
   if (h.swellPeriod < 9) chips.push({ t: "Short-period swell", k: "neg" });
   else if (h.swellPeriod >= 12) chips.push({ t: "Long-period groundswell", k: "pos" });
   if (h.swellHeight >= 0.9 && h.swellHeight <= 2.0) chips.push({ t: "Good size", k: "pos" });
   else if (h.swellHeight < 0.6) chips.push({ t: "Small swell", k: "neg" });
-  if (["SW", "WSW", "W", "SSW"].includes(h.swellDir)) chips.push({ t: "Ideal swell direction", k: "pos" });
+  // Spot-aware direction. Uses idealSwellDir when available (so Bondi
+  // gets credit for SE swell and Hossegor for W swell). Falls back to
+  // the legacy WA-only list if no spot is given — shouldn't happen in
+  // practice now that drivingChipsFor is always called with the spot.
+  const dirDeg = h.swellDirDeg != null ? h.swellDirDeg : (typeof h.swellDir === "number" ? h.swellDir : null);
+  if (spot && spot.idealSwellDir != null && dirDeg != null) {
+    const delta = Math.abs(((dirDeg - spot.idealSwellDir + 540) % 360) - 180);
+    if (delta <= 30) chips.push({ t: "Ideal swell direction", k: "pos" });
+  } else if (typeof h.swellDir === "string" && ["SW", "WSW", "W", "SSW"].includes(h.swellDir)) {
+    chips.push({ t: "Ideal swell direction", k: "pos" });
+  }
   if (h.windKmh >= 25) chips.push({ t: "Strong cross-shore", k: "neg" });
   else if (h.windKmh <= 10) chips.push({ t: "Light winds", k: "pos" });
   else if ((h.windType || "").toLowerCase().includes("off")) chips.push({ t: "Offshore wind", k: "pos" });
-  chips.push({ t: "Tide in the sweet spot", k: "pos" });
+  // Tide chip — only emitted if the score notes actually contain a positive
+  // tide signal. The previous unconditional "Tide in the sweet spot" lied
+  // half the time (n_tide_wrong / n_tide_ok / nothing in notes → still a
+  // green chip). Now reads h.notes which scoreSurf populates with the
+  // tide tag for the day's tide vs the spot's idealTide.
+  if (Array.isArray(h.notes)) {
+    if (h.notes.includes("n_tide_prime")) chips.push({ t: "Tide in the sweet spot", k: "pos" });
+    else if (h.notes.includes("n_tide_wrong")) chips.push({ t: "Wrong tide for this spot", k: "neg" });
+  }
   return chips;
 }
 

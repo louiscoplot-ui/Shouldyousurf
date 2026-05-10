@@ -719,7 +719,7 @@ function Loaded({
 
         <VerdictHero verdict={verdict} hour={hour} swapKey={swapKey} onOpenScore={() => { track("score_sheet_opened", { score: hour.score, verdict: verdict.key }); setScoreOpen(true); }}/>
 
-        {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} onClose={() => setScoreOpen(false)}/>}
+        {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} spot={effectiveSpot} onClose={() => setScoreOpen(false)}/>}
 
         <div className="lvl-inline rise-3">
           <button className="lvl-me-btn" onClick={onOpenLevel}>
@@ -746,7 +746,7 @@ function Loaded({
           effectiveSpot={effectiveSpot}
         />
 
-        <DrivingChips hour={hour}/>
+        <DrivingChips hour={hour} spot={effectiveSpot}/>
 
         <BestWindow day={day}/>
 
