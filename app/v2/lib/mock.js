@@ -26,6 +26,23 @@ function seeded(seed) {
   };
 }
 
+// Cardinal-to-degree map matching the cardinal labels mock uses below.
+// scoreV2 (post-multiplicatif) reads swellDirDeg/windDirDeg numerically;
+// without these the dir/wind multipliers fall through NaN guards and
+// the user sees "Skip 5" partout sur fallback mock (audit BLOQUANT #2).
+const SWELL_DIR_OPTIONS = [
+  { card: "SSW", deg: 202.5 },
+  { card: "SW",  deg: 225.0 },
+  { card: "S",   deg: 180.0 },
+  { card: "WSW", deg: 247.5 },
+];
+const WIND_DIR_OPTIONS = [
+  { card: "E",   deg: 90.0 },
+  { card: "ESE", deg: 112.5 },
+  { card: "SE",  deg: 135.0 },
+  { card: "NE",  deg: 45.0 },
+];
+
 function buildDay(seed, dayIdx, peakHour, peakScore, spread) {
   const r = seeded(seed);
   const hours = [];
@@ -36,15 +53,20 @@ function buildDay(seed, dayIdx, peakHour, peakScore, spread) {
     const swellPeriod = 8 + r() * 8;
     const windKmh = 6 + r() * 28;
     const faceFt = (swellHeight * Math.min(1.8, Math.max(0.7, swellPeriod / 10))) * 3.281;
+    const swellOpt = SWELL_DIR_OPTIONS[h % SWELL_DIR_OPTIONS.length];
+    const windOpt = WIND_DIR_OPTIONS[h % WIND_DIR_OPTIONS.length];
     hours.push({
       time: `2026-04-${String(13 + dayIdx).padStart(2, "0")}T${String(h).padStart(2, "0")}:00`,
       hour: h,
       score,
       swellHeight,
       swellPeriod,
-      swellDir: ["SSW", "SW", "S", "WSW"][h % 4],
+      swellDir: swellOpt.card,
+      swellDirDeg: swellOpt.deg,
       windKmh,
-      windDir: ["E", "ESE", "SE", "NE"][h % 4],
+      windDir: windOpt.card,
+      windDirDeg: windOpt.deg,
+      windSpeedKn: windKmh / 1.852,
       windType: windKmh < 15 ? "offshore" : windKmh < 25 ? "cross-shore" : "onshore",
       // Match realFetch — faceFtLow can be 0 on a tiny day. Keep faceFtHigh
       // at minimum 1 so we never display "0–0 ft" (cosmetic, the high band

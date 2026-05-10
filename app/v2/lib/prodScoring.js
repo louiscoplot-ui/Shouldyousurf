@@ -213,16 +213,28 @@ const FINAL_MULT_MAX = 1.35;
 // les tip selectors les consomment et n'ont pas à changer en PR1.
 export function scoreV2(h, spot, userLevel, tideCtx) {
   const level = userLevel || "intermediate";
-  const swellH = h.swellHeight || 0;
-  const period = h.swellPeriod || 0;
-  const swellDelta = Math.abs(((h.swellDir - spot.idealSwellDir + 540) % 360) - 180);
-  const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
-  const kmh = knToKmh(h.windSpeedKn || 0);
+  // Guards : on ne propage PAS NaN. Une donnée manquante doit afficher
+  // un multiplicateur neutre (1.00) plutôt que d'écraser silencieusement
+  // le score. Précédemment `h.swellPeriod || 0` collapsait null vers 0
+  // → periodMult 0.62 (very-short-period penalty) trompeur. `windDir`
+  // null → windDelta NaN → onshore branch + safety cap onshore désactivé.
+  const swellH = Number.isFinite(h.swellHeight) ? h.swellHeight : 0;
+  const period = Number.isFinite(h.swellPeriod) ? h.swellPeriod : 10;
+  const windKn = Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0;
+  const kmh = knToKmh(windKn);
+  const swellDir = Number.isFinite(h.swellDir) ? h.swellDir : null;
+  const windDir = Number.isFinite(h.windDir) ? h.windDir : null;
+  const swellDelta = swellDir != null && Number.isFinite(spot.idealSwellDir)
+    ? Math.abs(((swellDir - spot.idealSwellDir + 540) % 360) - 180)
+    : null;
+  const windDelta = windDir != null && Number.isFinite(spot.offshoreWindDir)
+    ? Math.abs(((windDir - spot.offshoreWindDir + 540) % 360) - 180)
+    : null;
 
   const baseSize = lookupBaseSize(swellH, level);
   const periodMult = lookupPeriodMult(period);
-  const windMult = lookupWindMult(windDelta, kmh);
-  const dirMult = lookupDirMult(swellDelta);
+  const windMult = windDelta != null ? lookupWindMult(windDelta, kmh) : 1.00;
+  const dirMult = swellDelta != null ? lookupDirMult(swellDelta) : 1.00;
   const tideMult = lookupTideMult(tideCtx, spot.idealTide, h.tideM);
 
   const rawCombined = periodMult * windMult * dirMult * tideMult;
@@ -232,11 +244,15 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // ── Safety overrides (skill: "Sécurité absolue inviolable") ──────────
   // La grille baseSize gère déjà la dégringolade hors-zone par niveau,
   // donc on ne hard-cap PAS sur faceFt > upperMax — laisser le score
-  // descendre naturellement préserve la résolution. On garde ces 3 cas
+  // descendre naturellement préserve la résolution. On garde ces caps
   // qui ne sont pas couverts par la grille seule :
   if (swellH < 0.4) score = Math.min(score, 12);  // micro swell → max Skip
   else if (swellH < 0.5) score = Math.min(score, 25);  // sub-knee territoire whitewash
-  if (windDelta >= 135 && kmh >= 35) score = Math.min(score, 15);  // gale onshore = junk
+  if (windDelta != null && windDelta >= 135 && kmh >= 35) score = Math.min(score, 15);  // gale onshore = junk
+  // Cross-shore violent : galeKills() route déjà vers SKIP côté verdict
+  // mais le score brut peut rester >40 sans cap. On aligne pour éviter
+  // la désync verdict↔score sur cross 50+ km/h (audit CALCUL #1).
+  if (windDelta != null && windDelta >= 90 && windDelta < 135 && kmh >= 50) score = Math.min(score, 25);
 
   // Notes recyclées de scoreSurf — drivingChips/tips/notes pipeline préservé.
   const baseRes = scoreSurf(h, spot, tideCtx);
@@ -772,6 +788,10 @@ export function adaptForecastToLevel(payload, userLevel, spot) {
       const { score } = scoreForLevel(hDeg, spot, userLevel, tideCtx);
       return { ...h, baseScore: h.baseScore ?? h.score, score };
     });
+    // Edge case : si l'API renvoie un day sans hours (rare mais possible
+    // pour les jours d'archive partiellement disponibles), on évite le
+    // crash hours[0].score sur undefined (audit SILENCIEUX #15).
+    if (!hours.length) return { ...d, hours, bestHour: null, bestLevel: scoreBandFromScore(0) };
     let best = hours[0];
     for (const hh of hours) if (hh.score > best.score) best = hh;
     const bestLevel = scoreBandFromScore(best.score);
