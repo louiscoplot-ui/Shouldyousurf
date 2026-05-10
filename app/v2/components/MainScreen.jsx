@@ -297,7 +297,8 @@ export default function MainScreen({ theme, setTheme }) {
       }
     }
     if (best) {
-      const when = `${fmtLongDay(best.time.split("T")[0], spot.timezone || "Australia/Perth", t)} ${fmtHour(best.hour)}`;
+      const tz = payload?.effectiveSpot?.timezone || spot.timezone || "Australia/Perth";
+      const when = `${fmtLongDay(best.time.split("T")[0], tz, t)} ${fmtHour(best.hour)}`;
       new Notification(`🌊 ${spot.name}`, { body: `${t("notif_best_window")}: ${when} · ${best.score}/100`, icon: "/icon-192.png" });
     } else {
       new Notification(`${spot.name}`, { body: t("notif_none_upcoming"), icon: "/icon-192.png" });
@@ -740,7 +741,7 @@ function Loaded({
           dayHours={day.hours}
           allHours={payload.days.flatMap((d) => d.hours)}
           sunByDay={payload.sunByDay}
-          tz={spot.timezone || "Australia/Perth"}
+          tz={effectiveSpot.timezone || spot.timezone || "Australia/Perth"}
           t={t}
           effectiveSpot={effectiveSpot}
         />
@@ -756,12 +757,12 @@ function Loaded({
             onSelect={(idx) => { setSelectedIdx(idx); const h = day.hours[idx]; if (h) track("hour_selected", { hour: h.hour, score: h.score }); }}
             currentHour={currentHour}
             sunByDay={payload.sunByDay}
-            tz={spot.timezone || "Australia/Perth"}
+            tz={effectiveSpot.timezone || spot.timezone || "Australia/Perth"}
             reasonText={personalReason}
           />
         </div>
 
-        <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx} tz={spot.timezone || "Australia/Perth"}/>
+        <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx} tz={effectiveSpot.timezone || spot.timezone || "Australia/Perth"}/>
 
         <LevelMatrix hour={hour} spot={effectiveSpot} t={t}/>
 

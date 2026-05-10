@@ -18,7 +18,12 @@ import {
 } from "./prodScoring";
 import { getLevel as getV2Level } from "./verdict";
 
-const TZ = "Australia/Perth";
+// Default fallback only used if neither the spot has a curated timezone
+// NOR Open-Meteo returns one (extremely rare — would mean the API call
+// itself failed). The standard path now is `timezone=auto` → API picks
+// the IANA tz from lat/lng, we read it back into effectiveSpot.timezone
+// so every downstream toLocaleTimeString sees the right zone.
+const FALLBACK_TZ = "Australia/Perth";
 
 function degToCardinal(deg) {
   if (deg == null || isNaN(deg)) return "—";
@@ -53,17 +58,27 @@ function formatDayLabel(isoDate, todayStr) {
 // `spot` on return is enriched with inferred idealSwellDir/offshoreWindDir when
 // they weren't curated — so scoring works for any coordinate the user picks.
 export async function fetchRealForecast(spot) {
-  const tz = spot.timezone || TZ;
-  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+  // Prefer a curated spot.timezone when set (BREAKS could pre-fill it for
+  // exact coastal accuracy). Otherwise ask Open-Meteo to auto-detect from
+  // lat/lng — `timezone=auto` makes it return the IANA name in the response,
+  // which we then reuse for every toLocaleTimeString downstream.
+  const requestTz = spot.timezone || "auto";
+  // For computing today's date locally we still need a real IANA string.
+  // If the spot has no curated tz we use the browser's tz at first — the
+  // API response will then refine effectiveSpot.timezone to the actual
+  // coastal zone for every later format call.
+  const localTz = spot.timezone || (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : FALLBACK_TZ) || FALLBACK_TZ;
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: localTz });
   const pastStart = offsetDate(todayStr, -3);
   const pastEnd = offsetDate(todayStr, -1);
   const marineFields =
     "wave_height,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
 
-  const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
-  const pastWindUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${encodeURIComponent(tz)}`;
-  const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${encodeURIComponent(tz)}&forecast_days=5`;
-  const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}&wind_speed_unit=kn&forecast_days=5`;
+  const tzParam = encodeURIComponent(requestTz);
+  const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
+  const pastWindUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
+  const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${tzParam}&forecast_days=5`;
+  const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5`;
 
   const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
     fetch(pastMarineUrl).catch(() => null),
@@ -127,7 +142,19 @@ export async function fetchRealForecast(spot) {
   // Infer spot profile if the curated spot didn't pre-fill idealSwellDir.
   const needsInfer = spot.idealSwellDir == null || spot.offshoreWindDir == null;
   const inferred = needsInfer ? inferSpotProfile(allRaw) : null;
-  const effectiveSpot = inferred ? { ...spot, ...inferred } : spot;
+  // Resolve the spot's actual timezone from the API response (returned when
+  // we sent `timezone=auto`). Fall back to whatever the spot already had,
+  // then to the local browser tz, then to the safety net. After this point
+  // every consumer reads effectiveSpot.timezone and gets the correct IANA
+  // string for the actual coastal location — no more "Australia/Perth"
+  // showing up for Bondi or Pipeline.
+  const apiTz = futureMarine.timezone || futureWind.timezone || null;
+  const resolvedTz = spot.timezone || apiTz || localTz;
+  const effectiveSpot = {
+    ...spot,
+    ...(inferred || {}),
+    timezone: resolvedTz,
+  };
 
   // Now shape each hour for v2 components and score it with the prod engine.
   const byDay = {};
