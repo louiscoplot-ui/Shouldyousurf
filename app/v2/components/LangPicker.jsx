@@ -4,7 +4,12 @@
 
 import { LANGUAGES } from "../../i18n";
 
-export default function LangPicker({ lang, setLang, onClose, customLangs, onDeleteCustom, onAddLang }) {
+export default function LangPicker({ lang, setLang, onClose, customLangs, onDeleteCustom, onAddLang, t }) {
+  const tt = typeof t === "function" ? t : ((k) => k);
+  const titleRaw = tt("language");
+  const title = (!titleRaw || titleRaw === "language") ? "Language" : titleRaw;
+  const addRaw = tt("add_language");
+  const addLabel = (!addRaw || addRaw === "add_language") ? "+ Add Language" : `+ ${addRaw}`;
   const allLangs = [...LANGUAGES, ...customLangs.map(c => ({ code: c.code, name: c.name, flag: c.flag, isCustom: true }))];
   return (
     <div className="v2-overlay" onClick={onClose}>
@@ -12,10 +17,10 @@ export default function LangPicker({ lang, setLang, onClose, customLangs, onDele
         <div className="v2-handle"/>
         <div className="v2-sheet-body">
           <div className="v2-sheet-header">
-            <div className="v2-sheet-title">Language</div>
+            <div className="v2-sheet-title">{title}</div>
             <button className="v2-close-btn" onClick={onClose}>✕</button>
           </div>
-          <button className="v2-add-lang-btn" onClick={() => { onClose(); onAddLang(); }}>+ Add Language</button>
+          <button className="v2-add-lang-btn" onClick={() => { onClose(); onAddLang(); }}>{addLabel}</button>
           {allLangs.map(l => (
             <div key={l.code} style={{ display: "flex", alignItems: "center" }}>
               <button className={`v2-lang-row ${lang === l.code ? "active" : ""}`}

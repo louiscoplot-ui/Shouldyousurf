@@ -14,13 +14,22 @@ import {
 
 const FNS = { classifyConditions, getPersonalVerdict, hasInsideReform };
 
-export default function LevelMatrix({ hour, spot }) {
+export default function LevelMatrix({ hour, spot, t }) {
   const m = levelMatrixFor(hour, spot, FNS);
-  const text = { yes: "GO", ok: "WORTH IT", no: "SKIP" };
+  // Verdict labels — pulled from i18n so they match the sticky-bar verdict
+  // text in every language (FR: TENTE, ES: VALE LA PENA, JA: いけそう, etc.).
+  // Without t() the matrix said "WORTH IT" while the sticky bar said
+  // something else for the same state.
+  const tt = typeof t === "function" ? t : ((k) => k);
+  const text = {
+    yes: tt("go") || "GO",
+    ok: tt("maybe") || "MAYBE",
+    no: tt("skip") || "SKIP",
+  };
   return (
     <div className="lvl-block">
       <div className="lvl-head">
-        <span className="lvl-h">Can you surf?</span>
+        <span className="lvl-h">{tt("can_you_surf") || "Can you surf?"}</span>
       </div>
       {m.map((l, i) => (
         <div key={i} className="lvl-row">
