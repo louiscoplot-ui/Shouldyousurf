@@ -184,7 +184,7 @@ export async function fetchRealForecast(spot) {
     const shaped = rawSurf.map((r) => shapeHour(r, tideCtx));
     const meta = formatDayLabel(dateStr, todayStr);
     const [y, mo, d] = dateStr.split("-").map(Number);
-    const bestHour = shaped.reduce((b, h) => (h.score > (b?.score ?? -1) ? h : b), null);
+    const bestHour = shaped.reduce((b, h) => (h.score > (b?.score ?? -1) ? h : b), null) || shaped[0];
     days.push({
       dateStr,
       label: meta.label,
