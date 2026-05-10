@@ -1,6 +1,8 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
+import { scoreV2, mToFt, estimateFaceHeight } from "./prodScoring";
+
 export const SCORE_SCALE = [
   { key: "unreal",    min: 75, max: 100, color: "#1d6a5b", label: "Unreal",    sub: "Prime, memorable conditions — rearrange your day." },
   { key: "excellent", min: 55, max: 74,  color: "#2d9178", label: "Excellent", sub: "Clean, well-shaped, worth going out of your way." },
@@ -25,68 +27,75 @@ export function coherentVerdict(h) {
   return { key: s.key, label: s.label, color: s.color, sub: s.sub };
 }
 
-// Score breakdown: explains the 0-100 score with weighted factors.
-// Takes the spot in argument so the swell-direction bullet can be computed
-// against THIS spot's idealSwellDir instead of a hardcoded SW list — that
-// list was correct for WA but wrong for Bondi (SE), Pipeline (NW), Hossegor
-// (WNW), etc. The modal "How this score is built" now reads the same axis
-// scoreSurf uses, so it can no longer say "off-axis 8/20" on a 80+ score day.
-export function scoreBreakdown(h, spot) {
-  const face = (h.faceFtLow + h.faceFtHigh) / 2;
+// Score breakdown — décomposition multiplicative qui matche exactement
+// scoreV2 : baseSize(swellH_m, level) × periodMult × windMult × dirMult
+// × tideMult, finalMult clamp [0.40, 1.35]. ScoreSheet rend baseSize en
+// barre principale + 4 lignes de multiplicateurs (×ratio) au lieu des
+// 4 bullets additifs sommant à 100 qui ne reflétaient plus le vrai calcul
+// depuis le passage au multiplicatif (PR2). Le total renvoyé == score réel.
+export function scoreBreakdown(h, spot, userLevel) {
+  const level = userLevel || "intermediate";
+  const hDeg = { ...h, swellDir: h.swellDirDeg ?? h.swellDir, windDir: h.windDirDeg ?? h.windDir };
+  const v2 = scoreV2(hDeg, spot, level, null);
+
   const period = typeof h.swellPeriod === "number" ? h.swellPeriod : 0;
-  const wind = typeof h.windKmh === "number" ? h.windKmh : 0;
+  const windKmh = typeof h.windKmh === "number" ? h.windKmh : 0;
   const dirCardinal = typeof h.swellDir === "string" ? h.swellDir : "—";
-  const dirDeg = h.swellDirDeg != null ? h.swellDirDeg : (typeof h.swellDir === "number" ? h.swellDir : null);
-  const type = (h.windType || "").toLowerCase();
+  const windType = (h.windType || "").toLowerCase();
+  const swellH = h.swellHeight || 0;
 
-  let sizePts = 0, sizeNote = "";
-  if (face < 1) { sizePts = 4;  sizeNote = "Almost flat"; }
-  else if (face < 2) { sizePts = 12; sizeNote = "Small"; }
-  else if (face < 3) { sizePts = 22; sizeNote = "Knee–waist, learn-friendly"; }
-  else if (face <= 6) { sizePts = 30; sizeNote = "Sweet spot"; }
-  else if (face <= 9) { sizePts = 24; sizeNote = "Overhead — for confident surfers"; }
-  else { sizePts = 14; sizeNote = "Big — limits the crowd"; }
+  let sizeNote;
+  if (swellH < 0.3) sizeNote = "Almost flat";
+  else if (swellH < 0.6) sizeNote = "Small / whitewash territoire";
+  else if (swellH < 1.0) sizeNote = "Knee–waist";
+  else if (swellH < 1.8) sizeNote = "Solid groundswell range";
+  else if (swellH < 3.0) sizeNote = "Big — pour surfers confirmés";
+  else sizeNote = "Heavy big-wave territory";
 
-  let perPts = 0, perNote = "";
-  if (period < 8)       { perPts = 6;  perNote = "Short period — windswell"; }
-  else if (period < 11) { perPts = 14; perNote = "Mixed swell"; }
-  else if (period < 14) { perPts = 22; perNote = "Decent groundswell"; }
-  else                  { perPts = 25; perNote = "Long-period groundswell"; }
+  let perNote;
+  if (period < 8)       perNote = "Short period — windswell";
+  else if (period < 11) perNote = "Mixed swell";
+  else if (period < 14) perNote = "Decent groundswell";
+  else                  perNote = "Long-period groundswell";
 
-  // Direction score — same equation as scoreSurf's swellDelta. ≤30° from
-  // the spot's ideal angle = ideal, ≤60° = workable, beyond = off-axis.
-  // Falls back to the old hardcoded WA list if the spot has no
-  // idealSwellDir at all (very early, pre-inferSpotProfile path).
-  let dirPts = 0, dirNote = "";
-  if (spot && spot.idealSwellDir != null && dirDeg != null) {
+  let dirNote = `${dirCardinal} — `;
+  if (spot && spot.idealSwellDir != null && (h.swellDirDeg != null || typeof h.swellDir === "number")) {
+    const dirDeg = h.swellDirDeg != null ? h.swellDirDeg : h.swellDir;
     const delta = Math.abs(((dirDeg - spot.idealSwellDir + 540) % 360) - 180);
-    if (delta <= 30) { dirPts = 20; dirNote = `${dirCardinal} — ideal angle`; }
-    else if (delta <= 60) { dirPts = 14; dirNote = `${dirCardinal} — workable angle`; }
-    else { dirPts = 8; dirNote = `${dirCardinal} — off-axis`; }
-  } else {
-    const ideal = ["SW", "WSW", "S", "SSW"];
-    if (ideal.includes(dirCardinal)) { dirPts = 20; dirNote = `${dirCardinal} — ideal angle`; }
-    else if (["W", "SE"].includes(dirCardinal)) { dirPts = 14; dirNote = `${dirCardinal} — workable angle`; }
-    else { dirPts = 8; dirNote = `${dirCardinal} — off-axis`; }
-  }
+    if (delta <= 20) dirNote += "ideal angle";
+    else if (delta <= 40) dirNote += "good angle";
+    else if (delta <= 60) dirNote += "workable angle";
+    else if (delta <= 100) dirNote += "off-axis";
+    else dirNote += "wrong direction";
+  } else dirNote += "angle vs spot";
 
-  let windPts = 0, windNote = "";
-  if (type.includes("offshore") && wind < 12) { windPts = 25; windNote = "Light offshore — glassy"; }
-  else if (type.includes("offshore"))         { windPts = 22; windNote = "Offshore"; }
-  else if (wind < 10)                          { windPts = 20; windNote = "Light winds"; }
-  else if (type.includes("cross") && wind < 20){ windPts = 14; windNote = "Cross-shore, manageable"; }
-  else if (type.includes("cross"))             { windPts = 8;  windNote = "Strong cross-shore"; }
-  else if (wind < 18)                          { windPts = 10; windNote = "Light onshore"; }
-  else                                         { windPts = 3;  windNote = "Onshore — blown out"; }
+  let windNote;
+  if (windType.includes("offshore") && windKmh < 12) windNote = "Light offshore — glassy";
+  else if (windType.includes("offshore") && windKmh < 30) windNote = "Offshore — well shaped";
+  else if (windType.includes("offshore")) windNote = "Strong offshore — getting picked off";
+  else if (windKmh < 10) windNote = "Light winds";
+  else if (windType.includes("cross") && windKmh < 20) windNote = "Cross-shore, manageable";
+  else if (windType.includes("cross")) windNote = "Strong cross-shore";
+  else if (windKmh < 18) windNote = "Light onshore";
+  else if (windKmh < 35) windNote = "Onshore — blown out";
+  else windNote = "Onshore gale — junk";
 
-  const total = sizePts + perPts + dirPts + windPts;
+  const tideNote = v2.multipliers.tide >= 1.05 ? "Sweet tide for this spot"
+                 : v2.multipliers.tide >= 1.01 ? "OK tide"
+                 : v2.multipliers.tide <= 0.95 ? "Wrong tide phase"
+                 : "Neutral / no tide preference set";
+
+  const sizeFt = mToFt(estimateFaceHeight(swellH, period));
   return {
-    total,
+    total: v2.score,
+    baseSize: v2.baseSize,
+    multipliers: v2.multipliers,
     factors: [
-      { key: "size",   label: "Wave size",       value: `${h.faceFtLow}–${h.faceFtHigh} ft`, pts: sizePts, max: 30, note: sizeNote },
-      { key: "period", label: "Swell period",    value: `${period.toFixed(0)}s`,              pts: perPts,  max: 25, note: perNote  },
-      { key: "dir",    label: "Swell direction", value: dirCardinal,                          pts: dirPts,  max: 20, note: dirNote  },
-      { key: "wind",   label: "Wind",            value: `${Math.round(wind)} km/h ${type || ""}`.trim(), pts: windPts, max: 25, note: windNote },
+      { key: "size",   label: "Wave size for level",  value: `${sizeFt.toFixed(1)} ft face · ${swellH.toFixed(1)} m swell`, pts: v2.baseSize, max: 100, note: sizeNote },
+      { key: "period", label: "Swell period",         value: `${period.toFixed(0)}s`,                                       mult: v2.multipliers.period, note: perNote },
+      { key: "dir",    label: "Swell direction",      value: dirCardinal,                                                   mult: v2.multipliers.dir,    note: dirNote },
+      { key: "wind",   label: "Wind",                 value: `${Math.round(windKmh)} km/h ${windType || ""}`.trim(),         mult: v2.multipliers.wind,   note: windNote },
+      { key: "tide",   label: "Tide",                 value: spot && spot.idealTide && spot.idealTide !== "any" ? spot.idealTide : "any", mult: v2.multipliers.tide, note: tideNote },
     ],
   };
 }
