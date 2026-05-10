@@ -46,10 +46,10 @@ export function scoreBreakdown(h, spot, userLevel) {
 
   let sizeNote;
   if (swellH < 0.3) sizeNote = "Almost flat";
-  else if (swellH < 0.6) sizeNote = "Small / whitewash territoire";
+  else if (swellH < 0.6) sizeNote = "Small / whitewash territory";
   else if (swellH < 1.0) sizeNote = "Knee–waist";
   else if (swellH < 1.8) sizeNote = "Solid groundswell range";
-  else if (swellH < 3.0) sizeNote = "Big — pour surfers confirmés";
+  else if (swellH < 3.0) sizeNote = "Big — for confident surfers";
   else sizeNote = "Heavy big-wave territory";
 
   let perNote;
