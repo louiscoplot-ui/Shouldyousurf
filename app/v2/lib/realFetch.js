@@ -25,13 +25,14 @@ import { getLevel as getV2Level } from "./verdict";
 // so every downstream toLocaleTimeString sees the right zone.
 const FALLBACK_TZ = "Australia/Perth";
 
-// Certains navigateurs (ou configs privacy / VM) retournent "Etc/Unknown"
-// — ou une string non résolvable — depuis Intl. On l'envoyait tel quel à
-// toLocaleDateString → "Invalid time zone specified: Etc/Unknown" throw →
-// tout le fetch échouait et tombait sur le mock. On valide la tz avant
-// usage ; si invalide on retombe sur UTC pour les calculs de date locaux
-// (l'API garde timezone=auto et géolocalise depuis lat/lng, donc l'heure
-// d'affichage reste correcte).
+// Certains téléphones / navigateurs (privacy, VM, certaines configs iOS)
+// renvoient "Etc/Unknown" ou une string non résolvable depuis Intl. On
+// l'envoyait tel quel à toLocaleDateString → "Invalid time zone specified"
+// throw → TOUT le fetch live échouait → fallback sur les données mock.
+// C'est pour ça que ces devices ne voyaient jamais les vraies données.
+// On valide la tz avant usage ; si invalide on retombe sur UTC pour le
+// calcul de date local (l'API garde timezone=auto et géolocalise depuis
+// lat/lng, donc l'heure d'affichage reste exacte pour le spot).
 function isValidTz(tz) {
   if (!tz || tz === "Etc/Unknown") return false;
   try {
@@ -99,7 +100,12 @@ export async function fetchRealForecast(spot) {
 
   const tzParam = encodeURIComponent(requestTz);
   const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
-  const pastWindUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,temperature_2m&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
+  // Past wind from the FORECAST API (not the ERA5 archive). The archive has
+  // a ~5-day reanalysis lag, so it returned nulls for yesterday / the day
+  // before → the past hours got filtered out (windKn == null) → no past
+  // days showed at all. The forecast API keeps recent past days from the
+  // same GFS model with no lag and accepts start_date/end_date + timezone=auto.
+  const pastWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
   const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${tzParam}&forecast_days=5`;
   const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5`;
 
