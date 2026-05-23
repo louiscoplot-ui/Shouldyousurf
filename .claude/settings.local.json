@@ -29,7 +29,8 @@
       "Bash(node -e \"const c=[]; process.stdin.on\\('data',d=>c.push\\(d\\)\\); process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(c.join\\(''\\)\\);console.log\\('no-model \\(default\\):',j.hourly?.swell_wave_height?.slice\\(0,4\\), '| model used:', j.model||'?'\\)}\\)\")",
       "Bash(curl -s \"https://marine-api.open-meteo.com/v1/marine?latitude=-31.88&longitude=115.75&hourly=swell_wave_height&timezone=Australia%2FPerth&forecast_days=1\")",
       "Bash(node -e \"const c=[]; process.stdin.on\\('data',d=>c.push\\(d\\)\\); process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(c.join\\(''\\)\\); delete j.hourly; console.log\\(JSON.stringify\\(j,null,2\\)\\)}\\)\")",
-      "mcp__claude_ai_Vercel__check_domain_availability_and_price"
+      "mcp__claude_ai_Vercel__check_domain_availability_and_price",
+      "mcp__8d43f99b-fbf4-4d2a-84ea-5b16b17e7915__exec"
     ]
   }
 }
