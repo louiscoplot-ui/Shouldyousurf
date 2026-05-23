@@ -25,6 +25,29 @@ import { getLevel as getV2Level } from "./verdict";
 // so every downstream toLocaleTimeString sees the right zone.
 const FALLBACK_TZ = "Australia/Perth";
 
+// Certains navigateurs (ou configs privacy / VM) retournent "Etc/Unknown"
+// — ou une string non résolvable — depuis Intl. On l'envoyait tel quel à
+// toLocaleDateString → "Invalid time zone specified: Etc/Unknown" throw →
+// tout le fetch échouait et tombait sur le mock. On valide la tz avant
+// usage ; si invalide on retombe sur UTC pour les calculs de date locaux
+// (l'API garde timezone=auto et géolocalise depuis lat/lng, donc l'heure
+// d'affichage reste correcte).
+function isValidTz(tz) {
+  if (!tz || tz === "Etc/Unknown") return false;
+  try {
+    new Date().toLocaleString("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function detectLocalTz() {
+  if (typeof Intl === "undefined") return "UTC";
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return isValidTz(tz) ? tz : "UTC";
+}
+
 function degToCardinal(deg) {
   if (deg == null || isNaN(deg)) return "—";
   return degToCompass(((deg % 360) + 360) % 360);
@@ -67,7 +90,7 @@ export async function fetchRealForecast(spot) {
   // If the spot has no curated tz we use the browser's tz at first — the
   // API response will then refine effectiveSpot.timezone to the actual
   // coastal zone for every later format call.
-  const localTz = spot.timezone || (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : FALLBACK_TZ) || FALLBACK_TZ;
+  const localTz = (spot.timezone && isValidTz(spot.timezone)) ? spot.timezone : detectLocalTz();
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: localTz });
   const pastStart = offsetDate(todayStr, -3);
   const pastEnd = offsetDate(todayStr, -1);
