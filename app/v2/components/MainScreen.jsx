@@ -250,24 +250,47 @@ export default function MainScreen({ theme, setTheme }) {
     setDataSource("mock");
     setFetchError(null);
 
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Fetch timed out after 8s")), 8000),
-    );
+    // Open-Meteo's marine API can be slow (its two marine calls dominate the
+    // 4-request fan-out). 8s was cutting off legitimate-but-slow responses,
+    // especially on cellular — the #1 tracked failure was "timed out after
+    // 8s", not a real outage. Bumped to 15s + one retry. We only surface the
+    // mock-fallback error AFTER the retry also fails, so a single slow
+    // response no longer flashes the "live unavailable" banner.
+    const fetchOnce = (ms) => {
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Fetch timed out after ${ms / 1000}s`)), ms),
+      );
+      return Promise.race([fetchRealForecast(spot), timeout]);
+    };
     (async () => {
-      try {
-        const real = await Promise.race([fetchRealForecast(spot), timeout]);
-        if (cancelled) return;
-        if (real && real.days && real.days.length) {
-          setPayload(real);
-          setDataSource("live");
-          setLastFetchAt(Date.now());
+      let lastErr = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const real = await fetchOnce(15000);
+          if (cancelled) return;
+          if (real && real.days && real.days.length) {
+            setPayload(real);
+            setDataSource("live");
+            setFetchError(null);
+            setLastFetchAt(Date.now());
+            lastErr = null;
+            break;
+          }
+        } catch (e) {
+          if (cancelled) return;
+          lastErr = e;
+          // Brief backoff before the single retry — gives a congested
+          // Open-Meteo edge a moment to recover.
+          if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
         }
-      } catch (e) {
-        if (cancelled) return;
-        const msg = e?.message || String(e);
-        console.warn("[v2] real forecast failed, staying on mock:", e);
-        setFetchError(msg);
-        track("forecast_fetch_failed", { error: msg, spotId: spot.id });
+      }
+      try {
+        if (lastErr && !cancelled) {
+          const msg = lastErr?.message || String(lastErr);
+          console.warn("[v2] real forecast failed after retry, staying on mock:", lastErr);
+          setFetchError(msg);
+          track("forecast_fetch_failed", { error: msg, spotId: spot.id });
+        }
       } finally {
         // Signal to the static preload splash in layout.js that the app has
         // finished its first data attempt. The splash's poller watches this
@@ -289,8 +312,14 @@ export default function MainScreen({ theme, setTheme }) {
     const onVisible = async () => {
       if (document.visibilityState !== "visible") return;
       if (Date.now() - lastFetchAt < STALE_MS) return;
+      // Même timeout 15s que le fetch initial — un refetch silencieux ne
+      // doit pas pendre indéfiniment si Open-Meteo est lent. Pas de retry
+      // ici : on garde simplement les données déjà affichées si ça échoue.
       try {
-        const real = await fetchRealForecast(spot);
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("refetch timed out after 15s")), 15000),
+        );
+        const real = await Promise.race([fetchRealForecast(spot), timeout]);
         if (real && real.days && real.days.length) {
           setPayload(real);
           setDataSource("live");
