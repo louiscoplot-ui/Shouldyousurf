@@ -763,14 +763,29 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
   if (!userLevel) return v2;
   const verdict = getPersonalVerdict(userLevel, h, spot);
   let adj = v2.score;
-  if (verdict === "no") adj = Math.min(adj, 38);
-  else if (verdict === "ok") adj = Math.min(adj, 70);
+  // Compression douce de la queue haute au lieu d'un cap dur. Un
+  // Math.min(adj, 70) aplatissait À 70 toutes les heures dont le score
+  // brut dépassait 70 — fréquent pour early_int en zone upper/too_big
+  // (verdict ok mais baseSize élevé) → "70 partout", zéro lisibilité sur
+  // les meilleures heures. compressTail garde le score intact sous le
+  // floor et remappe [floor..100] dans [floor..cap], donc le plafond
+  // verdict est respecté (jamais de MAYBE en Unreal, ni de SKIP en Fair+)
+  // tout en préservant l'ordre et la variation horaire.
+  if (verdict === "no") adj = compressTail(adj, 30, 38);
+  else if (verdict === "ok") adj = compressTail(adj, 55, 70);
   return {
     score: Math.max(0, Math.min(100, Math.round(adj))),
     notes: v2.notes,
     baseSize: v2.baseSize,
     multipliers: v2.multipliers,
   };
+}
+
+// Remappe [floor..100] dans [floor..cap] de façon monotone. En dessous
+// du floor le score est inchangé (résolution naturelle préservée).
+function compressTail(s, floor, cap) {
+  if (s <= floor) return s;
+  return floor + (s - floor) * ((cap - floor) / (100 - floor));
 }
 
 // Rebuilds a forecast payload so every hour.score is the level-adjusted
