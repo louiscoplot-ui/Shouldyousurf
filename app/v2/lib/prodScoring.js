@@ -360,7 +360,16 @@ export const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediat
 export const USER_LEVEL_ZONES = {
   first_timer:  { min: 0.3, sweetLo: 0.6, sweetHi: 1.5, upperMax: 2.2 },
   beginner:     { min: 0.3, sweetLo: 1,   sweetHi: 2,   upperMax: 3 },
-  early_int:    { min: 1.5, sweetLo: 1.8, sweetHi: 3,   upperMax: 4 },
+  // early_int : sweet = waist-to-head-high (2-4.5ft), cœur de la zone d'un
+  // early intermediate. Avant : sweetHi 3 / upperMax 4 → tout 3.5-5ft clean
+  // basculait en upper/too_big → verdict "ok" + tip "outside too much" alors
+  // que c'est PILE sa journée. Resynchronisé avec BASE_SIZE_GRID qui peak
+  // déjà à ~4.5ft face. Plafonné À intermediate (sweetHi 4.5 / upperMax 6)
+  // SANS le dépasser → monotonie du ladder préservée (early_int jamais plus
+  // tolérant qu'intermediate), tout en restant ≥ beginner. La distinction
+  // avec intermediate vit dans sweetLo (2 vs 2.5 : early_int profite des
+  // plus petites) + l'accès inside-reform que intermediate n'a pas.
+  early_int:    { min: 1.5, sweetLo: 2,   sweetHi: 4.5, upperMax: 6 },
   intermediate: { min: 1.5, sweetLo: 2.5, sweetHi: 4.5, upperMax: 6 },
   advanced:     { min: 2,   sweetLo: 3,   sweetHi: 7,   upperMax: 10 },
   expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
@@ -371,11 +380,15 @@ export function classifyConditions(userLevel, h, spot) {
   const kmh = knToKmh(h.windSpeedKn);
   const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
   const isOffshore = windDelta <= 45;
-  // Note: we don't compute isOnshore here. The wind label only branches on
-  // (isOffshore | !isOffshore) — anything that's not clearly offshore gets
-  // the same blown threshold. scoreSurf has its own isOnshore (>=135) for
-  // the score calculation; the two stay decoupled on purpose because the
-  // label only needs the binary "is this offshore or not".
+  const isOnshore = windDelta >= 135;
+  const isCross = !isOffshore && !isOnshore;
+  // On distingue cross-shore d'onshore pour le label "blown". Avant, tout
+  // ce qui n'était pas offshore partageait le seuil onshore (18-20 km/h),
+  // donc un cross-shore de 18-24 km/h était étiqueté "blown out" → tips
+  // "wind is killing it / trashing the shape". Faux : un cross 20 km/h
+  // c'est de la texture (bumpy), pas du blown out. Onshore vent dans la
+  // face = shredde tôt (18-20) ; cross-shore = chop latéral, tient
+  // jusqu'à ~30 km/h avant d'être vraiment blown.
 
   const z = USER_LEVEL_ZONES[userLevel] || USER_LEVEL_ZONES.intermediate;
   let size;
@@ -397,7 +410,12 @@ export function classifyConditions(userLevel, h, spot) {
 
   let wind;
   if ((isOffshore && kmh < 25) || kmh < 8) wind = "clean";
-  else if ((!isOffshore && kmh >= blownNonOffshore) || kmh >= 40 || (isOffshore && kmh >= galeOffshore)) wind = "blown";
+  else if (
+    (isOnshore && kmh >= blownNonOffshore) ||   // onshore dans la face = blown tôt
+    (isCross && kmh >= 30) ||                     // cross-shore tient jusqu'à 30
+    kmh >= 40 ||                                  // n'importe quelle direction à 40+
+    (isOffshore && kmh >= galeOffshore)           // offshore gale
+  ) wind = "blown";
   else wind = "bumpy";
 
   const reefTooMuch = (spot.heavy || spot.type === "reef") && isEarlyLearner;
