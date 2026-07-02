@@ -230,6 +230,11 @@ export function levelMatrixFor(hour, spot, fns) {
   });
 }
 
+// Index du niveau de l'utilisateur dans les 5 lignes retournées par
+// levelMatrixFor : [beginner, early_int, intermediate, advanced, expert].
+// (first_timer partage la ligne beginner.) L'ancien mapping datait d'un
+// design 4 lignes et surlignait la ligne du niveau EN DESSOUS pour
+// intermediate / advanced / expert.
 export const LEVEL_TO_MATRIX_IDX = {
-  first_timer: 0, beginner: 0, early_int: 1, intermediate: 1, advanced: 2, expert: 3,
+  first_timer: 0, beginner: 0, early_int: 1, intermediate: 2, advanced: 3, expert: 4,
 };

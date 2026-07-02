@@ -9,6 +9,7 @@
 import {
   scoreV2,
   estimateFaceHeight,
+  pickDominantSwell,
   dayTideCtx,
   mToFt,
   knToKmh,
@@ -81,7 +82,7 @@ function formatDayLabel(isoDate, todayStr) {
 // Fetches marine + forecast data for a spot. Returns { days, sunByDay, spot }.
 // `spot` on return is enriched with inferred idealSwellDir/offshoreWindDir when
 // they weren't curated — so scoring works for any coordinate the user picks.
-export async function fetchRealForecast(spot) {
+export async function fetchRealForecast(spot, signal) {
   // Prefer a curated spot.timezone when set (BREAKS could pre-fill it for
   // exact coastal accuracy). Otherwise ask Open-Meteo to auto-detect from
   // lat/lng — `timezone=auto` makes it return the IANA name in the response,
@@ -109,11 +110,14 @@ export async function fetchRealForecast(spot) {
   const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${tzParam}&forecast_days=5`;
   const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5`;
 
+  // `signal` (AbortController) lets the caller actually cancel the four
+  // requests on timeout / spot change — the previous Promise.race timeout
+  // left them running and burning mobile data in the background.
   const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
-    fetch(pastMarineUrl).catch(() => null),
-    fetch(pastWindUrl).catch(() => null),
-    fetch(futureMarineUrl),
-    fetch(futureWindUrl),
+    fetch(pastMarineUrl, { signal }).catch(() => null),
+    fetch(pastWindUrl, { signal }).catch(() => null),
+    fetch(futureMarineUrl, { signal }),
+    fetch(futureWindUrl, { signal }),
   ]);
 
   if (!futureMarineRes.ok) throw new Error(`Marine API: HTTP ${futureMarineRes.status}`);
@@ -123,12 +127,19 @@ export async function fetchRealForecast(spot) {
   if (!futureMarine.hourly || !futureWind.hourly) throw new Error("Invalid API response");
 
   const buildRawHours = (marine, wind, isPast) => {
-    return marine.hourly.time.map((t, i) => {
-      const swellHeight = marine.hourly.swell_wave_height[i];
-      const swellPeriod = marine.hourly.swell_wave_period[i];
-      const swellDirDeg = marine.hourly.swell_wave_direction[i];
-      const windKn = wind.hourly.wind_speed_10m[i];
-      const windDirDeg = wind.hourly.wind_direction_10m[i];
+    // Wind rows are matched to marine rows by TIMESTAMP, not by array
+    // index. The two APIs usually return aligned arrays, but if either
+    // ever returns fewer hours (partial archive, model gap) an index
+    // join silently pairs hour X's swell with hour Y's wind.
+    const windIdxByTime = new Map(wind.hourly.time.map((t, i) => [t, i]));
+    return marine.hourly.time.map((t, mi) => {
+      const wi = windIdxByTime.get(t);
+      if (wi == null) return null;
+      const swellHeight = marine.hourly.swell_wave_height[mi];
+      const swellPeriod = marine.hourly.swell_wave_period[mi];
+      const swellDirDeg = marine.hourly.swell_wave_direction[mi];
+      const windKn = wind.hourly.wind_speed_10m[wi];
+      const windDirDeg = wind.hourly.wind_direction_10m[wi];
       if (swellHeight == null || windKn == null) return null;
       return {
         time: t,
@@ -139,18 +150,18 @@ export async function fetchRealForecast(spot) {
         swellDir: swellDirDeg,
         windSpeedKn: windKn,
         windDir: windDirDeg,
-        waveHeight: marine.hourly.wave_height?.[i] ?? null,
-        windWaveHeight: marine.hourly.wind_wave_height?.[i] ?? null,
-        secSwellH: marine.hourly.secondary_swell_wave_height?.[i] ?? null,
-        secSwellP: marine.hourly.secondary_swell_wave_period?.[i] ?? null,
-        secSwellDir: marine.hourly.secondary_swell_wave_direction?.[i] ?? null,
-        tideM: marine.hourly.sea_level_height_msl?.[i] ?? null,
-        seaTemp: marine.hourly.sea_surface_temperature?.[i] ?? null,
-        airTemp: wind.hourly.temperature_2m?.[i] ?? null,
-        rainProb: wind.hourly.precipitation_probability?.[i] ?? null,
-        windGustKn: wind.hourly.wind_gusts_10m?.[i] ?? null,
-        currentVel: marine.hourly.ocean_current_velocity?.[i] ?? null,
-        currentDir: marine.hourly.ocean_current_direction?.[i] ?? null,
+        waveHeight: marine.hourly.wave_height?.[mi] ?? null,
+        windWaveHeight: marine.hourly.wind_wave_height?.[mi] ?? null,
+        secSwellH: marine.hourly.secondary_swell_wave_height?.[mi] ?? null,
+        secSwellP: marine.hourly.secondary_swell_wave_period?.[mi] ?? null,
+        secSwellDir: marine.hourly.secondary_swell_wave_direction?.[mi] ?? null,
+        tideM: marine.hourly.sea_level_height_msl?.[mi] ?? null,
+        seaTemp: marine.hourly.sea_surface_temperature?.[mi] ?? null,
+        airTemp: wind.hourly.temperature_2m?.[wi] ?? null,
+        rainProb: wind.hourly.precipitation_probability?.[wi] ?? null,
+        windGustKn: wind.hourly.wind_gusts_10m?.[wi] ?? null,
+        currentVel: marine.hourly.ocean_current_velocity?.[mi] ?? null,
+        currentDir: marine.hourly.ocean_current_direction?.[mi] ?? null,
       };
     }).filter(Boolean);
   };
@@ -204,7 +215,11 @@ export async function fetchRealForecast(spot) {
   }
 
   const shapeHour = (raw, tideCtx) => {
-    const faceM = estimateFaceHeight(raw.swellHeight, raw.swellPeriod);
+    // Face height display follows the DOMINANT swell partition (primary
+    // or secondary) — same pick as scoreV2/classifyConditions, so the
+    // "2–3 ft" the user reads is the wave the score is scoring.
+    const domSwell = pickDominantSwell(raw, effectiveSpot);
+    const faceM = estimateFaceHeight(domSwell.swellHeight, domSwell.swellPeriod);
     const faceFt = mToFt(faceM);
     // Score with the prod engine using the raw degrees — BEFORE we overwrite
     // swellDir/windDir below with the cardinal string the v2 components want.
@@ -236,16 +251,24 @@ export async function fetchRealForecast(spot) {
     };
   };
 
+  // "Today" must be the SPOT's current date, not the device's. A user in
+  // Paris at 11pm looking at Perth (already tomorrow there) used to see
+  // the spot's current day labelled "Tmrw". The device-tz todayStr above
+  // is only used to pick the fetch window; labels use the resolved spot tz.
+  const spotTodayStr = isValidTz(resolvedTz)
+    ? new Date().toLocaleDateString("en-CA", { timeZone: resolvedTz })
+    : todayStr;
+
   const days = [];
-  for (let off = -3; off <= 4; off++) {
-    const dateStr = offsetDate(todayStr, off);
+  for (let off = -4; off <= 5; off++) {
+    const dateStr = offsetDate(spotTodayStr, off);
     const rawHours = byDay[dateStr];
     if (!rawHours || !rawHours.length) continue;
     const rawSurf = rawHours.filter((h) => h.hour >= 4 && h.hour <= 20);
     if (!rawSurf.length) continue;
     const tideCtx = dayTideCtx(rawSurf);
     const shaped = rawSurf.map((r) => shapeHour(r, tideCtx));
-    const meta = formatDayLabel(dateStr, todayStr);
+    const meta = formatDayLabel(dateStr, spotTodayStr);
     const [y, mo, d] = dateStr.split("-").map(Number);
     const bestHour = shaped.reduce((b, h) => (h.score > (b?.score ?? -1) ? h : b), null) || shaped[0];
     days.push({

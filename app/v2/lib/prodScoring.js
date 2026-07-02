@@ -1,7 +1,6 @@
-// v2/lib/prodScoring.js — mirrors the production scoring engine in app/page.js.
-// Kept isolated so the v2 preview can evolve the visual design without diverging
-// from the canonical surf logic. Any update to the scoring rules must land in
-// both files (or be extracted to a third shared module) — for now we copy.
+// v2/lib/prodScoring.js — THE canonical scoring engine. app/page.js contains
+// no scoring anymore (it's a theme wrapper around MainScreen); this file is
+// the single source of truth for all surf logic. Locked by tests/scoring.test.mjs.
 
 export const mToFt = m => m * 3.281;
 export const knToKmh = kn => kn * 1.852;
@@ -9,13 +8,46 @@ export const knToKmh = kn => kn * 1.852;
 export function estimateFaceHeight(swellHeight, swellPeriod) {
   // Period boost reflects how long-period swell builds at the break.
   // But this only matters when there's enough water mass to build with —
-  // sub-0.5m swells just stay sub-0.5m faces regardless of period
-  // (a 0.3m @ 13s reads as 0.3m at the beach, not 0.5m). Skip the boost
-  // for tiny swells so the displayed face matches what people actually
-  // see in the lineup.
-  if (swellHeight < 0.5) return swellHeight;
+  // tiny swells stay tiny faces regardless of period (a 0.3m @ 13s reads
+  // as 0.3m at the beach). The boost ramps in CONTINUOUSLY between 0.4m
+  // and 0.8m (smoothstep) instead of switching on at a hard 0.5m — the
+  // old cliff made 1cm of swell change the displayed face by ~45%
+  // (0.49m@14s → 1.6ft vs 0.50m@14s → 2.3ft).
   const periodFactor = Math.min(1.8, Math.max(0.7, swellPeriod / 10));
-  return swellHeight * periodFactor;
+  const t = Math.max(0, Math.min(1, (swellHeight - 0.4) / 0.4));
+  const blend = t * t * (3 - 2 * t); // smoothstep 0→1 over 0.4–0.8m
+  return swellHeight * (1 + (periodFactor - 1) * blend);
+}
+
+// Angular delta helper — |((a - b + 540) % 360) - 180|, the shortest
+// angle between two compass directions. Was copy-pasted 7× across the file.
+export function angDelta(a, b) {
+  return Math.abs(((a - b + 540) % 360) - 180);
+}
+
+// pickDominantSwell — the surfable wave is not always the PRIMARY swell
+// partition. Open-Meteo's primary can be 0.4m of off-axis windswell while
+// a 1.5m @ 15s groundswell sits in the secondary partition, plumb on the
+// spot's ideal direction (classic Perth: local sea over a Five Fathom Bank
+// groundswell). Score/verdict/face must follow the partition a surfer
+// would actually ride: weight = height² (energy) × direction fit × period.
+// Returns { swellHeight, swellPeriod, swellDir, isSecondary }.
+export function pickDominantSwell(h, spot) {
+  const priH = Number.isFinite(h.swellHeight) ? h.swellHeight : 0;
+  const priP = Number.isFinite(h.swellPeriod) ? h.swellPeriod : 10;
+  const priD = Number.isFinite(h.swellDir) ? h.swellDir : null;
+  const primary = { swellHeight: priH, swellPeriod: priP, swellDir: priD, isSecondary: false };
+  const secH = Number.isFinite(h.secSwellH) ? h.secSwellH : null;
+  if (secH == null || secH < 0.3) return primary;
+  const secP = Number.isFinite(h.secSwellP) ? h.secSwellP : 10;
+  const secD = Number.isFinite(h.secSwellDir) ? h.secSwellDir : null;
+  const ideal = Number.isFinite(spot?.idealSwellDir) ? spot.idealSwellDir : null;
+  const fit = (dir) => (ideal != null && dir != null) ? lookupDirMult(angDelta(dir, ideal)) : 1.0;
+  const weight = (hh, pp, dd) => hh * hh * lookupPeriodMult(pp) * fit(dd);
+  if (weight(secH, secP, secD) > weight(priH, priP, priD)) {
+    return { swellHeight: secH, swellPeriod: secP, swellDir: secD, isSecondary: true };
+  }
+  return primary;
 }
 
 export const TIDE_TARGETS = { "low": 0.1, "mid-low": 0.3, "mid": 0.5, "mid-high": 0.7, "high": 0.9 };
@@ -229,17 +261,22 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // le score. Précédemment `h.swellPeriod || 0` collapsait null vers 0
   // → periodMult 0.62 (very-short-period penalty) trompeur. `windDir`
   // null → windDelta NaN → onshore branch + safety cap onshore désactivé.
-  const swellH = Number.isFinite(h.swellHeight) ? h.swellHeight : 0;
-  const period = Number.isFinite(h.swellPeriod) ? h.swellPeriod : 10;
+  //
+  // La houle scorée est la partition DOMINANTE (primaire ou secondaire,
+  // cf. pickDominantSwell) — avant, une secondaire 1,5m @ 15s plein axe
+  // sous une primaire de chop off-axis donnait score 3 ("flat").
+  const dom = pickDominantSwell(h, spot);
+  const swellH = dom.swellHeight;
+  const period = dom.swellPeriod;
+  const swellDir = dom.swellDir;
   const windKn = Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0;
   const kmh = knToKmh(windKn);
-  const swellDir = Number.isFinite(h.swellDir) ? h.swellDir : null;
   const windDir = Number.isFinite(h.windDir) ? h.windDir : null;
   const swellDelta = swellDir != null && Number.isFinite(spot.idealSwellDir)
-    ? Math.abs(((swellDir - spot.idealSwellDir + 540) % 360) - 180)
+    ? angDelta(swellDir, spot.idealSwellDir)
     : null;
   const windDelta = windDir != null && Number.isFinite(spot.offshoreWindDir)
-    ? Math.abs(((windDir - spot.offshoreWindDir + 540) % 360) - 180)
+    ? angDelta(windDir, spot.offshoreWindDir)
     : null;
 
   const baseSize = lookupBaseSize(swellH, level);
@@ -248,15 +285,34 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   const dirMult = swellDelta != null ? lookupDirMult(swellDelta) : 1.00;
   const tideMult = lookupTideMult(tideCtx, spot.idealTide, h.tideM);
 
+  // ── Facteurs surface (rafales + windswell) ───────────────────────────
+  // Appliqués HORS du clamp finalMult : ce sont des dégradations de
+  // surface qui doivent mordre même quand les bonus période/dir/vent
+  // saturent déjà le clamp. Avant, ces deux pénalités n'existaient que
+  // dans scoreSurf (additif) devenu simple générateur de notes → un jour
+  // "glassy 5kn de moyenne / rafales 30kn" scorait comme un vrai glassy.
+  let gustMult = 1.0;
+  if (Number.isFinite(h.windGustKn)) {
+    const gustDelta = knToKmh(h.windGustKn) - kmh;
+    if (gustDelta >= 25) gustMult = 0.85;
+    else if (gustDelta >= 15) gustMult = 0.93;
+  }
+  let chopMult = 1.0;
+  if (Number.isFinite(h.windWaveHeight) && swellH > 0.3) {
+    const ratio = h.windWaveHeight / Math.max(0.3, swellH);
+    if (ratio >= 0.8 && period < 11) chopMult = 0.82;      // face illisible
+    else if (ratio >= 0.5 && period < 10) chopMult = 0.91; // texture marquée
+  }
+
   const rawCombined = periodMult * windMult * dirMult * tideMult;
   const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
-  let score = baseSize * finalMult;
+  let score = baseSize * finalMult * gustMult * chopMult;
 
   // ── Safety overrides (skill: "Sécurité absolue inviolable") ──────────
   // La grille baseSize gère déjà la dégringolade hors-zone par niveau,
   // donc on ne hard-cap PAS sur faceFt > upperMax — laisser le score
   // descendre naturellement préserve la résolution. On garde ces caps
-  // qui ne sont pas couverts par la grille seule :
+  // qui ne sont pas couverts par la grille seule (sur la houle DOMINANTE) :
   if (swellH < 0.4) score = Math.min(score, 12);  // micro swell → max Skip
   else if (swellH < 0.5) score = Math.min(score, 25);  // sub-knee territoire whitewash
   if (windDelta != null && windDelta >= 135 && kmh >= 35) score = Math.min(score, 15);  // gale onshore = junk
@@ -277,6 +333,8 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
       wind: windMult,
       dir: dirMult,
       tide: tideMult,
+      gust: gustMult,
+      chop: chopMult,
       combined: finalMult,
     },
   };
@@ -376,7 +434,11 @@ export const USER_LEVEL_ZONES = {
 };
 
 export function classifyConditions(userLevel, h, spot) {
-  const faceFt = mToFt(estimateFaceHeight(h.swellHeight, h.swellPeriod));
+  // Même partition dominante que scoreV2 — sinon le verdict jugerait la
+  // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
+  // groundswell) et les deux se contrediraient à l'écran.
+  const dom = pickDominantSwell(h, spot);
+  const faceFt = mToFt(estimateFaceHeight(dom.swellHeight, dom.swellPeriod));
   const kmh = knToKmh(h.windSpeedKn);
   const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
   const isOffshore = windDelta <= 45;
