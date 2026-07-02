@@ -7,7 +7,10 @@ import { USER_LEVELS } from "../lib/prodScoring";
 
 export default function OnboardingModal({ onPick, onSkip, t }) {
   return (
-    <div className="v2-overlay" onClick={onSkip}>
+    // Backdrop tap intentionally does NOT skip: skipping marks the user as
+    // onboarded forever (localStorage) and locks them on the default level.
+    // A definitive choice needs the explicit "skip" button below.
+    <div className="v2-overlay">
       <div className="v2-sheet" onClick={e => e.stopPropagation()}>
         <div className="v2-handle"/>
         <div className="v2-sheet-body">

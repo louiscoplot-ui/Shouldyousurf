@@ -6,26 +6,31 @@
 // the curve and H/L peaks were a sin function of the hour — totally decoupled
 // from actual water height.
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { fmtHour } from "../lib/hooks";
 
-// Locale-aware short hour for axis labels (4am / 12pm / 8pm). Falls back to
-// the manual am/pm strings if Intl breaks for any reason.
-function fmtAxisHour(hr, tz) {
-  try {
-    const dt = new Date();
-    dt.setHours(hr, 0, 0, 0);
-    return dt
-      .toLocaleTimeString(undefined, { hour: "numeric", hour12: true, timeZone: tz })
-      .toLowerCase()
-      .replace(/\s/g, "");
-  } catch {
-    return hr === 0 ? "12am" : hr < 12 ? `${hr}am` : hr === 12 ? "12pm" : `${hr - 12}pm`;
-  }
+// Short hour for axis labels (4am / 12pm / 8pm). `hr` is ALREADY the
+// spot-local hour (parsed from the API's local time strings) — no Intl
+// timezone conversion here. The previous version built a Date from the
+// DEVICE clock and re-formatted it in the spot tz, which double-converted:
+// a Paris user looking at Perth saw the "4am" axis label rendered "10am".
+function fmtAxisHour(hr) {
+  return hr === 0 ? "12am" : hr < 12 ? `${hr}am` : hr === 12 ? "12pm" : `${hr - 12}pm`;
 }
 
-export default function TideCurve({ hours, selectedIdx, onSelect, tz }) {
+export default function TideCurve({ hours, selectedIdx, onSelect }) {
   const W = 340, H = 110, pad = 14;
+
+  // Hooks first, early return after — useRef below a conditional return
+  // violates the rules of hooks and crashes React the first time `hours`
+  // flips between empty and non-empty.
+  const svgRef = useRef(null);
+
+  // Drag listeners are attached to `window` on mousedown; if the component
+  // unmounts mid-drag (day switch, payload swap) they must be detached or
+  // they keep calling onSelect on a dead component until the next mouseup.
+  const dragCleanupRef = useRef(null);
+  useEffect(() => () => { dragCleanupRef.current?.(); }, []);
 
   // Memoise tout le calcul interpolation + path + peaks sur `hours` —
   // re-déclenché par chaque tick scroll/ago du parent (audit PERF #9).
@@ -81,7 +86,6 @@ export default function TideCurve({ hours, selectedIdx, onSelect, tz }) {
   const { pts, d, area, peaks, isMock, xs } = tide;
   const sel = pts[selectedIdx] || pts[0];
 
-  const svgRef = useRef(null);
   const handleDrag = (e) => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -111,9 +115,11 @@ export default function TideCurve({ hours, selectedIdx, onSelect, tz }) {
           const up = () => {
             window.removeEventListener("mousemove", handleDrag);
             window.removeEventListener("mouseup", up);
+            dragCleanupRef.current = null;
           };
           window.addEventListener("mousemove", handleDrag);
           window.addEventListener("mouseup", up);
+          dragCleanupRef.current = up;
         }}
         onTouchStart={handleDrag}
         onTouchMove={handleDrag}
@@ -131,13 +137,13 @@ export default function TideCurve({ hours, selectedIdx, onSelect, tz }) {
         <line className="tide-marker" x1={sel[0]} y1="10" x2={sel[0]} y2={H - 16}/>
         <circle className="tide-dot" cx={sel[0]} cy={sel[1]} r="5.5"/>
         <text className="tide-axis" x={pad} y={H - 3} textAnchor="start">
-          {fmtAxisHour(hours[0].hour, tz)}
+          {fmtAxisHour(hours[0].hour)}
         </text>
         <text className="tide-axis" x={W / 2} y={H - 3} textAnchor="middle">
-          {fmtAxisHour(12, tz)}
+          {fmtAxisHour(12)}
         </text>
         <text className="tide-axis" x={W - pad} y={H - 3} textAnchor="end">
-          {fmtAxisHour(hours[hours.length - 1].hour, tz)}
+          {fmtAxisHour(hours[hours.length - 1].hour)}
         </text>
       </svg>
     </div>

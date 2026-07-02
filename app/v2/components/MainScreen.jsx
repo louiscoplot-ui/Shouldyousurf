@@ -35,6 +35,7 @@ import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
 import { fetchRealForecast } from "../lib/realFetch";
 import {
+  classifyConditions,
   getPersonalAdviceKey,
   getPersonalModifier,
   getPersonalVerdict,
@@ -49,6 +50,17 @@ import {
 } from "../lib/prodScoring";
 
 const DEFAULT_SPOT = BREAKS.find((b) => b.id === "trigg") || BREAKS[0];
+
+// Page-scope `new Notification()` throws on Android Chrome and is a no-op
+// on iOS PWAs — notifications must go through the service worker
+// registration there. Try the SW path first, constructor as fallback.
+async function showLocalNotification(title, opts) {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg?.showNotification) { await reg.showNotification(title, opts); return; }
+  } catch {}
+  try { new Notification(title, opts); } catch {}
+}
 
 export default function MainScreen({ theme, setTheme }) {
   const [spot, setSpot] = useState(DEFAULT_SPOT);
@@ -76,6 +88,12 @@ export default function MainScreen({ theme, setTheme }) {
   const customLangDict = customLangs.find((c) => c.code === lang)?.translations;
   const t = getT(lang, customLangDict);
 
+  // Analytics guards: spotEffectRanRef distinguishes mount from user action,
+  // restoredSpotRef marks setSpot calls that come from localStorage / URL
+  // restoration (they re-run the [spot] effect but are not user picks).
+  const spotEffectRanRef = useRef(false);
+  const restoredSpotRef = useRef(false);
+
   // PWA install event — fires when user accepts the install prompt
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -97,34 +115,47 @@ export default function MainScreen({ theme, setTheme }) {
     prevLangRef.current = lang;
   }, [lang]);
 
-  // Load persisted state + shared-URL params
+  // Load persisted state + shared-URL params. Each read is individually
+  // guarded: with the old single try/catch, ONE corrupt JSON key (e.g.
+  // favourites) silently aborted every restoration after it — language,
+  // level, country AND the shared ?spot= link all reset to defaults.
   useEffect(() => {
+    const safeGet = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
+    const safeJson = (key) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } };
+
+    const savedCustom = safeJson("surf-last-break-custom");
+    // Minimal shape validation — a malformed custom spot (string lat…)
+    // would otherwise go straight into the Open-Meteo URL.
+    if (savedCustom && typeof savedCustom.id === "string"
+        && Number.isFinite(savedCustom.lat) && Number.isFinite(savedCustom.lng)) {
+      restoredSpotRef.current = true;
+      setSpot(savedCustom);
+    } else {
+      const savedId = safeGet("surf-last-break");
+      if (savedId) { restoredSpotRef.current = true; setSpot(findBreak(savedId)); }
+    }
+    const favs = safeJson("surf-favorites");
+    if (Array.isArray(favs)) setFavorites(favs.filter((x) => typeof x === "string"));
+    const savedLang = safeGet("surf-lang");
+    if (savedLang) setLang(savedLang);
+    const savedCustomLangs = safeJson("surf-custom-langs");
+    if (Array.isArray(savedCustomLangs)) setCustomLangs(savedCustomLangs);
+    const savedLvl = safeGet("surf-user-level");
+    if (savedLvl) setUserLevel(savedLvl);
+    const onboarded = safeGet("surf-onboarded-v2");
+    if (!onboarded && !savedLvl) setOnboardingOpen(true);
+    const savedCountry = safeGet("surf-country");
+    if (savedCountry) setCountry(savedCountry);
+    const notifOpt = safeGet("surf-notif-opt-in");
+    if (notifOpt && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      setNotifOptIn(true);
+    }
     try {
-      const savedId = localStorage.getItem("surf-last-break");
-      const savedCustom = localStorage.getItem("surf-last-break-custom");
-      if (savedCustom) setSpot(JSON.parse(savedCustom));
-      else if (savedId) setSpot(findBreak(savedId));
-      const favs = localStorage.getItem("surf-favorites");
-      if (favs) setFavorites(JSON.parse(favs));
-      const savedLang = localStorage.getItem("surf-lang");
-      if (savedLang) setLang(savedLang);
-      const savedCustomLangs = localStorage.getItem("surf-custom-langs");
-      if (savedCustomLangs) setCustomLangs(JSON.parse(savedCustomLangs));
-      const savedLvl = localStorage.getItem("surf-user-level");
-      if (savedLvl) setUserLevel(savedLvl);
-      const onboarded = localStorage.getItem("surf-onboarded-v2");
-      if (!onboarded && !savedLvl) setOnboardingOpen(true);
-      const savedCountry = localStorage.getItem("surf-country");
-      if (savedCountry) setCountry(savedCountry);
-      const notifOpt = localStorage.getItem("surf-notif-opt-in");
-      if (notifOpt && typeof Notification !== "undefined" && Notification.permission === "granted") {
-        setNotifOptIn(true);
-      }
       const params = new URLSearchParams(window.location.search);
       const sharedSpot = params.get("spot");
       if (sharedSpot) {
         const b = findBreak(sharedSpot);
-        if (b) setSpot(b);
+        if (b) { restoredSpotRef.current = true; setSpot(b); }
       }
     } catch {}
   }, []);
@@ -158,18 +189,24 @@ export default function MainScreen({ theme, setTheme }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Persist spot + favourites + analytics
+  // Persist spot + favourites + analytics. Analytics only fire on ACTUAL
+  // spot changes — the effect also runs on mount (default/restored spot),
+  // which used to inflate spot_selected by one per pageload and fire
+  // custom_spot_added on every visit for users with a persisted custom spot.
   useEffect(() => {
+    const isUserAction = spotEffectRanRef.current && !restoredSpotRef.current;
+    spotEffectRanRef.current = true;
+    restoredSpotRef.current = false;
     try {
       if (spot.id.startsWith("custom-")) {
         localStorage.setItem("surf-last-break-custom", JSON.stringify(spot));
         localStorage.removeItem("surf-last-break");
-        track("custom_spot_added", { lat: spot.lat, lng: spot.lng });
+        if (isUserAction) track("custom_spot_added", { lat: spot.lat, lng: spot.lng });
       } else {
         localStorage.setItem("surf-last-break", spot.id);
         localStorage.removeItem("surf-last-break-custom");
       }
-      track("spot_selected", { id: spot.id, name: spot.name, country: spot.country, type: spot.type });
+      if (isUserAction) track("spot_selected", { id: spot.id, name: spot.name, country: spot.country, type: spot.type });
     } catch {}
   }, [spot]);
   useEffect(() => {
@@ -229,7 +266,10 @@ export default function MainScreen({ theme, setTheme }) {
   // sees the splash.
   const [splashReady, setSplashReady] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setSplashReady(true), 2500);
+    // 1.2s floor (was 2.5s): long enough for the splash not to flash,
+    // short enough not to tax every single visit's LCP — the app's whole
+    // promise is a fast decision.
+    const id = setTimeout(() => setSplashReady(true), 1200);
     return () => clearTimeout(id);
   }, []);
 
@@ -249,18 +289,23 @@ export default function MainScreen({ theme, setTheme }) {
     setPayload({ days: mockDays, sunByDay: {}, effectiveSpot: spot });
     setDataSource("mock");
     setFetchError(null);
+    // The UI is interactive from this point (mock seed), so the recovery
+    // kill-switch in layout.js must stand down NOW — not after the first
+    // fetch resolves. Before, a legitimate 12-15s fetch on slow cellular
+    // tripped the kill-switch (SW unregister + cache wipe + reload) on
+    // exactly the users the 15s timeout was meant to protect.
+    if (typeof window !== "undefined") window.__appReady = true;
 
     // Open-Meteo's marine API can be slow (its two marine calls dominate the
     // 4-request fan-out). 8s was cutting off legitimate-but-slow responses,
-    // especially on cellular — the #1 tracked failure was "timed out after
-    // 8s", not a real outage. Bumped to 15s so slow-but-valid responses
-    // still land instead of falling back to mock.
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Fetch timed out after 15s")), 15000),
-    );
+    // especially on cellular. 15s timeout via AbortController so the four
+    // requests are actually cancelled (Promise.race left them running and
+    // burning mobile data in the background).
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error("Fetch timed out after 15s")), 15000);
     (async () => {
       try {
-        const real = await Promise.race([fetchRealForecast(spot), timeout]);
+        const real = await fetchRealForecast(spot, controller.signal);
         if (cancelled) return;
         if (real && real.days && real.days.length) {
           setPayload(real);
@@ -274,13 +319,10 @@ export default function MainScreen({ theme, setTheme }) {
         setFetchError(msg);
         track("forecast_fetch_failed", { error: msg, spotId: spot.id });
       } finally {
-        // Signal to the static preload splash in layout.js that the app has
-        // finished its first data attempt. The splash's poller watches this
-        // flag and hides as soon as it flips to true (after min 1.5s on screen).
-        if (typeof window !== "undefined") window.__appReady = true;
+        clearTimeout(timer);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
   }, [spot]);
 
   // Refetch when the tab regains focus AND it's been > 5 minutes since the
@@ -291,17 +333,21 @@ export default function MainScreen({ theme, setTheme }) {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const STALE_MS = 5 * 60 * 1000;
+    // `cancelled` guards the async landing: without it, a refetch for spot A
+    // started on tab-return could resolve AFTER the user switched to spot B
+    // and overwrite B's payload with A's swell (race observed in audit).
+    let cancelled = false;
+    const controller = new AbortController();
     const onVisible = async () => {
       if (document.visibilityState !== "visible") return;
       if (Date.now() - lastFetchAt < STALE_MS) return;
       // Même timeout 15s que le fetch initial — un refetch silencieux ne
       // doit pas pendre indéfiniment si Open-Meteo est lent. Pas de retry
       // ici : on garde simplement les données déjà affichées si ça échoue.
+      const timer = setTimeout(() => controller.abort(new Error("refetch timed out after 15s")), 15000);
       try {
-        const timeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("refetch timed out after 15s")), 15000),
-        );
-        const real = await Promise.race([fetchRealForecast(spot), timeout]);
+        const real = await fetchRealForecast(spot, controller.signal);
+        if (cancelled) return;
         if (real && real.days && real.days.length) {
           setPayload(real);
           setDataSource("live");
@@ -309,11 +355,17 @@ export default function MainScreen({ theme, setTheme }) {
           setLastFetchAt(Date.now());
         }
       } catch (e) {
-        console.warn("[v2] visibility refetch failed:", e);
+        if (!cancelled) console.warn("[v2] visibility refetch failed:", e);
+      } finally {
+        clearTimeout(timer);
       }
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [spot, lastFetchAt]);
 
   async function toggleNotifications() {
@@ -350,9 +402,9 @@ export default function MainScreen({ theme, setTheme }) {
     if (best) {
       const tz = payload?.effectiveSpot?.timezone || spot.timezone || "Australia/Perth";
       const when = `${fmtLongDay(best.time.split("T")[0], tz, t)} ${fmtHour(best.hour)}`;
-      new Notification(`🌊 ${spot.name}`, { body: `${t("notif_best_window")}: ${when} · ${best.score}/100`, icon: "/icon-192.png" });
+      showLocalNotification(`🌊 ${spot.name}`, { body: `${t("notif_best_window")}: ${when} · ${best.score}/100`, icon: "/icon-192.png" });
     } else {
-      new Notification(`${spot.name}`, { body: t("notif_none_upcoming"), icon: "/icon-192.png" });
+      showLocalNotification(`${spot.name}`, { body: t("notif_none_upcoming"), icon: "/icon-192.png" });
     }
   }
 
@@ -451,20 +503,43 @@ function Loaded({
   const safeInit = todayIdx >= 0 ? todayIdx : (firstNonPast >= 0 ? firstNonPast : 0);
   const [dayIdx, setDayIdx] = useState(safeInit);
 
-  // Resync dayIdx on payload swap — mock data has today at index 1, real data
-  // has today at index 3 (3 past days + today + 4 future). Without this, the
-  // first render uses mock's index 1, real data lands, and suddenly the user
-  // is looking at "-2d" instead of Today.
+  // A day the USER explicitly picked is remembered by its dateStr so it
+  // survives payload swaps; everything else snaps to Today.
+  const pickedDateRef = useRef(null);
+  const selectDay = (i) => {
+    setDayIdx(i);
+    pickedDateRef.current = days[i]?.dateStr || null;
+  };
+
+  // Resync dayIdx on payload swap — mock and real payloads put Today at
+  // different indices (mock: 1; real: after up-to-4 past days). Re-find the
+  // user's picked day by DATE in the new payload; if they hadn't picked one
+  // (or it's gone), snap to Today. The old check only fired when the stale
+  // index landed on a past day — if the past-days fetch failed, index 1 was
+  // "Tmrw" and the user silently read tomorrow's forecast as today's.
   useEffect(() => {
     const tIdx = days.findIndex((d) => d.isToday);
-    if (tIdx >= 0 && days[dayIdx]?.isPast) setDayIdx(tIdx);
+    const wanted = pickedDateRef.current
+      ? days.findIndex((d) => d.dateStr === pickedDateRef.current)
+      : -1;
+    if (wanted >= 0) setDayIdx(wanted);
+    else if (tIdx >= 0) setDayIdx(tIdx);
+    else setDayIdx(safeInit);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawPayload]);
 
   const day = days[dayIdx] || days[safeInit];
 
+  // Current hour in the SPOT's timezone — day.hours[].hour are spot-local.
+  // Using the device clock here pre-selected the wrong hour (and mis-dimmed
+  // "past" hours) for anyone browsing a spot outside their own timezone.
   const currentHour = (() => {
-    const h = new Date().getHours();
+    let h;
+    try {
+      const tz = effectiveSpot.timezone;
+      h = parseInt(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: tz || undefined }).format(new Date()), 10);
+    } catch { h = new Date().getHours(); }
+    if (!Number.isFinite(h)) h = new Date().getHours();
     const min = day.hours[0].hour;
     const max = day.hours[day.hours.length - 1].hour;
     return Math.min(max, Math.max(min, h));
@@ -480,14 +555,11 @@ function Loaded({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayIdx]);
 
-  const hour = day.hours[selectedIdx];
+  // Clamp: selectedIdx resets in an effect AFTER render, so switching to a
+  // day with fewer hours would read hours[15] of an 8-hour day → undefined
+  // → TypeError in coherentVerdict on the intermediate render.
+  const hour = day.hours[Math.min(selectedIdx, day.hours.length - 1)] || day.hours[0];
   const swapKey = useSwapKey(`${dayIdx}-${selectedIdx}`);
-
-  const hlyWrapRef = useRef(null);
-  useEffect(() => {
-    const el = hlyWrapRef.current?.querySelector(".hly-row.selected");
-    if (el) el.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-  }, [selectedIdx]);
 
   // "UPDATED Xm AGO" — derived from lastFetchAt (the outer MainScreen's
   // timestamp of the most recent successful real fetch). Increments live
@@ -503,6 +575,18 @@ function Loaded({
 
   const verdict = coherentVerdict(hour);
   const [scoreOpen, setScoreOpen] = useState(false);
+
+  // DangerBanner — safety banner for learners on a hard SKIP driven by a
+  // physical hazard (rip, size, blown wind, reef). Was documented in
+  // CLAUDE.md as active but had been silently dropped from the build.
+  const danger = useMemo(() => {
+    const isLearner = effectiveLevel === "first_timer" || effectiveLevel === "beginner" || effectiveLevel === "early_int";
+    if (!isLearner) return false;
+    const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
+    if (getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot) !== "no") return false;
+    const cls = classifyConditions(effectiveLevel, hourDeg, effectiveSpot);
+    return cls.currentHazard !== "none" || cls.size === "too_big" || cls.wind === "blown" || cls.reefTooMuch;
+  }, [effectiveLevel, hour, effectiveSpot]);
 
   // Build the sticky-bar reason as a React node so we can highlight the
   // level name (bold) and the verdict label (coloured) inline — exactly like
@@ -648,7 +732,7 @@ function Loaded({
   const isFav = favorites.includes(spot.id);
 
   async function shareSpot() {
-    const url = `${window.location.origin}/v2?spot=${encodeURIComponent(spot.id)}`;
+    const url = `${window.location.origin}/?spot=${encodeURIComponent(spot.id)}`;
     track("share_clicked", { spotId: spot.id });
     try {
       if (navigator.share) {
@@ -697,7 +781,7 @@ function Loaded({
           </div>
           {dataSource === "mock" && (
             <div className="mock-banner" role="status">
-              ⚠ Live forecast unavailable — showing sample data. Check your connection.
+              ⚠ {t("mock_banner") || "Live forecast unavailable — showing sample data. Check your connection."}
             </div>
           )}
         </div>
@@ -708,7 +792,7 @@ function Loaded({
               <button
                 key={i}
                 onClick={(e) => {
-                  setDayIdx(i);
+                  selectDay(i);
                   track("day_switched", { dayIdx: i, label: d.label });
                   // v1 behavior: smoothly scroll the clicked tab toward the
                   // centre of the tab bar so the neighbouring days become
@@ -735,7 +819,7 @@ function Loaded({
           {days.map((d, i) => (
             <button
               key={i}
-              onClick={() => setDayIdx(i)}
+              onClick={() => selectDay(i)}
               className={`dt ${i === dayIdx ? "active" : ""} ${d.isPast ? "past" : ""}`}
             >
               <div className="dt-day">{d.label}</div>
@@ -745,13 +829,23 @@ function Loaded({
           ))}
         </div>
 
-        <div className="rise-2" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 4 }}>
-          <span className="mono" style={{ fontSize: 9.5, color: "var(--text-dim)", letterSpacing: "0.12em" }}>
-            UPDATED {ago}M AGO
-          </span>
-        </div>
+        {/* Freshness badge only when the data is actually live — showing
+            "UPDATED 0M AGO" above the mock banner contradicted it. */}
+        {dataSource === "live" && (
+          <div className="rise-2" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 4 }}>
+            <span className="mono" style={{ fontSize: 9.5, color: "var(--text-dim)", letterSpacing: "0.12em" }}>
+              UPDATED {ago}M AGO
+            </span>
+          </div>
+        )}
 
         <VerdictHero verdict={verdict} hour={hour} swapKey={swapKey} onOpenScore={() => { track("score_sheet_opened", { score: hour.score, verdict: verdict.key }); setScoreOpen(true); }}/>
+
+        {danger && (
+          <div className="danger-banner" role="alert">
+            {t("danger_banner") || "⚠️ Dangerous conditions for your level — check on-site before paddling out"}
+          </div>
+        )}
 
         {scoreOpen && <ScoreSheet hour={hour} verdict={verdict} userLevel={effectiveLevel} boardRec={boardRecForSheet} sessionNotes={sessionNotes} spot={effectiveSpot} tideCtx={day.tideCtx || dayTideCtx(day.hours)} t={t} onClose={() => setScoreOpen(false)}/>}
 
@@ -782,20 +876,21 @@ function Loaded({
 
         <BestWindow day={day}/>
 
-        <div ref={hlyWrapRef}>
-          <HourlyList
-            key={effectiveLevel}
-            hours={day.hours}
-            selectedIdx={selectedIdx}
-            onSelect={(idx) => { setSelectedIdx(idx); const h = day.hours[idx]; if (h) track("hour_selected", { hour: h.hour, score: h.score }); }}
-            currentHour={currentHour}
-            sunByDay={payload.sunByDay}
-            tz={effectiveSpot.timezone || spot.timezone || "Australia/Perth"}
-            reasonText={personalReason}
-          />
-        </div>
+        {/* No key={effectiveLevel} — remounting on level change wiped the
+            user's cards/list choice and scroll position; props updates
+            re-render just fine. */}
+        <HourlyList
+          hours={day.hours}
+          selectedIdx={Math.min(selectedIdx, day.hours.length - 1)}
+          onSelect={(idx) => { setSelectedIdx(idx); const h = day.hours[idx]; if (h) track("hour_selected", { hour: h.hour, score: h.score }); }}
+          currentHour={currentHour}
+          sunByDay={payload.sunByDay}
+          reasonText={personalReason}
+          isToday={!!day.isToday}
+          isPastDay={!!day.isPast}
+        />
 
-        <TideCurve hours={day.hours} selectedIdx={selectedIdx} onSelect={setSelectedIdx} tz={effectiveSpot.timezone || spot.timezone || "Australia/Perth"}/>
+        <TideCurve hours={day.hours} selectedIdx={Math.min(selectedIdx, day.hours.length - 1)} onSelect={setSelectedIdx}/>
 
         <LevelMatrix hour={hour} spot={effectiveSpot} userLevel={userLevel} t={t}/>
 

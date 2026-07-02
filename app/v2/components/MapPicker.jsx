@@ -154,7 +154,10 @@ export default function MapPicker({ onSelect, onClose, t, initialCenter }) {
   }
 
   return (
-    <div className="v2-overlay" onClick={onClose}>
+    // stopPropagation: the MapPicker renders INSIDE BreakPicker's overlay,
+    // whose own onClick={onClose} would otherwise fire too and close both
+    // sheets on a single backdrop tap.
+    <div className="v2-overlay" onClick={(e) => { e.stopPropagation(); onClose(); }}>
       <div className="v2-sheet" style={{ maxHeight: "94vh" }} onClick={e => e.stopPropagation()}>
         <div className="v2-handle"/>
         <div className="v2-sheet-body">

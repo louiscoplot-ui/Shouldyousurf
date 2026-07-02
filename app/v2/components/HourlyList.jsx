@@ -23,12 +23,18 @@ const WindIcon = () => (
   </svg>
 );
 
-function fmtTimeShort(iso, tz) {
+// Open-Meteo returns LOCAL naive time strings ("2026-07-02T06:59") when a
+// timezone param is sent — the wall-clock IS already the spot's. Parse the
+// digits directly. The previous version did `new Date(iso)` (parsed in the
+// DEVICE tz) then re-formatted with `timeZone: tz` — a double conversion
+// that shifted sunrise/sunset for any user outside the spot's timezone.
+function fmtTimeShort(iso) {
   if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz || "Australia/Perth" })
-      .toLowerCase().replace(" ", "");
-  } catch { return ""; }
+  const m = /T(\d{2}):(\d{2})/.exec(iso);
+  if (!m) return "";
+  const h = parseInt(m[1], 10);
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${m[2]}${h < 12 ? "am" : "pm"}`;
 }
 
 // Defensive numeric formatters — every shaped hour SHOULD have these
@@ -38,8 +44,11 @@ function fmtTimeShort(iso, tz) {
 const fmt1 = (v) => typeof v === "number" ? v.toFixed(1) : "—";
 const fmt0 = (v) => typeof v === "number" ? Math.round(v) : "—";
 
-export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, tz, reasonText }) {
+export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, reasonText, isToday = true, isPastDay = false }) {
   const [viewMode, setViewMode] = useState("cards");
+  // "past" dimming only makes sense relative to the day being shown:
+  // on future days nothing is past; on past days everything is.
+  const isHourPast = (h) => (isPastDay ? true : isToday ? h.hour < currentHour : false);
   const [openIdx, setOpenIdx] = useState(null);
   const scrollerRef = useRef(null);
   const barsRef = useRef(null);
@@ -97,7 +106,13 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
   useEffect(() => {
     if (viewMode === "list" && openIdx == null) {
       const morning = hours.findIndex((h) => h.hour === 6);
-      setOpenIdx(morning >= 0 ? morning : 0);
+      const idx = morning >= 0 ? morning : 0;
+      setOpenIdx(idx);
+      // Keep the selection in lock-step with the auto-opened row — the
+      // expanded detail shows `reasonText`, which the parent computes for
+      // the SELECTED hour. Without this, the 6am row displayed the verdict
+      // and board rec of whatever hour was selected before (e.g. 3pm).
+      onSelect(idx);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode]);
@@ -141,11 +156,12 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               setViewMode("list");
               // Open the 6am row by default — it's near the top of the
               // list so the user can see the expanded detail without
-              // scrolling down. Falls back to the first available hour
-              // if 6am isn't in this day's data (rare, e.g. archived
-              // past days).
+              // scrolling down. Select it too so the reasonText shown in
+              // the expanded row matches the row itself.
               const morning = hours.findIndex((h) => h.hour === 6);
-              setOpenIdx(morning >= 0 ? morning : 0);
+              const idx = morning >= 0 ? morning : 0;
+              setOpenIdx(idx);
+              onSelect(idx);
             }}
           >List</button>
         </div>
@@ -158,7 +174,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         <div className="hly-cards" ref={scrollerRef} key={`cards-${hours[0]?.time?.split("T")?.[0] || "day"}`}>
           {hours.map((h, i) => {
             const v = verdicts[i];
-            const past = h.hour < currentHour;
+            const past = isHourPast(h);
             const selected = selectedIdx === i;
             const tone =
               v.key === "unreal" || v.key === "excellent" ? "good"
@@ -233,8 +249,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
         const dayKey   = h.time?.split("T")?.[0];
         const sun      = sunByDay ? sunByDay[dayKey] : null;
-        const rise     = fmtTimeShort(sun?.sunrise, tz);
-        const set      = fmtTimeShort(sun?.sunset, tz);
+        const rise     = fmtTimeShort(sun?.sunrise);
+        const set      = fmtTimeShort(sun?.sunset);
         return (
           <div className="hly-cpanel" style={{ "--hly-cp-color": v.color }}>
             {reasonText && (
@@ -302,7 +318,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         <div className="hly-list">
           {hours.map((h, i) => {
             const v = verdicts[i];
-            const past = h.hour < currentHour;
+            const past = isHourPast(h);
             const selected = selectedIdx === i;
             const isOpen = openIdx === i;
             const rowOpacity = Math.min(0.9, Math.max(0.15, h.score / 110));
@@ -346,8 +362,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                       {(() => {
                         const dayKey = h.time?.split("T")?.[0];
                         const sun = sunByDay ? sunByDay[dayKey] : null;
-                        const rise = fmtTimeShort(sun?.sunrise, tz);
-                        const set  = fmtTimeShort(sun?.sunset, tz);
+                        const rise = fmtTimeShort(sun?.sunrise);
+                        const set  = fmtTimeShort(sun?.sunset);
                         const curKmh = h.currentVel != null ? (h.currentVel * 3.6) : null;
                         const windTrend = getWindTrend(h, hours);
                         return (

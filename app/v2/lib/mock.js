@@ -43,7 +43,7 @@ const WIND_DIR_OPTIONS = [
   { card: "NE",  deg: 45.0 },
 ];
 
-function buildDay(seed, dayIdx, peakHour, peakScore, spread) {
+function buildDay(seed, dateIso, peakHour, peakScore, spread) {
   const r = seeded(seed);
   const hours = [];
   for (let h = 4; h <= 20; h++) {
@@ -56,7 +56,7 @@ function buildDay(seed, dayIdx, peakHour, peakScore, spread) {
     const swellOpt = SWELL_DIR_OPTIONS[h % SWELL_DIR_OPTIONS.length];
     const windOpt = WIND_DIR_OPTIONS[h % WIND_DIR_OPTIONS.length];
     hours.push({
-      time: `2026-04-${String(13 + dayIdx).padStart(2, "0")}T${String(h).padStart(2, "0")}:00`,
+      time: `${dateIso}T${String(h).padStart(2, "0")}:00`,
       hour: h,
       score,
       swellHeight,
@@ -94,16 +94,39 @@ function buildDay(seed, dayIdx, peakHour, peakScore, spread) {
   return hours;
 }
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export function makeForecast(spotId) {
   const seed = spotId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) * 37;
-  const days = [
-    { label: "Yest.",  dateLabel: "12/4", isPast: true,  hours: buildDay(seed + 0, 0, 9,  48, 5) },
-    { label: "Today",  dateLabel: "13/4", isPast: false, hours: buildDay(seed + 1, 1, 8,  82, 7), isToday: true },
-    { label: "Tmrw",   dateLabel: "14/4", isPast: false, hours: buildDay(seed + 2, 2, 10, 66, 6) },
-    { label: "Wed",    dateLabel: "15/4", isPast: false, hours: buildDay(seed + 3, 3, 11, 42, 5) },
-    { label: "Thu",    dateLabel: "16/4", isPast: false, hours: buildDay(seed + 4, 4, 7,  58, 6) },
-    { label: "Fri",    dateLabel: "17/4", isPast: false, hours: buildDay(seed + 5, 5, 9,  30, 4) },
+  // Dates are generated from the device clock so the fallback never shows
+  // a frozen calendar (the old hardcoded "13/4" read as a real forecast
+  // for the wrong date whenever the live fetch failed).
+  const dayMeta = (offset) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const label = offset === -1 ? "Yest." : offset === 0 ? "Today" : offset === 1 ? "Tmrw" : WEEKDAYS[d.getDay()];
+    return { iso, label, dateLabel: `${d.getDate()}/${d.getMonth() + 1}` };
+  };
+  const PROFILES = [
+    { off: -1, peakHour: 9,  peakScore: 48, spread: 5 },
+    { off: 0,  peakHour: 8,  peakScore: 82, spread: 7 },
+    { off: 1,  peakHour: 10, peakScore: 66, spread: 6 },
+    { off: 2,  peakHour: 11, peakScore: 42, spread: 5 },
+    { off: 3,  peakHour: 7,  peakScore: 58, spread: 6 },
+    { off: 4,  peakHour: 9,  peakScore: 30, spread: 4 },
   ];
+  const days = PROFILES.map((p, i) => {
+    const m = dayMeta(p.off);
+    return {
+      label: m.label,
+      dateLabel: m.dateLabel,
+      dateStr: m.iso,
+      isPast: p.off < 0,
+      isToday: p.off === 0,
+      hours: buildDay(seed + i, m.iso, p.peakHour, p.peakScore, p.spread),
+    };
+  });
   days.forEach((d) => {
     d.bestHour = d.hours.reduce((b, h) => (h.score > (b?.score ?? -1) ? h : b), null);
     d.bestLevel = getLevel(d.bestHour.score);
