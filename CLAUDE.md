@@ -16,10 +16,10 @@ Lis ce fichier en entier avant chaque session. Il contient tout le contexte du p
 
 ## STACK
 
-- Next.js 14.2.15 + React 18.3.1 (App Router)
-- styled-jsx
-- APIs : Open-Meteo Marine (ECMWF) + Forecast (GFS/ICON) + Archive (ERA5) — gratuit, no key
-- Analytics : PostHog US Cloud + Session Replay (`NEXT_PUBLIC_POSTHOG_KEY`)
+- Next.js 14.2.35 + React 18.3.1 (App Router)
+- Tests : vitest (`npm test`) — `tests/scoring.test.mjs` verrouille les invariants du moteur. OBLIGATOIRE avant push si tu touches au scoring.
+- APIs : Open-Meteo Marine + Forecast (GFS/ICON) — gratuit, no key. ⚠️ tier gratuit = non-commercial, migration plan Standard 29$/mois à prévoir.
+- Analytics : PostHog US Cloud + Session Replay (`NEXT_PUBLIC_POSTHOG_KEY`) + GA (gtag dans layout.js)
 - Microsoft Clarity : `NEXT_PUBLIC_CLARITY_ID` non set → script no-op
 - Hosting : Vercel auto-deploy depuis `main`
 
@@ -43,8 +43,9 @@ https://github.com/louiscoplot-ui/Shouldyousurf/compare/main...claude/resume-ses
 ## ARCHITECTURE
 
 ### Routes
-- `/` (`app/page.js`) : version v1 historique, owns le theme state au global
-- `/v2` (`app/v2/page.js`) : version utilisée en prod, MainScreen + co
+- `/` (`app/page.js`) : LA prod — wrapper thème (111 lignes) qui rend `MainScreen` v2 + sync `meta theme-color` iOS. Il n'y a plus de "v1" nulle part.
+- `/v2` : redirect 308 permanent vers `/` (next.config.mjs). Ne pas y remettre de contenu.
+- `app/robots.js` + `app/sitemap.js` : SEO natifs Next.
 
 ### Thème — appliqué EN 2 ENDROITS (obligatoire)
 - `.v2-stage[data-theme="..."]` (wrapper React)
@@ -54,9 +55,11 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
 
 ### Fichiers clés scoring (`app/v2/lib/`)
 
-- `prodScoring.js` — toute la logique métier surf
-  - `estimateFaceHeight(swell, period)` : conversion swell → face avec period boost. **Skip le boost si swellHeight < 0.5m** (sinon 0.3m × 13s donne 1.3m de face fictive)
-  - `scoreSurf(h, spot, tideCtx)` : score baseline 0-100 (continu, pas par niveau)
+- `prodScoring.js` — toute la logique métier surf. **Moteur UNIQUE** (le commentaire "mirrors app/page.js" est mort — page.js ne contient aucun scoring).
+  - `estimateFaceHeight(swell, period)` : conversion swell → face avec period boost. **Boost en rampe continue 0.4→0.8m (smoothstep)** — pas de boost sous 0.4m (face honnête), plein boost dès 0.8m. Plus de falaise à 0.5m.
+  - `pickDominantSwell(h, spot)` : choisit la partition (primaire vs secondaire) qu'un surfeur riderait vraiment (poids = h² × dirMult × periodMult). Utilisée par scoreV2 + classifyConditions + le display faceFt de realFetch — TOUJOURS les trois ensemble, sinon score et verdict divergent.
+  - `scoreV2(...)` : multiplicatif baseSize × period × wind × dir × tide (clamp 0.40-1.35) **× gustMult × chopMult hors clamp** (rafales +15/+25 km/h → ×0.93/×0.85 ; windswell ratio ≥0.5/≥0.8 à période courte → ×0.91/×0.82)
+  - `scoreSurf(h, spot, tideCtx)` : ancien additif, ne sert plus QUE de générateur de `notes` pour chips/tips
   - `USER_LEVEL_ZONES` : matrice min/sweetLo/sweetHi/upperMax par niveau (6 niveaux)
   - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`
   - `hasInsideReform(level, faceFt, spot)` : éligibilité fallback whitewash
@@ -67,22 +70,24 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
   - `adaptForecastToLevel(payload, level, spot)` : recompute tous les `hour.score` quand le user change de niveau
   - `getBoardRec(level, faceFt, period, spot)` : reco planche
   - `levelMatrixFor(hour, spot, fns)` : verdict par niveau (LevelMatrix)
-- `verdict.js` — `SCORE_SCALE` (skip 0-14, poor 15-34, fair 35-44, good 45-54, excellent 55-74, unreal 75-100)
+- `verdict.js` — `SCORE_SCALE` (skip 0-14, poor 15-29, fair 30-44, good 45-59, excellent 60-74, unreal 75-100). `LEVEL_TO_MATRIX_IDX` mappe sur les **5 lignes** de levelMatrixFor (int=2, adv=3, exp=4).
 - `realFetch.js` — fetch Open-Meteo + reshape, calcule `faceFtLow`/`faceFtHigh` pour display. `faceFtLow` peut valoir 0 (display "0-1 ft" honnête).
 
 ### Fichiers UI clés (`app/v2/components/`)
 
-- `MainScreen.jsx` (~750 lignes) — orchestrateur principal
-  - `personalReason` useMemo (~ligne 438) : `pv` ← `getPersonalVerdict`, passé à `getPersonalAdviceKey`
-  - `danger` useMemo (~ligne 498) : DangerBanner pour learners SKIP
-  - PWA banner timing (~ligne 140)
-  - `startVersionCheck()` au mount
-- `HourlyList.jsx` — Cards mode + List mode, expand panels (sub band line retirée des 2 modes)
+- `MainScreen.jsx` (~850 lignes) — orchestrateur principal
+  - `personalReason` useMemo : `pv` ← `getPersonalVerdict`, passé à `getPersonalAdviceKey`
+  - `danger` useMemo : bandeau `.danger-banner` inline (learner + verdict no + hazard physique) — il n'y a PAS de composant DangerBanner.jsx séparé
+  - `currentHour` calculé dans le **fuseau du spot** (Intl + effectiveSpot.timezone), pas le device
+  - fetch avec AbortController (timeout 15s annule vraiment) ; `window.__appReady = true` dès le seed mock (kill-switch layout.js à 20s)
+  - resync jour par `dateStr` via `pickedDateRef` au swap de payload
+  - analytics spot gardées par `spotEffectRanRef`/`restoredSpotRef` (pas de tracking au mount/restore)
+- `HourlyList.jsx` — Cards mode + List mode. Props `isToday`/`isPastDay` conditionnent le dimming "past". PAS de `key={level}` (reset le viewMode).
 - `ScoreSheet.jsx` — modale "How this score is built", **portalée sur `document.body`** → sort du `.v2-stage` → besoin de `:root[data-theme]`
 - `LevelMatrix.jsx` — verdict par niveau en bas, GO/MAYBE/SKIP, utilise `getPersonalVerdict` directement
 - `PwaInstallPrompt.jsx` — bannière install
-- `DangerBanner.jsx` — bandeau safety learners
-- `v2.css` (~1900+ lignes) — tous les styles v2 + 6 thèmes (terracotta, burgundy, nocturnal, oceanic, forest, sand)
+- `v2.css` (~2000+ lignes) — tous les styles v2 + **5 thèmes** (terracotta, burgundy, nocturnal, oceanic, forest — "sand" n'existe pas)
+- ⚠️ CSS : `.wrap.hly-cardmode-active` et `.wrap:has(.hly--list-mode)` cachent StickyInfoBar/.C, DrivingChips/.drv et BestWindow/.best dans les DEUX modes → ces 3 features sont invisibles en prod. Décision produit en attente (réintégrer ou supprimer).
 
 ### Lib (`app/lib/`)
 - `versionCheck.js` — heartbeat 20s, force reload sur deploy. `visibilitychange` déclenche check sans seuil.
@@ -129,8 +134,8 @@ Tip selector : `currentHazard !== "none"` pour learner → `tip_<level>_current`
 
 ### Process strict
 1. Édite le code
-2. `npm run build` pour vérifier
-3. `git restore public/version.json` AVANT add (le hook `gen-version` touche ce fichier — build artifact)
+2. `npm test` (obligatoire si scoring touché) puis `npm run build` pour vérifier
+3. `public/version.json` est gitignoré (build artifact, régénéré par gen-version) — plus de `git restore` nécessaire
 4. `git add` les fichiers spécifiques (pas `-A`)
 5. Commit avec body clair sur le POURQUOI
 6. Push : `git push origin main` ; si 403 → `git push origin main:claude/resume-session-2pbVi`
@@ -158,22 +163,26 @@ Body explique le POURQUOI, pas le quoi.
 
 ---
 
-## ÉTAT ACTUEL (au moment de l'écriture de ce fichier)
+## ÉTAT ACTUEL (mis à jour au sprint réparation 2026-07, cf. AUDIT-PLATFORM-2026-07.md)
 
-- `main` HEAD : `b734bb6` (PR #1 mergée)
-- Tracking PostHog complet + Session Replay actif
-- Auto-update 20s + visibilitychange
-- Cohérence score/label/tip à 100% (single source = `getPersonalVerdict`)
-- Typography : Bricolage Grotesque / Geist / Geist Mono
-- PWA banner : re-prompt 7j après dismiss, skip permanent uniquement si standalone
-- Verdict learner inside-reform : strong current + blown wind = SKIP
-- Face height : honest pour swell <0.5m, `faceFtLow` peut être 0
-- `early_int` zone min : 1.5 ft
-- `early_int + too_small` → SKIP
+- Tracking PostHog complet + Session Replay actif (events spot/custom gardés contre l'inflation au mount)
+- Auto-update 20s + visibilitychange ; kill-switch layout.js à 20s, `__appReady` posé dès le seed mock
+- Cohérence score/label/tip à 100% (single source = `getPersonalVerdict`, partition dominante partagée score↔verdict↔display)
+- scoreV2 : + gustMult/chopMult (hors clamp) + houle secondaire via `pickDominantSwell`
+- Face height : rampe continue 0.4-0.8m, honest sous 0.4m, `faceFtLow` peut être 0
+- Timezone : currentHour/Today/dimming/axe marée/sunrise-sunset tous en heure SPOT
+- Mock : dates générées du jour, banner traduit (12 langues), badge UPDATED masqué, scores mock jamais présentés comme frais
+- DangerBanner learners re-porté (inline MainScreen + `.danger-banner` CSS)
+- Notifications locales via `registration.showNotification` (Android/iOS PWA ok)
+- SEO : metadataBase + OG/Twitter + robots.txt + sitemap.xml + redirect /v2→/ + headers sécurité
+- Tests vitest : `tests/scoring.test.mjs` (19 cas) — invariants verdict/ceilings/grille/NaN
+- `early_int` zone min : 1.5 ft ; `early_int + too_small` → SKIP
 
 ### Bugs identifiés non fixés
 - `early_int` sur reef break avec 3-4ft clean retourne GO. Louis : "il sait ce qu'il fait, on garde" — DON'T FIX sauf demande explicite.
-- 10 langues sur 12 n'ont pas tous les tip strings → fallback EN. Hors scope.
+- ~60 strings UI hardcodées EN (panneaux Hourly, chips, LevelMatrix reasons, ScoreSheet notes, session notes) → fallback EN dans 11 langues. Les clés safety (danger_banner, footer_disclaimer, mock_banner) SONT traduites partout. Batch i18n restant : voir audit §7.
+- StickyInfoBar / DrivingChips / BestWindow cachés par CSS dans les 2 modes (décision produit en attente).
+- surfer.mp4 5.3 MB à ré-encoder (~1.5 MB) — pas de ffmpeg dans l'env de session.
 
 ### Niveau / spots / langues
 - 6 niveaux : `first_timer`, `beginner`, `early_int`, `intermediate`, `advanced`, `expert`

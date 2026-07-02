@@ -3,9 +3,12 @@
 
 import "./v2.css";
 
+// /v2 permanently redirects to "/" (next.config.mjs) — this metadata only
+// exists as a fallback and must NOT read "Preview / not production": it was
+// the title Google indexed and the one shown on shared links.
 export const metadata = {
-  title: "Should You Surf? — Preview v2",
-  description: "Redesign preview. Not the production experience.",
+  title: "Should You Surf?",
+  description: "Should you surf today? Instant GO / MAYBE / SKIP verdict for your level.",
 };
 
 export default function V2Layout({ children }) {

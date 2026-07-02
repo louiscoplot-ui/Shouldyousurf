@@ -1,7 +1,23 @@
 export const metadata = {
+  metadataBase: new URL("https://shouldyousurf.com"),
   title: "Should You Surf?",
-  description: "Should you surf today? Check live conditions for beaches across Australia.",
+  description: "Should you surf today? Instant GO / MAYBE / SKIP verdict for your level — live surf conditions, 5-day forecast, 90+ breaks worldwide.",
   manifest: "/manifest.json",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Should You Surf?",
+    description: "Instant GO / MAYBE / SKIP surf verdict for your level — live conditions and 5-day forecast for 90+ breaks worldwide.",
+    url: "https://shouldyousurf.com",
+    siteName: "Should You Surf?",
+    type: "website",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Should You Surf?" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Should You Surf?",
+    description: "Instant GO / MAYBE / SKIP surf verdict for your level.",
+    images: ["/icon-512.png"],
+  },
   appleWebApp: {
     capable: true,
     // statusBarStyle is intentionally OMITTED — the <meta> tag is managed
@@ -148,10 +164,11 @@ export default function RootLayout({ children }) {
           gtag('js', new Date());
           gtag('config', 'G-77RCEQZ2YS');
           // Recovery kill-switch. If the app hasn't signalled ready within
-          // 12s (window.__appReady = true, set from page.js after first
-          // data fetch completes OR the error screen renders), we assume
+          // 20s (window.__appReady = true, set from MainScreen as soon as
+          // the mock seed renders — i.e. the UI is interactive), we assume
           // the user is stuck on a corrupt cached bundle / stale SW and
-          // clear everything + reload.
+          // clear everything + reload. 20s > the 15s fetch timeout so a
+          // slow-but-healthy network can never trip it.
           //
           // sessionStorage flag prevents reload loops on slow connections:
           // if 12s isn't enough on the first visit, the kill-switch fires
@@ -181,7 +198,7 @@ export default function RootLayout({ children }) {
                   }).then(function(){ location.reload(); });
                 } else { location.reload(); }
               } catch(e) { location.reload(); }
-            }, 12000);
+            }, 20000);
           })();
         `}} />
         {/* PostHog — product analytics. Loaded only if the env var is
@@ -238,7 +255,7 @@ export default function RootLayout({ children }) {
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            var MIN_SHOW = 1500;  // 1.5s — enough to see the video start without feeling long
+            var MIN_SHOW = 1000;  // 1s — see the video start without taxing every visit's LCP
             function hide() {
               if (hidden) return;
               hidden = true;

@@ -5,12 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/gen-version.mjs && next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run"
   },
   "dependencies": {
-    "next": "14.2.15",
+    "next": "14.2.35",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "styled-jsx": "^5.1.7"
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.3",
+    "vitest": "^4.1.9"
   }
 }
