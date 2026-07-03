@@ -118,6 +118,9 @@ Sinon le sheet hérite des vars sand par défaut (deep teal #1a3d3a) et devient 
 ⚠️ **Header `cache-control: no-store` sur `/version.json`**
 Le heartbeat cache-bust avec `?t=`, mais le header est la ceinture-bretelle au cas où le CDN ignore le query string.
 
+⚠️ **CSS inline de layout.js : `dangerouslySetInnerHTML` OBLIGATOIRE**
+Un enfant texte de `<style>` est échappé par React côté serveur (`'Geist'` → `&#x27;`) alors que le navigateur parse le raw text → mismatch d'hydratation garanti → React jetait TOUT le HTML serveur à chaque load (#425/#418/#423). Ne jamais revenir à `<style>{`...`}</style>`, et pas de `<tag>` dans les commentaires CSS.
+
 ⚠️ **Typography : axe SOFT n'existe pas sur Bricolage Grotesque**
 Tous les `font-variation-settings: "SOFT" X, "opsz" Y` ont été cleanés → `"opsz" 96` seulement. Si réintroduit par accident : silencieusement ignoré.
 
