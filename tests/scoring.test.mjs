@@ -108,6 +108,50 @@ describe("scoreV2 surface factors", () => {
   });
 });
 
+describe("continuity — no cliffs anywhere in scoreV2", () => {
+  const maxJump = (lo, hi, step, fn) => {
+    let worst = 0, prev = fn(lo);
+    for (let x = lo + step; x <= hi + 1e-9; x += step) {
+      const v = fn(x);
+      worst = Math.max(worst, Math.abs(v - prev));
+      prev = v;
+    }
+    return worst;
+  };
+  const JUMP_LIMIT = 3; // points de score par pas fin
+
+  it("period 4→20s (0.1s steps)", () => {
+    expect(maxJump(4, 20, 0.1, (x) => scoreV2(mk({ swellPeriod: x }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+  });
+  it("wind speed 0→60 km/h (0.25 km/h steps) in all three regimes", () => {
+    for (const windDir of [90, 190, 270]) { // offshore / cross / onshore vs offshoreWindDir 90
+      expect(maxJump(0, 60, 0.25, (kmh) => scoreV2(mk({ windSpeedKn: kmh / 1.852, windDir }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+    }
+  });
+  it("wind direction 0→360° (1° steps) at moderate and strong wind", () => {
+    for (const kn of [12, 28]) {
+      expect(maxJump(0, 360, 1, (d) => scoreV2(mk({ windSpeedKn: kn, windDir: d }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+    }
+  });
+  it("swell direction 0→360° (1° steps)", () => {
+    expect(maxJump(0, 360, 1, (d) => scoreV2(mk({ swellDir: d }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+  });
+  it("swell height 0→4m (1cm steps)", () => {
+    expect(maxJump(0, 4, 0.01, (x) => scoreV2(mk({ swellHeight: x }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+  });
+  it("secondary swell height 0→2m (1cm steps) over an off-axis primary", () => {
+    expect(maxJump(0, 2, 0.01, (x) => scoreV2(mk({ swellHeight: 0.5, swellDir: 100, secSwellH: x, secSwellP: 14, secSwellDir: 240 }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+  });
+  it("gusts 0→40kn (0.1kn steps) and windswell 0→2m (1cm steps)", () => {
+    expect(maxJump(5, 40, 0.1, (g) => scoreV2(mk({ windGustKn: g }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+    expect(maxJump(0, 2, 0.01, (w) => scoreV2(mk({ swellPeriod: 9, windWaveHeight: w }), spot, "intermediate").score)).toBeLessThan(JUMP_LIMIT);
+  });
+  it("missing period is a strictly neutral multiplier (×1.00)", () => {
+    const r = scoreV2(mk({ swellPeriod: null }), spot, "intermediate");
+    expect(r.multipliers.period).toBe(1.00);
+  });
+});
+
 describe("secondary swell as dominant partition", () => {
   const h = mk({ swellHeight: 0.4, swellDir: 100, secSwellH: 1.5, secSwellP: 15, secSwellDir: 240 });
   it("picks the ideal-direction groundswell over off-axis primary chop", () => {

@@ -46,22 +46,45 @@ export function angDelta(a, b) {
 // groundswell). Score/verdict/face must follow the partition a surfer
 // would actually ride: weight = height² (energy) × direction fit × period.
 // Returns { swellHeight, swellPeriod, swellDir, isSecondary }.
-export function pickDominantSwell(h, spot) {
-  const priH = Number.isFinite(h.swellHeight) ? h.swellHeight : 0;
-  const priP = Number.isFinite(h.swellPeriod) ? h.swellPeriod : 10;
-  const priD = Number.isFinite(h.swellDir) ? h.swellDir : null;
-  const primary = { swellHeight: priH, swellPeriod: priP, swellDir: priD, isSecondary: false };
-  const secH = Number.isFinite(h.secSwellH) ? h.secSwellH : null;
-  if (secH == null || secH < 0.3) return primary;
-  const secP = Number.isFinite(h.secSwellP) ? h.secSwellP : 10;
-  const secD = Number.isFinite(h.secSwellDir) ? h.secSwellDir : null;
+// swellPartitions — les deux partitions normalisées + leurs poids. Le poids
+// de la secondaire monte en smoothstep de 0 (≤0.2m) à plein (≥0.4m) au lieu
+// de l'ancienne coupure sèche à 0.3m (falaise de 6 pts pour 1cm). Partagé
+// par pickDominantSwell (verdict/face) et scoreV2 (blend de score) pour que
+// les deux ne puissent jamais diverger sur "qui est dominante".
+export function swellPartitions(h, spot) {
   const ideal = Number.isFinite(spot?.idealSwellDir) ? spot.idealSwellDir : null;
   const fit = (dir) => (ideal != null && dir != null) ? lookupDirMult(angDelta(dir, ideal)) : 1.0;
-  const weight = (hh, pp, dd) => hh * hh * lookupPeriodMult(pp) * fit(dd);
-  if (weight(secH, secP, secD) > weight(priH, priP, priD)) {
-    return { swellHeight: secH, swellPeriod: secP, swellDir: secD, isSecondary: true };
+  const priPKnown = Number.isFinite(h.swellPeriod);
+  const pri = {
+    swellHeight: Number.isFinite(h.swellHeight) ? h.swellHeight : 0,
+    swellPeriod: priPKnown ? h.swellPeriod : 10, // 10s = periodFactor 1.0 pour la face
+    swellDir: Number.isFinite(h.swellDir) ? h.swellDir : null,
+    isSecondary: false,
+    periodKnown: priPKnown,
+  };
+  const weight = (p) => p.swellHeight * p.swellHeight
+    * (p.periodKnown ? lookupPeriodMult(p.swellPeriod) : 1.0) * fit(p.swellDir);
+  const w1 = weight(pri);
+  const secH = Number.isFinite(h.secSwellH) ? h.secSwellH : null;
+  let sec = null, w2 = 0;
+  if (secH != null && secH > 0.2) {
+    const secPKnown = Number.isFinite(h.secSwellP);
+    sec = {
+      swellHeight: secH,
+      swellPeriod: secPKnown ? h.secSwellP : 10,
+      swellDir: Number.isFinite(h.secSwellDir) ? h.secSwellDir : null,
+      isSecondary: true,
+      periodKnown: secPKnown,
+    };
+    const g = Math.max(0, Math.min(1, (secH - 0.2) / 0.2));
+    w2 = weight(sec) * (g * g * (3 - 2 * g));
   }
-  return primary;
+  return { pri, sec, w1, w2 };
+}
+
+export function pickDominantSwell(h, spot) {
+  const { pri, sec, w1, w2 } = swellPartitions(h, spot);
+  return sec && w2 > w1 ? sec : pri;
 }
 
 export const TIDE_TARGETS = { "low": 0.1, "mid-low": 0.3, "mid": 0.5, "mid-high": 0.7, "high": 0.9 };
@@ -206,44 +229,57 @@ export function levelPeakBaseSize(userLevel) {
   return max;
 }
 
-export function lookupPeriodMult(s) {
-  if (s < 6) return 0.62;
-  if (s < 8) return 0.80;
-  if (s < 10) return 0.95;
-  if (s < 12) return 1.12;
-  if (s < 14) return 1.25;
-  if (s < 16) return 1.35;
-  return 1.42;
+// lerpTable — interpolation linéaire sur une table de nœuds [x, y] triés.
+// Clamp aux extrémités. Toutes les tables de multiplicateurs passent par
+// là : les anciennes fonctions à paliers créaient des falaises de 15-28
+// pts de score pour 0.1s de période ou 1° de vent (audit 2026-07). Les
+// nœuds reprennent les valeurs historiques placées au CENTRE de chaque
+// ancienne bande — aucune recalibration, juste la forme continue.
+function lerpTable(x, nodes) {
+  if (x <= nodes[0][0]) return nodes[0][1];
+  for (let i = 1; i < nodes.length; i++) {
+    if (x <= nodes[i][0]) {
+      const [x0, y0] = nodes[i - 1];
+      const [x1, y1] = nodes[i];
+      return y0 + (y1 - y0) * ((x - x0) / (x1 - x0));
+    }
+  }
+  return nodes[nodes.length - 1][1];
 }
+
+// Anciennes bandes : <6→0.62, <8→0.80, <10→0.95, <12→1.12, <14→1.25,
+// <16→1.35, ≥16→1.42 — nœuds aux centres (5,7,9,11,13,15,17).
+const PERIOD_NODES = [[5, 0.62], [7, 0.80], [9, 0.95], [11, 1.12], [13, 1.25], [15, 1.35], [17, 1.42]];
+export function lookupPeriodMult(s) {
+  return lerpTable(s, PERIOD_NODES);
+}
+
+// Courbes de vitesse par classe de vent (nœuds aux centres des anciennes
+// bandes <10/<20/<30/<50), puis fondu ENTRE les classes sur ±10° autour
+// des anciennes frontières 45°/135° — la falaise "44° vs 46°" disparaît.
+const WIND_OFFSHORE_NODES = [[5, 1.30], [15, 1.20], [25, 1.10], [40, 0.92], [60, 0.70]];
+const WIND_CROSS_NODES    = [[5, 1.05], [15, 0.90], [30, 0.75]];
+const WIND_ONSHORE_NODES  = [[5, 0.72], [15, 0.58], [25, 0.45], [40, 0.30]];
+const mix = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 
 // windDelta = |((windDir - offshoreWindDir + 540) % 360) - 180|
-// offshore: ≤45°, cross: 45-135°, onshore: ≥135°
+// offshore: ≤45°, cross: 45-135°, onshore: ≥135° (fondu ±10° aux frontières)
 export function lookupWindMult(windDelta, kmh) {
-  if (windDelta <= 45) {
-    if (kmh < 10) return 1.30;
-    if (kmh < 20) return 1.20;
-    if (kmh < 30) return 1.10;
-    if (kmh < 50) return 0.92;
-    return 0.70;
-  }
-  if (windDelta < 135) {
-    if (kmh < 10) return 1.05;
-    if (kmh < 20) return 0.90;
-    return 0.75;
-  }
-  if (kmh < 10) return 0.72;
-  if (kmh < 20) return 0.58;
-  if (kmh < 30) return 0.45;
-  return 0.30;
+  const off = lerpTable(kmh, WIND_OFFSHORE_NODES);
+  const cr  = lerpTable(kmh, WIND_CROSS_NODES);
+  const on  = lerpTable(kmh, WIND_ONSHORE_NODES);
+  if (windDelta <= 35) return off;
+  if (windDelta < 55)  return mix(off, cr, (windDelta - 35) / 20);
+  if (windDelta <= 120) return cr;
+  if (windDelta < 150) return mix(cr, on, (windDelta - 120) / 30);
+  return on;
 }
 
+// Anciennes bandes : ≤20→1.22, ≤40→1.10, ≤60→0.95, ≤80→0.75, ≤100→0.50,
+// >100→0.25 — nœuds aux centres (10,30,50,70,90,110).
+const DIR_NODES = [[10, 1.22], [30, 1.10], [50, 0.95], [70, 0.75], [90, 0.50], [110, 0.25]];
 export function lookupDirMult(swellDelta) {
-  if (swellDelta <= 20) return 1.22;
-  if (swellDelta <= 40) return 1.10;
-  if (swellDelta <= 60) return 0.95;
-  if (swellDelta <= 80) return 0.75;
-  if (swellDelta <= 100) return 0.50;
-  return 0.25;
+  return lerpTable(swellDelta, DIR_NODES);
 }
 
 export function lookupTideMult(tideCtx, idealTide, tideM) {
@@ -270,74 +306,95 @@ const FINAL_MULT_MAX = 1.35;
 // les tip selectors les consomment et n'ont pas à changer en PR1.
 export function scoreV2(h, spot, userLevel, tideCtx) {
   const level = userLevel || "intermediate";
-  // Guards : on ne propage PAS NaN. Une donnée manquante doit afficher
-  // un multiplicateur neutre (1.00) plutôt que d'écraser silencieusement
-  // le score. Précédemment `h.swellPeriod || 0` collapsait null vers 0
-  // → periodMult 0.62 (very-short-period penalty) trompeur. `windDir`
-  // null → windDelta NaN → onshore branch + safety cap onshore désactivé.
+  // Guards : on ne propage PAS NaN. Une donnée manquante doit donner un
+  // multiplicateur NEUTRE exact (1.00) — l'ancien défaut "période 10s"
+  // passait par la table et offrait ×1.12 de bonus à une donnée absente.
   //
-  // La houle scorée est la partition DOMINANTE (primaire ou secondaire,
-  // cf. pickDominantSwell) — avant, une secondaire 1,5m @ 15s plein axe
-  // sous une primaire de chop off-axis donnait score 3 ("flat").
-  const dom = pickDominantSwell(h, spot);
-  // Hauteur EFFECTIVE au break : l'atténuation du spot s'applique une
-  // seule fois, ici — baseSize, caps sécurité et ratio chop lisent tous
-  // la houle qui arrive vraiment (Trigg ne reçoit pas le Hs du large).
+  // Le score est calculé pour CHAQUE partition de houle (primaire +
+  // secondaire) puis fondu par poids relatif autour du point de bascule.
+  // Un argmax sec (scorer uniquement la dominante) créait une falaise au
+  // basculement primaire↔secondaire ; le blend rend la sortie continue
+  // tout en restant fidèle à la partition dominante partout ailleurs
+  // (sous 35% de poids relatif la secondaire ne pèse rien, au-dessus de
+  // 65% elle porte tout — cf. probe continuité secSwellH).
   const att = spotAttenuation(spot);
-  const swellH = dom.swellHeight * att;
-  const period = dom.swellPeriod;
-  const swellDir = dom.swellDir;
   const windKn = Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0;
   const kmh = knToKmh(windKn);
   const windDir = Number.isFinite(h.windDir) ? h.windDir : null;
-  const swellDelta = swellDir != null && Number.isFinite(spot.idealSwellDir)
-    ? angDelta(swellDir, spot.idealSwellDir)
-    : null;
   const windDelta = windDir != null && Number.isFinite(spot.offshoreWindDir)
     ? angDelta(windDir, spot.offshoreWindDir)
     : null;
-
-  const baseSize = lookupBaseSize(swellH, level);
-  const periodMult = lookupPeriodMult(period);
   const windMult = windDelta != null ? lookupWindMult(windDelta, kmh) : 1.00;
-  const dirMult = swellDelta != null ? lookupDirMult(swellDelta) : 1.00;
   const tideMult = lookupTideMult(tideCtx, spot.idealTide, h.tideM);
+  const ideal = Number.isFinite(spot.idealSwellDir) ? spot.idealSwellDir : null;
 
-  // ── Facteurs surface (rafales + windswell) ───────────────────────────
-  // Appliqués HORS du clamp finalMult : ce sont des dégradations de
-  // surface qui doivent mordre même quand les bonus période/dir/vent
-  // saturent déjà le clamp. Avant, ces deux pénalités n'existaient que
-  // dans scoreSurf (additif) devenu simple générateur de notes → un jour
-  // "glassy 5kn de moyenne / rafales 30kn" scorait comme un vrai glassy.
+  // ── Facteurs surface (rafales), indépendants de la partition ─────────
+  // Appliqués HORS du clamp finalMult : dégradations de surface qui
+  // doivent mordre même quand les bonus période/dir/vent saturent le clamp.
+  // Rampe continue, anciens paliers (15→0.93, 25→0.85) comme ancres aux
+  // centres — un delta de rafale de 14.9 vs 15.1 km/h ne saute plus.
   let gustMult = 1.0;
   if (Number.isFinite(h.windGustKn)) {
     const gustDelta = knToKmh(h.windGustKn) - kmh;
-    if (gustDelta >= 25) gustMult = 0.85;
-    else if (gustDelta >= 15) gustMult = 0.93;
-  }
-  let chopMult = 1.0;
-  if (Number.isFinite(h.windWaveHeight) && swellH > 0.3) {
-    const ratio = h.windWaveHeight / Math.max(0.3, swellH);
-    if (ratio >= 0.8 && period < 11) chopMult = 0.82;      // face illisible
-    else if (ratio >= 0.5 && period < 10) chopMult = 0.91; // texture marquée
+    gustMult = lerpTable(gustDelta, [[10, 1.0], [20, 0.93], [30, 0.85]]);
   }
 
-  const rawCombined = periodMult * windMult * dirMult * tideMult;
-  const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
-  let score = baseSize * finalMult * gustMult * chopMult;
+  // ── Score d'une partition : hauteur EFFECTIVE (× atténuation spot,
+  // appliquée UNE fois ici), baseSize, multiplicateurs, chop, micro-cap.
+  const partScore = (part) => {
+    const hEff = part.swellHeight * att;
+    const baseSize = lookupBaseSize(hEff, level);
+    const periodMult = part.periodKnown ? lookupPeriodMult(part.swellPeriod) : 1.00;
+    const swellDelta = (part.swellDir != null && ideal != null) ? angDelta(part.swellDir, ideal) : null;
+    const dirMult = swellDelta != null ? lookupDirMult(swellDelta) : 1.00;
+    // Chop windswell : pénalité en rampe sur le ratio (anciens paliers
+    // 0.5→0.91 / 0.8→0.82 comme ancres), modulée par une porte de période
+    // qui s'éteint entre 9.5s et 11s (avant : conditions sèches <10s/<11s).
+    let chopMult = 1.0;
+    if (Number.isFinite(h.windWaveHeight) && hEff > 0.3 && part.periodKnown) {
+      const ratio = h.windWaveHeight / Math.max(0.3, hEff);
+      const ratioPenalty = lerpTable(ratio, [[0.4, 1.0], [0.65, 0.91], [0.9, 0.82]]);
+      const pGate = 1 - Math.max(0, Math.min(1, (part.swellPeriod - 9.5) / 1.5));
+      chopMult = 1 - (1 - ratioPenalty) * pGate;
+    }
+    const rawCombined = periodMult * windMult * dirMult * tideMult;
+    const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
+    let s = baseSize * finalMult * gustMult * chopMult;
+    // Micro-swell : plafond en RAMPE 12 (≤0.35m) → 25 (0.5m) → libéré (0.65m).
+    if (hEff < 0.65) s = Math.min(s, lerpTable(hEff, [[0.35, 12], [0.5, 25], [0.65, 100]]));
+    return { s, baseSize, periodMult, dirMult, chopMult, finalMult };
+  };
 
-  // ── Safety overrides (skill: "Sécurité absolue inviolable") ──────────
-  // La grille baseSize gère déjà la dégringolade hors-zone par niveau,
-  // donc on ne hard-cap PAS sur faceFt > upperMax — laisser le score
-  // descendre naturellement préserve la résolution. On garde ces caps
-  // qui ne sont pas couverts par la grille seule (sur la houle DOMINANTE) :
-  if (swellH < 0.4) score = Math.min(score, 12);  // micro swell → max Skip
-  else if (swellH < 0.5) score = Math.min(score, 25);  // sub-knee territoire whitewash
-  if (windDelta != null && windDelta >= 135 && kmh >= 35) score = Math.min(score, 15);  // gale onshore = junk
-  // Cross-shore violent : galeKills() route déjà vers SKIP côté verdict
-  // mais le score brut peut rester >40 sans cap. On aligne pour éviter
-  // la désync verdict↔score sur cross 50+ km/h (audit CALCUL #1).
-  if (windDelta != null && windDelta >= 90 && windDelta < 135 && kmh >= 50) score = Math.min(score, 25);
+  const { pri, sec, w1, w2 } = swellPartitions(h, spot);
+  const priRes = partScore(pri);
+  let score = priRes.s;
+  let chosen = priRes;
+  if (sec && w2 > 0 && (w1 + w2) > 0) {
+    const secRes = partScore(sec);
+    const t = w2 / (w1 + w2);
+    const b = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
+    const blend = b * b * (3 - 2 * b); // 0 sous 35% de poids, 1 au-dessus de 65%
+    score = priRes.s + (secRes.s - priRes.s) * blend;
+    if (w2 > w1) chosen = secRes; // cohérent avec pickDominantSwell
+  }
+
+  // ── Safety override vent (skill: "Sécurité absolue inviolable") ──────
+  // Plafond continu en vitesse ET en direction, indépendant de la
+  // partition. Onshore : descend de "pas de cap" (28 km/h) vers 15
+  // (42 km/h) — centre 35 = l'ancien seuil sec. Cross : vers 25 entre
+  // 43 et 57 km/h (centre 50 = l'ancien seuil sec, qui faisait une
+  // falaise mesurée de 46 pts). Fondu entre régimes sur delta 120-150°
+  // (aligné sur lookupWindMult), montée du régime cross sur 70-95°.
+  if (windDelta != null) {
+    const onshoreCap = lerpTable(kmh, [[28, 100], [42, 15]]);
+    const crossCap   = lerpTable(kmh, [[43, 100], [57, 25]]);
+    let cap = 100;
+    if (windDelta >= 150) cap = onshoreCap;
+    else if (windDelta >= 120) cap = mix(crossCap, onshoreCap, (windDelta - 120) / 30);
+    else if (windDelta >= 95) cap = crossCap;
+    else if (windDelta >= 70) cap = mix(100, crossCap, (windDelta - 70) / 25);
+    score = Math.min(score, cap);
+  }
 
   // Notes recyclées de scoreSurf — drivingChips/tips/notes pipeline préservé.
   const baseRes = scoreSurf(h, spot, tideCtx);
@@ -345,15 +402,15 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   return {
     score: Math.max(0, Math.min(100, Math.round(score))),
     notes: baseRes.notes,
-    baseSize: Math.round(baseSize),
+    baseSize: Math.round(chosen.baseSize),
     multipliers: {
-      period: periodMult,
+      period: chosen.periodMult,
       wind: windMult,
-      dir: dirMult,
+      dir: chosen.dirMult,
       tide: tideMult,
       gust: gustMult,
-      chop: chopMult,
-      combined: finalMult,
+      chop: chosen.chopMult,
+      combined: chosen.finalMult,
     },
   };
 }
