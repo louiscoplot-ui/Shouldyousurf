@@ -2,6 +2,8 @@
 // TODO: replace with a fetch to the real forecast API when wiring prod data.
 
 import { getLevel } from "./verdict";
+import { estimateFaceHeight, mToFt, spotAttenuation } from "./prodScoring";
+import { BREAKS } from "../../breaks";
 
 export const BREAKS_MOCK = [
   { id: "trigg",       name: "Trigg Beach",        region: "Perth, WA",    type: "beach" },
@@ -43,7 +45,7 @@ const WIND_DIR_OPTIONS = [
   { card: "NE",  deg: 45.0 },
 ];
 
-function buildDay(seed, dateIso, peakHour, peakScore, spread) {
+function buildDay(seed, dateIso, peakHour, peakScore, spread, attenuation) {
   const r = seeded(seed);
   const hours = [];
   for (let h = 4; h <= 20; h++) {
@@ -52,7 +54,10 @@ function buildDay(seed, dateIso, peakHour, peakScore, spread) {
     const swellHeight = 0.8 + r() * 1.6;
     const swellPeriod = 8 + r() * 8;
     const windKmh = 6 + r() * 28;
-    const faceFt = (swellHeight * Math.min(1.8, Math.max(0.7, swellPeriod / 10))) * 3.281;
+    // Même formule de face que le moteur (atténuation du spot incluse) —
+    // l'ancienne copie locale non atténuée affichait "3–5 ft" à Trigg
+    // pendant que score/verdict/planche raisonnaient sur ~2.6 ft.
+    const faceFt = mToFt(estimateFaceHeight(swellHeight, swellPeriod, attenuation));
     const swellOpt = SWELL_DIR_OPTIONS[h % SWELL_DIR_OPTIONS.length];
     const windOpt = WIND_DIR_OPTIONS[h % WIND_DIR_OPTIONS.length];
     hours.push({
@@ -98,6 +103,10 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function makeForecast(spotId) {
   const seed = spotId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) * 37;
+  // Atténuation du vrai spot (Trigg 0.60, etc.) pour que la face mock
+  // affiche la même chose que ce que le moteur score. Spot custom/inconnu
+  // → 1.0 (spotAttenuation gère le défaut).
+  const attenuation = spotAttenuation(BREAKS.find((b) => b.id === spotId));
   // Dates are generated from the device clock so the fallback never shows
   // a frozen calendar (the old hardcoded "13/4" read as a real forecast
   // for the wrong date whenever the live fetch failed).
@@ -124,7 +133,7 @@ export function makeForecast(spotId) {
       dateStr: m.iso,
       isPast: p.off < 0,
       isToday: p.off === 0,
-      hours: buildDay(seed + i, m.iso, p.peakHour, p.peakScore, p.spread),
+      hours: buildDay(seed + i, m.iso, p.peakHour, p.peakScore, p.spread, attenuation),
     };
   });
   days.forEach((d) => {

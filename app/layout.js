@@ -68,9 +68,14 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" />
-        <style>{`
+        {/* dangerouslySetInnerHTML: React escapes quotes in <style> text
+            children on the server (&#x27;Geist&#x27;) while browsers parse raw
+            text — the mismatch made React discard the whole server HTML on
+            every single load (hydration error #425/#418/#423). Static CSS,
+            owner-controlled, no user input. */}
+        <style dangerouslySetInnerHTML={{ __html: `
           /* html/body bg inherit a CSS var that app/page.js sets inline on
-             <html> whenever the theme changes. Falls back to paper so the
+             the html element whenever the theme changes. Falls back to paper so the
              first paint before hydration still looks reasonable, but the
              var will flip to #10161a on nocturnal and propagate to the
              iOS safe-area-inset-top region. */
@@ -78,7 +83,7 @@ export default function RootLayout({ children }) {
           html, body { margin: 0; font-family: 'Geist', system-ui, sans-serif; color: var(--text, #0f1e2e); }
           body { background: var(--bg, #f5ede1); }
           /* ── Preload splash ──────────────────────────────────────────
-             Rendered as static HTML at the top of <body>. Appears the
+             Rendered as static HTML at the top of the body. Appears the
              instant the browser parses the first line of body — before
              React hydrates, before Google Fonts load, before Open-Meteo
              answers. Uses system serif (Georgia) so there's ZERO font-
@@ -91,7 +96,7 @@ export default function RootLayout({ children }) {
             gap: 20px; padding: 0 24px; text-align: center;
             /* Fallback bg: coral-to-teal vertical gradient (matches the
                sunset → water palette of the video) so the split-second
-               before <video> paints isn't a colour-mismatch flash. */
+               before the video paints isn't a colour-mismatch flash. */
             background: linear-gradient(180deg, #4a2341 0%, #2a3f50 35%, #12303a 100%);
             overflow: hidden;
             transition: opacity 180ms ease-out;
@@ -156,7 +161,7 @@ export default function RootLayout({ children }) {
           .load-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pl-bounce 1.2s infinite ease-in-out both; }
           .load-dot:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
           .load-dot:nth-child(3) { animation-delay: 0.3s; }
-        `}</style>
+        ` }} />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-77RCEQZ2YS"></script>
         <script dangerouslySetInnerHTML={{ __html: `
           window.dataLayer = window.dataLayer || [];
