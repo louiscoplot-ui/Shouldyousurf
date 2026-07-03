@@ -247,6 +247,11 @@ export async function fetchRealForecast(spot, signal) {
       windDirDeg,
       windKmh: knToKmh(raw.windSpeedKn),
       windType: classifyWind(windDirDeg, effectiveSpot.offshoreWindDir),
+      // Partition dominante + face exacte, calculées UNE fois ici et lues
+      // partout via getDominant()/faceFtOf() — aucun lecteur ne re-dérive
+      // depuis la primaire.
+      dom: domSwell,
+      faceFt,
       faceFtLow: Math.max(0, Math.floor(faceFt - 0.5)),
       faceFtHigh: Math.max(1, Math.ceil(faceFt + 0.5)),
       score,

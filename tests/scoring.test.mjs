@@ -6,6 +6,8 @@ import {
   estimateFaceHeight,
   spotAttenuation,
   pickDominantSwell,
+  faceFtOf,
+  getBoardRec,
   scoreV2,
   scoreForLevel,
   getPersonalVerdict,
@@ -15,7 +17,7 @@ import {
   mToFt,
 } from "../app/v2/lib/prodScoring.js";
 import { BREAKS } from "../app/breaks.js";
-import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE } from "../app/v2/lib/verdict.js";
+import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE, scoreBreakdown, drivingChipsFor } from "../app/v2/lib/verdict.js";
 
 const spot = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
 const reef = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid", type: "reef", heavy: true };
@@ -169,6 +171,40 @@ describe("secondary swell as dominant partition", () => {
     // 1.5m @ 15s ≈ 7ft face → sweet/upper for advanced, not "too_small"
     const cls = classifyConditions("advanced", h, spot);
     expect(cls.size).not.toBe("too_small");
+  });
+});
+
+describe("dominant partition propagated to every reader", () => {
+  // Jour à secondaire dominante : primaire 0.4m @ 6s off-axis, secondaire
+  // 1.5m @ 15s plein axe (probe E de l'audit).
+  const hSec = mk({ swellHeight: 0.4, swellPeriod: 6, swellDir: 100, secSwellH: 1.5, secSwellP: 15, secSwellDir: 240, windKmh: 9, windType: "offshore" });
+
+  it("getDominant prefers the cached hour.dom without recomputing", async () => {
+    const cached = { swellHeight: 9.9, swellPeriod: 20, swellDir: 240, isSecondary: true, periodKnown: true };
+    const { getDominant } = await import("../app/v2/lib/prodScoring.js");
+    expect(getDominant({ ...hSec, dom: cached }, spot)).toBe(cached);
+  });
+  it("faceFtOf reads the cached hour.faceFt", () => {
+    expect(faceFtOf({ ...hSec, faceFt: 4.2 }, spot)).toBe(4.2);
+  });
+  it("board rec face matches the scored (secondary) wave, not the primary chop", () => {
+    const face = faceFtOf(hSec, spot);
+    expect(face).toBeGreaterThan(6); // ~7.4 ft — plus jamais 1.3 ft
+    const board = getBoardRec("advanced", face, 15, spot);
+    expect(board.short).not.toMatch(/Longboard/);
+  });
+  it("ScoreSheet wave-size line describes the dominant swell", () => {
+    const bd = scoreBreakdown(hSec, spot, "advanced", null);
+    expect(bd.factors[0].value).toContain("1.5 m");
+    expect(parseFloat(bd.factors[0].value)).toBeGreaterThan(6); // ft face
+  });
+  it("driving chips read the dominant swell (long-period pos, no small-swell neg)", () => {
+    const chips = drivingChipsFor(hSec, spot, "advanced");
+    const texts = chips.map((c) => c.t);
+    expect(texts).toContain("Long-period groundswell");
+    expect(texts).toContain("Ideal swell direction");
+    expect(texts).not.toContain("Too small for level");
+    expect(texts).not.toContain("Short-period swell");
   });
 });
 

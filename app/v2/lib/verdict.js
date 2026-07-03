@@ -1,7 +1,7 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
-import { scoreV2, scoreForLevel, lookupBaseSize, levelPeakBaseSize, mToFt, estimateFaceHeight, spotAttenuation } from "./prodScoring";
+import { scoreV2, scoreForLevel, lookupBaseSize, levelPeakBaseSize, degToCompass, faceFtOf, getDominant, spotAttenuation } from "./prodScoring";
 
 // Bandes recalibrées post-multiplicatif. Distribution analysée sur 4800
 // combinaisons (10 swellH × 5 periods × 4 winds × 4 dir × 6 levels) :
@@ -57,11 +57,15 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
   // Sa signature retourne aussi baseSize/multipliers depuis PR2.
   const v2 = scoreForLevel(hDeg, spot, level, tideCtx);
 
-  const period = typeof h.swellPeriod === "number" ? h.swellPeriod : 0;
+  // Partition DOMINANTE (cachée sur hour.dom par realFetch) — le sheet
+  // décrit la houle que le score note, plus jamais la primaire quand une
+  // secondaire porte le jour (audit : "1.3 ft face" sur un jour scoré 51).
+  const dom = getDominant(hDeg, spot);
+  const period = dom.periodKnown ? dom.swellPeriod : 0;
   const windKmh = typeof h.windKmh === "number" ? h.windKmh : 0;
-  const dirCardinal = typeof h.swellDir === "string" ? h.swellDir : "—";
+  const dirCardinal = dom.swellDir != null ? degToCompass(dom.swellDir) : (typeof h.swellDir === "string" ? h.swellDir : "—");
   const windType = (h.windType || "").toLowerCase();
-  const swellH = h.swellHeight || 0;
+  const swellH = dom.swellHeight;
 
   let sizeNote;
   if (swellH < 0.3) sizeNote = "Almost flat";
@@ -78,9 +82,8 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
   else                  perNote = "Long-period groundswell";
 
   let dirNote = `${dirCardinal} — `;
-  if (spot && spot.idealSwellDir != null && (h.swellDirDeg != null || typeof h.swellDir === "number")) {
-    const dirDeg = h.swellDirDeg != null ? h.swellDirDeg : h.swellDir;
-    const delta = Math.abs(((dirDeg - spot.idealSwellDir + 540) % 360) - 180);
+  if (spot && spot.idealSwellDir != null && dom.swellDir != null) {
+    const delta = Math.abs(((dom.swellDir - spot.idealSwellDir + 540) % 360) - 180);
     if (delta <= 20) dirNote += "ideal angle";
     else if (delta <= 40) dirNote += "good angle";
     else if (delta <= 60) dirNote += "workable angle";
@@ -104,7 +107,7 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
                  : v2.multipliers.tide <= 0.95 ? "Wrong tide phase"
                  : "Neutral / no tide preference set";
 
-  const sizeFt = mToFt(estimateFaceHeight(swellH, period, spotAttenuation(spot)));
+  const sizeFt = faceFtOf(hDeg, spot);
   return {
     total: v2.score,
     baseSize: v2.baseSize,
@@ -122,29 +125,35 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
 
 export function drivingChipsFor(h, spot, userLevel) {
   const chips = [];
-  if (h.swellPeriod < 9) chips.push({ t: "Short-period swell", k: "neg" });
-  else if (h.swellPeriod >= 12) chips.push({ t: "Long-period groundswell", k: "pos" });
+  // Toutes les chips houle lisent la partition DOMINANTE (+ atténuation
+  // du spot pour la taille) — mêmes entrées que le score qu'elles
+  // prétendent expliquer.
+  const dom = getDominant(h, spot);
+  if (dom.periodKnown) {
+    if (dom.swellPeriod < 9) chips.push({ t: "Short-period swell", k: "neg" });
+    else if (dom.swellPeriod >= 12) chips.push({ t: "Long-period groundswell", k: "pos" });
+  }
   // Size chip lit la grille baseSize du niveau au lieu d'un seuil
   // 0.9-2.0m hardcodé. Pre-FIX 5, un beginner sur 0.85m voyait "Small
   // swell" en rouge alors que son score était au peak — confusion
   // visuelle "pourquoi le score est élevé si swell small ?". Maintenant
   // chip pos quand la taille est dans la sweet zone du niveau, neg
   // seulement quand vraiment under-sized pour ce niveau.
-  if (Number.isFinite(h.swellHeight) && userLevel) {
-    const bs = lookupBaseSize(h.swellHeight, userLevel);
+  const effH = dom.swellHeight * spotAttenuation(spot);
+  if (Number.isFinite(effH) && userLevel) {
+    const bs = lookupBaseSize(effH, userLevel);
     if (bs >= 60) chips.push({ t: "Good size for level", k: "pos" });
     else if (bs <= 18) chips.push({ t: "Too small for level", k: "neg" });
   } else {
-    if (h.swellHeight >= 0.9 && h.swellHeight <= 2.0) chips.push({ t: "Good size", k: "pos" });
-    else if (h.swellHeight < 0.6) chips.push({ t: "Small swell", k: "neg" });
+    if (effH >= 0.9 && effH <= 2.0) chips.push({ t: "Good size", k: "pos" });
+    else if (effH < 0.6) chips.push({ t: "Small swell", k: "neg" });
   }
   // Spot-aware direction. Uses idealSwellDir when available (so Bondi
   // gets credit for SE swell and Hossegor for W swell). Falls back to
   // the legacy WA-only list if no spot is given — shouldn't happen in
   // practice now that drivingChipsFor is always called with the spot.
-  const dirDeg = h.swellDirDeg != null ? h.swellDirDeg : (typeof h.swellDir === "number" ? h.swellDir : null);
-  if (spot && spot.idealSwellDir != null && dirDeg != null) {
-    const delta = Math.abs(((dirDeg - spot.idealSwellDir + 540) % 360) - 180);
+  if (spot && spot.idealSwellDir != null && dom.swellDir != null) {
+    const delta = Math.abs(((dom.swellDir - spot.idealSwellDir + 540) % 360) - 180);
     if (delta <= 30) chips.push({ t: "Ideal swell direction", k: "pos" });
   } else if (typeof h.swellDir === "string" && ["SW", "WSW", "W", "SSW"].includes(h.swellDir)) {
     chips.push({ t: "Ideal swell direction", k: "pos" });

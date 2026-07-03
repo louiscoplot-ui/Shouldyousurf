@@ -87,6 +87,26 @@ export function pickDominantSwell(h, spot) {
   return sec && w2 > w1 ? sec : pri;
 }
 
+// getDominant — lecture UNIQUE de la partition dominante. realFetch la
+// calcule une fois par heure et la cache sur `hour.dom` ; tous les
+// lecteurs (classify, chips, breakdown, modifiers, session notes, board)
+// passent par ici au lieu de re-piocher h.swellHeight (la primaire) —
+// c'était la source des affichages "1.3 ft" sur un jour scoré 51.
+export function getDominant(h, spot) {
+  const d = h ? h.dom : null;
+  if (d && Number.isFinite(d.swellHeight)) return d;
+  return pickDominantSwell(h, spot);
+}
+
+// faceFtOf — LA hauteur de face (ft) d'une heure : partition dominante +
+// atténuation du spot, calculée une fois dans shapeHour (hour.faceFt) et
+// recalculée seulement en fallback (heures mock / synthétiques).
+export function faceFtOf(h, spot) {
+  if (h && Number.isFinite(h.faceFt)) return h.faceFt;
+  const dom = getDominant(h, spot);
+  return mToFt(estimateFaceHeight(dom.swellHeight, dom.swellPeriod, spotAttenuation(spot)));
+}
+
 export const TIDE_TARGETS = { "low": 0.1, "mid-low": 0.3, "mid": 0.5, "mid-high": 0.7, "high": 0.9 };
 
 export function scoreSurf(h, spot, tideCtx) {
@@ -511,10 +531,9 @@ export const USER_LEVEL_ZONES = {
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la
   // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
-  // groundswell) et les deux se contrediraient à l'écran. L'atténuation
-  // du spot s'applique dans estimateFaceHeight (une seule fois).
-  const dom = pickDominantSwell(h, spot);
-  const faceFt = mToFt(estimateFaceHeight(dom.swellHeight, dom.swellPeriod, spotAttenuation(spot)));
+  // groundswell) et les deux se contrediraient à l'écran. faceFtOf lit
+  // le cache hour.faceFt (atténuation incluse) posé par shapeHour.
+  const faceFt = faceFtOf(h, spot);
   const kmh = knToKmh(h.windSpeedKn);
   const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
   const isOffshore = windDelta <= 45;
@@ -648,8 +667,11 @@ export function getPersonalModifier(userLevel, h, spot) {
   if (size === "too_small" || size === "too_big") return null;
   if (wind === "blown") return null;
 
-  const period = h.swellPeriod || 0;
-  const dirDelta = Math.abs(((h.swellDir - spot.idealSwellDir + 540) % 360) - 180);
+  // Partition dominante — le modifier "long period" doit parler de la
+  // houle que le score note, pas de la primaire.
+  const dom = getDominant(h, spot);
+  const period = dom.periodKnown ? dom.swellPeriod : 0;
+  const dirDelta = Math.abs(((dom.swellDir - spot.idealSwellDir + 540) % 360) - 180);
   const isLearner = userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int";
 
   if (period >= 14 && (size === "sweet" || size === "upper")) return "tip_mod_long_period";
@@ -753,8 +775,9 @@ export function getSessionNotes(userLevel, h, dayHours, spot) {
     }
   }
 
-  // Period warnings
-  const period = h.swellPeriod || 0;
+  // Period warnings — sur la partition dominante (celle que le score note)
+  const domSw = getDominant(h, spot);
+  const period = domSw.periodKnown ? domSw.swellPeriod : 0;
   if (period >= 13 && (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int")) {
     out.push("Long-period swell — waves hit harder than they look, be patient with take-offs");
   } else if (period > 0 && period < 8 && (size === "sweet" || size === "upper")) {
