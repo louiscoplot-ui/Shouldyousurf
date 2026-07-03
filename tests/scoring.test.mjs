@@ -224,6 +224,31 @@ describe("verdict ceilings (label ↔ score coherence)", () => {
   });
 });
 
+describe("safety holes closed (audit bloc 4)", () => {
+  it("13 ft glassy long-period → hard no for early_int and intermediate", () => {
+    const big = mk({ swellHeight: 2.5, swellPeriod: 16, windSpeedKn: 5 }); // ~13 ft exposed
+    expect(getPersonalVerdict("early_int", big, spot)).toBe("no");
+    expect(getPersonalVerdict("intermediate", big, spot)).toBe("no");
+    // advanced garde son jugement (MAYBE, pas d'interdiction)
+    expect(getPersonalVerdict("advanced", big, spot)).toBe("ok");
+  });
+  it("upperMax +25% (≈7.5 ft) clean stays MAYBE for intermediate", () => {
+    const edge = mk({ swellHeight: 1.6, swellPeriod: 14 }); // face ~7.4 ft
+    expect(classifyConditions("intermediate", edge, spot).size).toBe("too_big");
+    expect(getPersonalVerdict("intermediate", edge, spot)).toBe("ok");
+  });
+  it("dangerous rip → hard no for early_int; strong rip → never GO", () => {
+    const ripDanger = mk({ swellHeight: 0.9, currentVel: 0.6 });
+    expect(getPersonalVerdict("early_int", ripDanger, spot)).toBe("no");
+    const ripStrong = mk({ swellHeight: 0.9, currentVel: 0.4 });
+    expect(getPersonalVerdict("early_int", ripStrong, spot)).not.toBe("yes");
+    expect(classifyConditions("early_int", ripStrong, spot).currentHazard).toBe("strong");
+  });
+  it("currents remain invisible for advanced+ (their call)", () => {
+    expect(classifyConditions("advanced", mk({ currentVel: 0.7 }), spot).currentHazard).toBe("none");
+  });
+});
+
 describe("CLAUDE.md safety invariants", () => {
   it("reef/heavy spot → hard no for first_timer and beginner", () => {
     const h = mk({ swellHeight: 1.0 });

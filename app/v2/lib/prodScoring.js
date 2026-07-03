@@ -577,12 +577,16 @@ export function classifyConditions(userLevel, h, spot) {
 
   const reefTooMuch = (spot.heavy || spot.type === "reef") && isEarlyLearner;
 
-  // Ocean-current hazard for early-learners — a rip drains a beginner faster
-  // than they can paddle against it. Open-Meteo returns velocity in m/s;
-  // 0.28 m/s ≈ 1 km/h, 0.56 m/s ≈ 2 km/h.
+  // Ocean-current hazard for learners — a rip drains them faster than they
+  // can paddle against it. Open-Meteo returns velocity in m/s;
+  // 0.28 m/s ≈ 1 km/h, 0.56 m/s ≈ 2 km/h. Covers early_int too : ils sont
+  // sur un mid-length, pas encore le paddle pour remonter un vrai rip —
+  // et les tips "courant" leur étaient déjà routés alors que le hazard
+  // restait aveugle pour eux (trou relevé par l'audit).
+  const hazardProne = isEarlyLearner || userLevel === "early_int";
   const curVel = h.currentVel || 0;
-  const currentHazard = isEarlyLearner && curVel >= 0.56 ? "dangerous"
-                      : isEarlyLearner && curVel >= 0.28 ? "strong"
+  const currentHazard = hazardProne && curVel >= 0.56 ? "dangerous"
+                      : hazardProne && curVel >= 0.28 ? "strong"
                       : "none";
   return { size, wind, reefTooMuch, faceFt, currentHazard };
 }
@@ -920,6 +924,16 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // attempt — "ok" (MAYBE) instead of hard-no keeps the level ladder
     // monotonic (never stricter than beginner).
     if (userLevel === "first_timer" || userLevel === "beginner") return "no";
+    // Plafond ABSOLU pour early_int / intermediate : au-delà de
+    // upperMax × 1.6 (≈ 9.6 ft pour leurs zones à upperMax 6), ce n'est
+    // plus "sur la limite, choisis tes vagues" mais double-overhead —
+    // l'audit montrait un MAYBE sur 13 ft glassy. Le ×1.6 laisse la
+    // marge raisonnable (upperMax +20-30%, soit 7.2-7.8 ft) en MAYBE et
+    // coupe net au-delà. Advanced/expert gardent leur jugement.
+    if (userLevel === "early_int" || userLevel === "intermediate") {
+      const z = USER_LEVEL_ZONES[userLevel];
+      if (faceFt > z.upperMax * 1.6) return "no";
+    }
     return "ok";
   }
   const cap = currentHazard === "strong" ? "ok" : null;
