@@ -5,7 +5,16 @@
 export const mToFt = m => m * 3.281;
 export const knToKmh = kn => kn * 1.852;
 
-export function estimateFaceHeight(swellHeight, swellPeriod) {
+// Per-spot swell attenuation — offshore Hs is what the wave model sees at
+// the grid cell; sheltered spots (offshore banks, islands, headlands) only
+// receive a fraction of it. 1.0 = fully exposed (default, non-regression).
+// Values live on the spot in breaks.js (`swellAttenuation`).
+export function spotAttenuation(spot) {
+  const a = spot ? spot.swellAttenuation : null;
+  return Number.isFinite(a) ? Math.min(1, Math.max(0, a)) : 1.0;
+}
+
+export function estimateFaceHeight(swellHeight, swellPeriod, attenuation = 1) {
   // Period boost reflects how long-period swell builds at the break.
   // But this only matters when there's enough water mass to build with —
   // tiny swells stay tiny faces regardless of period (a 0.3m @ 13s reads
@@ -13,10 +22,15 @@ export function estimateFaceHeight(swellHeight, swellPeriod) {
   // and 0.8m (smoothstep) instead of switching on at a hard 0.5m — the
   // old cliff made 1cm of swell change the displayed face by ~45%
   // (0.49m@14s → 1.6ft vs 0.50m@14s → 2.3ft).
+  //
+  // `attenuation` scales the offshore Hs down to what actually reaches the
+  // break (spotAttenuation) — applied BEFORE the period boost and the ramp
+  // thresholds, exactly once per call chain.
+  const hEff = swellHeight * attenuation;
   const periodFactor = Math.min(1.8, Math.max(0.7, swellPeriod / 10));
-  const t = Math.max(0, Math.min(1, (swellHeight - 0.4) / 0.4));
+  const t = Math.max(0, Math.min(1, (hEff - 0.4) / 0.4));
   const blend = t * t * (3 - 2 * t); // smoothstep 0→1 over 0.4–0.8m
-  return swellHeight * (1 + (periodFactor - 1) * blend);
+  return hEff * (1 + (periodFactor - 1) * blend);
 }
 
 // Angular delta helper — |((a - b + 540) % 360) - 180|, the shortest
@@ -266,7 +280,11 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // cf. pickDominantSwell) — avant, une secondaire 1,5m @ 15s plein axe
   // sous une primaire de chop off-axis donnait score 3 ("flat").
   const dom = pickDominantSwell(h, spot);
-  const swellH = dom.swellHeight;
+  // Hauteur EFFECTIVE au break : l'atténuation du spot s'applique une
+  // seule fois, ici — baseSize, caps sécurité et ratio chop lisent tous
+  // la houle qui arrive vraiment (Trigg ne reçoit pas le Hs du large).
+  const att = spotAttenuation(spot);
+  const swellH = dom.swellHeight * att;
   const period = dom.swellPeriod;
   const swellDir = dom.swellDir;
   const windKn = Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0;
@@ -436,9 +454,10 @@ export const USER_LEVEL_ZONES = {
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la
   // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
-  // groundswell) et les deux se contrediraient à l'écran.
+  // groundswell) et les deux se contrediraient à l'écran. L'atténuation
+  // du spot s'applique dans estimateFaceHeight (une seule fois).
   const dom = pickDominantSwell(h, spot);
-  const faceFt = mToFt(estimateFaceHeight(dom.swellHeight, dom.swellPeriod));
+  const faceFt = mToFt(estimateFaceHeight(dom.swellHeight, dom.swellPeriod, spotAttenuation(spot)));
   const kmh = knToKmh(h.windSpeedKn);
   const windDelta = Math.abs(((h.windDir - spot.offshoreWindDir + 540) % 360) - 180);
   const isOffshore = windDelta <= 45;

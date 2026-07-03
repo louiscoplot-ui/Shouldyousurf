@@ -30,12 +30,20 @@ export const COUNTRIES = [
   { code: "JP", name: "Japan",            flag: "🇯🇵" },
 ];
 
+// `swellAttenuation` (0-1, défaut 1.0 = spot pleinement exposé) : fraction du
+// Hs offshore du modèle qui atteint réellement le break. Le corridor Perth
+// métro est abrité par Five Fathom Bank + Rottnest + Garden Island — les
+// bouées montrent typiquement 40-50% de perte entre Rottnest et la plage.
+// ⚠️ TODO calibration : valeurs hypothèses, à ajuster sur les bouées
+// Rottnest (56005) / Cottesloe (56008) quand l'ingestion sera branchée.
 export const BREAKS = [
   // ─── Western Australia ───────────────────────────────────────────────
-  { id: "trigg",        country: "AU", name: "Trigg Beach",        region: "Perth, WA",    lat: -31.8826, lng: 115.7519, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", notes: "Five Fathom Bank absorbs swell. Needs long period." },
-  { id: "scarborough",  country: "AU", name: "Scarborough",        region: "Perth, WA",    lat: -31.8939, lng: 115.7553, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high" },
-  { id: "cottesloe",    country: "AU", name: "Cottesloe",          region: "Perth, WA",    lat: -31.9950, lng: 115.7520, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high" },
-  { id: "leighton",     country: "AU", name: "Leighton",           region: "Perth, WA",    lat: -32.0283, lng: 115.7461, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high" },
+  // Trigg/Scarborough : nord du corridor, un peu plus ouverts au NW mais Five Fathom Bank filtre le SW dominant.
+  { id: "trigg",        country: "AU", name: "Trigg Beach",        region: "Perth, WA",    lat: -31.8826, lng: 115.7519, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.60, notes: "Five Fathom Bank absorbs swell. Needs long period." },
+  { id: "scarborough",  country: "AU", name: "Scarborough",        region: "Perth, WA",    lat: -31.8939, lng: 115.7553, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.60 },
+  // Cottesloe/Leighton : plein dans l'ombre de Rottnest + Garden Island, les plus abrités du métro.
+  { id: "cottesloe",    country: "AU", name: "Cottesloe",          region: "Perth, WA",    lat: -31.9950, lng: 115.7520, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
+  { id: "leighton",     country: "AU", name: "Leighton",           region: "Perth, WA",    lat: -32.0283, lng: 115.7461, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
   { id: "margaret",     country: "AU", name: "Margaret River Main",region: "Margaret River, WA", lat: -33.9717, lng: 114.9896, idealSwellDir: 225, offshoreWindDir: 90,  idealTide: "mid" },
   { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6406, lng: 114.9908, idealSwellDir: 225, offshoreWindDir: 135, idealTide: "mid" },
   { id: "gnaraloo",     country: "AU", name: "Gnaraloo (Tombstones)", region: "Coral Coast, WA", lat: -23.8489, lng: 113.5350, idealSwellDir: 225, offshoreWindDir: 90,  idealTide: "mid-low" },

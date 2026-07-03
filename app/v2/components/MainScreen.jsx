@@ -46,6 +46,7 @@ import {
   getSessionNotes,
   mToFt,
   estimateFaceHeight,
+  spotAttenuation,
   dayTideCtx,
 } from "../lib/prodScoring";
 
@@ -621,7 +622,7 @@ function Loaded({
     // Board recommendation — short inline label (e.g. "Foamie 7'–8'",
     // "Shortboard 6'0–6'4"). Hidden when verdict is SKIP (no board advice
     // makes sense when the session itself is off).
-    const faceFt = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0));
+    const faceFt = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0, spotAttenuation(effectiveSpot)));
     const boardRec = pv !== "no" ? getBoardRec(effectiveLevel, faceFt, hour.swellPeriod || 0, effectiveSpot) : null;
 
     return (
@@ -645,7 +646,7 @@ function Loaded({
     return getSessionNotes(effectiveLevel, hourDeg, day.hours, effectiveSpot);
   }, [effectiveLevel, hour, day.hours, effectiveSpot]);
 
-  const faceFtForSheet = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0));
+  const faceFtForSheet = mToFt(estimateFaceHeight(hour.swellHeight || 0, hour.swellPeriod || 0, spotAttenuation(effectiveSpot)));
   const boardRecForSheet = getBoardRec(effectiveLevel, faceFtForSheet, hour.swellPeriod || 0, effectiveSpot);
 
   const sibSentinelRef = useRef(null);

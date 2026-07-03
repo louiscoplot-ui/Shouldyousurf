@@ -10,6 +10,7 @@ import {
   scoreV2,
   estimateFaceHeight,
   pickDominantSwell,
+  spotAttenuation,
   dayTideCtx,
   mToFt,
   knToKmh,
@@ -217,9 +218,11 @@ export async function fetchRealForecast(spot, signal) {
   const shapeHour = (raw, tideCtx) => {
     // Face height display follows the DOMINANT swell partition (primary
     // or secondary) — same pick as scoreV2/classifyConditions, so the
-    // "2–3 ft" the user reads is the wave the score is scoring.
+    // "2–3 ft" the user reads is the wave the score is scoring. The
+    // spot's swellAttenuation applies here too (once, inside
+    // estimateFaceHeight).
     const domSwell = pickDominantSwell(raw, effectiveSpot);
-    const faceM = estimateFaceHeight(domSwell.swellHeight, domSwell.swellPeriod);
+    const faceM = estimateFaceHeight(domSwell.swellHeight, domSwell.swellPeriod, spotAttenuation(effectiveSpot));
     const faceFt = mToFt(faceM);
     // Score with the prod engine using the raw degrees — BEFORE we overwrite
     // swellDir/windDir below with the cardinal string the v2 components want.

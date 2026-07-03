@@ -4,6 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   estimateFaceHeight,
+  spotAttenuation,
   pickDominantSwell,
   scoreV2,
   scoreForLevel,
@@ -13,6 +14,7 @@ import {
   USER_LEVELS,
   mToFt,
 } from "../app/v2/lib/prodScoring.js";
+import { BREAKS } from "../app/breaks.js";
 import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE } from "../app/v2/lib/verdict.js";
 
 const spot = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
@@ -33,6 +35,52 @@ describe("estimateFaceHeight", () => {
   it("applies the full period boost from 0.8m", () => {
     expect(estimateFaceHeight(1.0, 15)).toBeCloseTo(1.5, 5);
     expect(estimateFaceHeight(1.0, 7)).toBeCloseTo(0.7, 5);
+  });
+});
+
+describe("swellAttenuation", () => {
+  it("default (absent or 1.0) is a bit-for-bit non-regression", () => {
+    const spotNoField = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
+    const spotOne = { ...spotNoField, swellAttenuation: 1.0 };
+    for (const h of [0, 0.4, 1, 3, 8]) {
+      for (const p of [4, 8, 12, 18]) {
+        for (const w of [0, 15, 40]) {
+          const hr = mk({ swellHeight: h, swellPeriod: p, windSpeedKn: w });
+          expect(scoreV2(hr, spotOne, "advanced").score).toBe(scoreV2(hr, spotNoField, "advanced").score);
+          expect(estimateFaceHeight(h, p, 1)).toBe(estimateFaceHeight(h, p));
+        }
+      }
+    }
+  });
+  it("is applied exactly once (face at full boost scales linearly with attenuation)", () => {
+    // at 3m even attenuated to 1.5m both sides sit above the 0.8m ramp →
+    // pure linear scaling proves single application (0.5² would betray double)
+    expect(estimateFaceHeight(3, 14, 0.5)).toBeCloseTo(0.5 * estimateFaceHeight(3, 14, 1), 10);
+  });
+  it("face is monotonic in attenuation", () => {
+    let prev = -1;
+    for (let a = 0.3; a <= 1.0; a += 0.05) {
+      const f = estimateFaceHeight(2.5, 16, a);
+      expect(f).toBeGreaterThan(prev);
+      prev = f;
+    }
+  });
+  it("Trigg 2.5m @ 16s reads 6-9 ft face (sheltered corridor), exposed spot unchanged", () => {
+    const trigg = BREAKS.find((b) => b.id === "trigg");
+    const margs = BREAKS.find((b) => b.id === "margaret");
+    const h = mk({ swellHeight: 2.5, swellPeriod: 16 });
+    const faceTrigg = classifyConditions("advanced", h, trigg).faceFt;
+    const faceMargs = classifyConditions("advanced", h, margs).faceFt;
+    expect(faceTrigg).toBeGreaterThanOrEqual(6);
+    expect(faceTrigg).toBeLessThanOrEqual(9);
+    expect(faceMargs).toBeCloseTo(mToFt(estimateFaceHeight(2.5, 16)), 5);
+  });
+  it("spotAttenuation clamps and defaults", () => {
+    expect(spotAttenuation(null)).toBe(1);
+    expect(spotAttenuation({})).toBe(1);
+    expect(spotAttenuation({ swellAttenuation: 1.4 })).toBe(1);
+    expect(spotAttenuation({ swellAttenuation: -0.2 })).toBe(0);
+    expect(spotAttenuation({ swellAttenuation: 0.6 })).toBe(0.6);
   });
 });
 

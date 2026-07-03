@@ -1,7 +1,7 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
-import { scoreV2, scoreForLevel, lookupBaseSize, levelPeakBaseSize, mToFt, estimateFaceHeight } from "./prodScoring";
+import { scoreV2, scoreForLevel, lookupBaseSize, levelPeakBaseSize, mToFt, estimateFaceHeight, spotAttenuation } from "./prodScoring";
 
 // Bandes recalibrées post-multiplicatif. Distribution analysée sur 4800
 // combinaisons (10 swellH × 5 periods × 4 winds × 4 dir × 6 levels) :
@@ -104,7 +104,7 @@ export function scoreBreakdown(h, spot, userLevel, tideCtx) {
                  : v2.multipliers.tide <= 0.95 ? "Wrong tide phase"
                  : "Neutral / no tide preference set";
 
-  const sizeFt = mToFt(estimateFaceHeight(swellH, period));
+  const sizeFt = mToFt(estimateFaceHeight(swellH, period, spotAttenuation(spot)));
   return {
     total: v2.score,
     baseSize: v2.baseSize,
