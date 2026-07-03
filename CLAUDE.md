@@ -55,13 +55,15 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
 
 ### Fichiers clés scoring (`app/v2/lib/`)
 
-- `prodScoring.js` — toute la logique métier surf. **Moteur UNIQUE** (le commentaire "mirrors app/page.js" est mort — page.js ne contient aucun scoring).
-  - `estimateFaceHeight(swell, period)` : conversion swell → face avec period boost. **Boost en rampe continue 0.4→0.8m (smoothstep)** — pas de boost sous 0.4m (face honnête), plein boost dès 0.8m. Plus de falaise à 0.5m.
-  - `pickDominantSwell(h, spot)` : choisit la partition (primaire vs secondaire) qu'un surfeur riderait vraiment (poids = h² × dirMult × periodMult). Utilisée par scoreV2 + classifyConditions + le display faceFt de realFetch — TOUJOURS les trois ensemble, sinon score et verdict divergent.
-  - `scoreV2(...)` : multiplicatif baseSize × period × wind × dir × tide (clamp 0.40-1.35) **× gustMult × chopMult hors clamp** (rafales +15/+25 km/h → ×0.93/×0.85 ; windswell ratio ≥0.5/≥0.8 à période courte → ×0.91/×0.82)
-  - `scoreSurf(h, spot, tideCtx)` : ancien additif, ne sert plus QUE de générateur de `notes` pour chips/tips
+- `prodScoring.js` — toute la logique métier surf. **Moteur UNIQUE, 100% CONTINU** (sprint 2026-07 : plus aucun palier dur — toutes les tables passent par `lerpTable`, tous les caps sont des rampes ; tests de continuité assert saut < 3 pts par pas fin).
+  - `spotAttenuation(spot)` : fraction du Hs offshore qui atteint le break (`swellAttenuation` sur le spot, défaut 1.0). Perth métro 0.55-0.60 (Five Fathom Bank / Rottnest) — TODO calibration bouées. Appliquée UNE fois par chemin (estimateFaceHeight / hauteur effective de scoreV2).
+  - `estimateFaceHeight(swell, period, attenuation)` : conversion swell → face avec period boost en rampe continue 0.4→0.8m (smoothstep sur la hauteur ATTÉNUÉE).
+  - `swellPartitions(h, spot)` / `pickDominantSwell` / `getDominant(h, spot)` / `faceFtOf(h, spot)` : la partition dominante (poids = h² × dirMult × periodMult, porte secondaire en smoothstep 0.2-0.4m) est calculée UNE fois par heure dans realFetch (cache `hour.dom` + `hour.faceFt`) et lue partout via getDominant/faceFtOf. AUCUN lecteur ne pioche `h.swellHeight` direct.
+  - `scoreV2(...)` : multiplicatif baseSize(hauteur effective) × period × wind × dir × tide (clamp 0.40-1.35) × gustMult × chopMult (rampes, hors clamp). Le score est le BLEND des deux partitions autour du point de bascule (continuité). Période manquante = multiplicateur 1.00 exact. Caps sécurité en rampes (micro-swell 0.35-0.65m, onshore 28-42 km/h, cross 43-57 km/h).
+  - `windClass(deltaDeg)` : classification offshore/cross/onshore UNIQUE (les 4 copies ont été fusionnées) ; null si delta inconnu → neutre explicite côté appelant.
+  - `tideNotes(h, spot, tideCtx)` : générateur de notes minimal (tags marée) — scoreSurf (ancien additif mort) a été supprimé.
   - `USER_LEVEL_ZONES` : matrice min/sweetLo/sweetHi/upperMax par niveau (6 niveaux)
-  - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`
+  - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`. currentHazard couvre first_timer/beginner/**early_int** (seuils 0.28/0.56 m/s). Verdict too_big : plafond absolu `faceFt > upperMax × 1.6` → no pour early_int/intermediate (plus de MAYBE sur 13 ft).
   - `hasInsideReform(level, faceFt, spot)` : éligibilité fallback whitewash
   - `getPersonalVerdict(level, h, spot)` → `"yes" | "ok" | "no"` — **SOURCE DE VÉRITÉ pour le label perso**
   - `getPersonalAdviceKey(level, h, spot, displayedVerdict)` : retourne tip key matching le verdict (4e param explicite, jamais re-dériver depuis le score)
@@ -168,14 +170,14 @@ Body explique le POURQUOI, pas le quoi.
 - Tracking PostHog complet + Session Replay actif (events spot/custom gardés contre l'inflation au mount)
 - Auto-update 20s + visibilitychange ; kill-switch layout.js à 20s, `__appReady` posé dès le seed mock
 - Cohérence score/label/tip à 100% (single source = `getPersonalVerdict`, partition dominante partagée score↔verdict↔display)
-- scoreV2 : + gustMult/chopMult (hors clamp) + houle secondaire via `pickDominantSwell`
-- Face height : rampe continue 0.4-0.8m, honest sous 0.4m, `faceFtLow` peut être 0
+- scoreV2 : + gustMult/chopMult (hors clamp) + houle secondaire (blend bi-partition) + atténuation par spot + 100% continu (sprint fixes-calculs 2026-07)
+- Face height : rampe continue 0.4-0.8m sur hauteur atténuée, honest sous 0.4m, `faceFtLow` peut être 0
 - Timezone : currentHour/Today/dimming/axe marée/sunrise-sunset tous en heure SPOT
 - Mock : dates générées du jour, banner traduit (12 langues), badge UPDATED masqué, scores mock jamais présentés comme frais
 - DangerBanner learners re-porté (inline MainScreen + `.danger-banner` CSS)
 - Notifications locales via `registration.showNotification` (Android/iOS PWA ok)
 - SEO : metadataBase + OG/Twitter + robots.txt + sitemap.xml + redirect /v2→/ + headers sécurité
-- Tests vitest : `tests/scoring.test.mjs` (19 cas) — invariants verdict/ceilings/grille/NaN
+- Tests vitest : `tests/scoring.test.mjs` (52 cas) — invariants verdict/ceilings/grille/NaN + continuité + dominante + sécurité
 - `early_int` zone min : 1.5 ft ; `early_int + too_small` → SKIP
 
 ### Bugs identifiés non fixés

@@ -164,8 +164,8 @@ export function drivingChipsFor(h, spot, userLevel) {
   // Tide chip — only emitted if the score notes actually contain a positive
   // tide signal. The previous unconditional "Tide in the sweet spot" lied
   // half the time (n_tide_wrong / n_tide_ok / nothing in notes → still a
-  // green chip). Now reads h.notes which scoreSurf populates with the
-  // tide tag for the day's tide vs the spot's idealTide.
+  // green chip). Now reads h.notes which tideNotes (prodScoring) populates
+  // with the tide tag for the day's tide vs the spot's idealTide.
   if (Array.isArray(h.notes)) {
     if (h.notes.includes("n_tide_prime")) chips.push({ t: "Tide in the sweet spot", k: "pos" });
     else if (h.notes.includes("n_tide_wrong")) chips.push({ t: "Wrong tide for this spot", k: "neg" });

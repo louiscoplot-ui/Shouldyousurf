@@ -395,7 +395,9 @@ export default function MainScreen({ theme, setTheme }) {
       if (d.isPast) continue;
       for (const h of d.hours) {
         if (new Date(h.time).getTime() < now) continue;
-        if (h.score >= 65 && (!best || h.score > best.score)) best = h;
+        // 60 = borne basse de la bande "excellent" (SCORE_SCALE) — l'ancien
+        // seuil 65 ne notifiait jamais les heures excellent 60-64.
+        if (h.score >= 60 && (!best || h.score > best.score)) best = h;
       }
     }
     if (best) {

@@ -11,6 +11,8 @@ import {
   estimateFaceHeight,
   pickDominantSwell,
   spotAttenuation,
+  windClass,
+  angDelta,
   dayTideCtx,
   mToFt,
   knToKmh,
@@ -56,12 +58,12 @@ function degToCardinal(deg) {
   return degToCompass(((deg % 360) + 360) % 360);
 }
 
+// Wraps the single shared windClass (prodScoring) — the UI string uses
+// "cross-shore" where the engine says "cross"; unknown delta (no
+// offshoreWindDir on the spot) maps to the explicit neutral "cross-shore".
 function classifyWind(windDeg, offshoreWindDir) {
-  if (offshoreWindDir == null) return "cross-shore";
-  const delta = Math.abs((((windDeg - offshoreWindDir) + 540) % 360) - 180);
-  if (delta <= 45) return "offshore";
-  if (delta >= 135) return "onshore";
-  return "cross-shore";
+  const wc = offshoreWindDir == null ? null : windClass(angDelta(windDeg, offshoreWindDir));
+  return wc === "offshore" ? "offshore" : wc === "onshore" ? "onshore" : "cross-shore";
 }
 
 function formatDayLabel(isoDate, todayStr) {
@@ -97,18 +99,25 @@ export async function fetchRealForecast(spot, signal) {
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: localTz });
   const pastStart = offsetDate(todayStr, -3);
   const pastEnd = offsetDate(todayStr, -1);
+  // wave_height (Hs totale) retirée : transportée dans chaque heure depuis
+  // le début, consommée nulle part (audit). `models=best_match` est rendu
+  // EXPLICITE pour tracer le choix — TODO reproductibilité : épingler le
+  // modèle réel (probablement meteofrance_wave) après avoir vérifié que
+  // sea_level_height_msl + courants restent servis pour tous les spots
+  // (l'API est inaccessible depuis l'env de session, proxy 403).
   const marineFields =
-    "wave_height,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
+    "swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
+  const marineModels = "best_match";
 
   const tzParam = encodeURIComponent(requestTz);
-  const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
+  const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
   // Past wind from the FORECAST API (not the ERA5 archive). The archive has
   // a ~5-day reanalysis lag, so it returned nulls for yesterday / the day
   // before → the past hours got filtered out (windKn == null) → no past
   // days showed at all. The forecast API keeps recent past days from the
   // same GFS model with no lag and accepts start_date/end_date + timezone=auto.
   const pastWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
-  const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&timezone=${tzParam}&forecast_days=5`;
+  const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&timezone=${tzParam}&forecast_days=5`;
   const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5`;
 
   // `signal` (AbortController) lets the caller actually cancel the four
@@ -151,7 +160,6 @@ export async function fetchRealForecast(spot, signal) {
         swellDir: swellDirDeg,
         windSpeedKn: windKn,
         windDir: windDirDeg,
-        waveHeight: marine.hourly.wave_height?.[mi] ?? null,
         windWaveHeight: marine.hourly.wind_wave_height?.[mi] ?? null,
         secSwellH: marine.hourly.secondary_swell_wave_height?.[mi] ?? null,
         secSwellP: marine.hourly.secondary_swell_wave_period?.[mi] ?? null,

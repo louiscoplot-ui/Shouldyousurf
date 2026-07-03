@@ -13,6 +13,10 @@ import {
   getPersonalVerdict,
   classifyConditions,
   lookupBaseSize,
+  lookupTideMult,
+  windClass,
+  tideNotes,
+  adaptForecastToLevel,
   USER_LEVELS,
   mToFt,
 } from "../app/v2/lib/prodScoring.js";
@@ -311,6 +315,104 @@ describe("baseSize grids", () => {
         expect(v).toBeLessThanOrEqual(100);
       }
     }
+  });
+});
+
+describe("windClass — single source for wind direction classification", () => {
+  it("matches the historical 45°/135° bands over the full grid", () => {
+    for (let d = 0; d <= 180; d++) {
+      const expected = d <= 45 ? "offshore" : d >= 135 ? "onshore" : "cross";
+      expect(windClass(d)).toBe(expected);
+    }
+  });
+  it("returns null on unknown delta instead of a silent NaN fallthrough", () => {
+    expect(windClass(NaN)).toBe(null);
+    expect(windClass(undefined)).toBe(null);
+  });
+});
+
+describe("tideNotes — minimal notes generator (ex-scoreSurf)", () => {
+  const tSpot = { idealTide: "mid-high" };
+  const ctx = { min: 0, max: 1 };
+  it("snapshot over 10 representative cases", () => {
+    const cases = [
+      [{ tideM: 0.7 }, tSpot, ctx, ["n_tide_prime"]],   // pile sur target 0.7
+      [{ tideM: 0.75 }, tSpot, ctx, ["n_tide_prime"]],
+      [{ tideM: 0.5 }, tSpot, ctx, ["n_tide_ok"]],
+      [{ tideM: 0.95 }, tSpot, ctx, ["n_tide_ok"]],
+      [{ tideM: 0.05 }, tSpot, ctx, ["n_tide_wrong"]],  // delta 0.65 > 0.6
+      [{ tideM: 0.35 }, tSpot, ctx, []],                 // delta 0.35 : zone neutre
+      [{ tideM: null }, tSpot, ctx, []],
+      [{ tideM: 0.7 }, { idealTide: "any" }, ctx, []],
+      [{ tideM: 0.7 }, tSpot, { min: 0, max: 0.1 }, []], // range ≤ 0.15
+      [{ tideM: 0.7 }, tSpot, null, []],
+    ];
+    for (const [h, sp, c, expected] of cases) {
+      expect(tideNotes(h, sp, c)).toEqual(expected);
+    }
+  });
+  it("feeds the tide chip exactly as before", () => {
+    const prime = { ...mk({ tideM: 0.7 }), notes: ["n_tide_prime"] };
+    const wrong = { ...mk({ tideM: 0.05 }), notes: ["n_tide_wrong"] };
+    expect(drivingChipsFor(prime, spot, "intermediate").map((c) => c.t)).toContain("Tide in the sweet spot");
+    expect(drivingChipsFor(wrong, spot, "intermediate").map((c) => c.t)).toContain("Wrong tide for this spot");
+  });
+});
+
+describe("lookupTideMult", () => {
+  const ctx = { min: 0, max: 1 };
+  it("neutral without ctx / idealTide any / tideM null / flat range", () => {
+    expect(lookupTideMult(null, "mid", 0.5)).toBe(1.0);
+    expect(lookupTideMult(ctx, "any", 0.5)).toBe(1.0);
+    expect(lookupTideMult(ctx, "mid", null)).toBe(1.0);
+    expect(lookupTideMult({ min: 0, max: 0.1 }, "mid", 0.05)).toBe(1.0);
+  });
+  it("rewards the target window, penalizes the opposite phase", () => {
+    expect(lookupTideMult(ctx, "mid-high", 0.7)).toBe(1.06);
+    expect(lookupTideMult(ctx, "mid-high", 0.5)).toBe(1.02);
+    expect(lookupTideMult(ctx, "mid-high", 0.05)).toBe(0.92);
+  });
+  it("tideM outside the day's ctx does not explode", () => {
+    const v = lookupTideMult({ min: -0.12, max: 0.12 }, "mid-high", 0.5);
+    expect(v).toBeGreaterThanOrEqual(0.92);
+    expect(v).toBeLessThanOrEqual(1.06);
+  });
+});
+
+describe("adaptForecastToLevel", () => {
+  const mkDay = (hours) => ({ hours, tideCtx: null });
+  const shaped = (o) => ({ ...mk(o), swellDirDeg: 240, windDirDeg: 90, score: 50 });
+  it("recomputes scores per level and bestHour from the adapted set", () => {
+    const payload = { days: [mkDay([shaped({ swellHeight: 0.6 }), shaped({ swellHeight: 1.6 })])] };
+    const ft = adaptForecastToLevel(payload, "first_timer", spot);
+    const exp = adaptForecastToLevel(payload, "expert", spot);
+    expect(ft.days[0].hours[0].score).not.toBe(exp.days[0].hours[0].score);
+    const best = ft.days[0].bestHour;
+    expect(best.score).toBe(Math.max(...ft.days[0].hours.map((h) => h.score)));
+  });
+  it("survives a day with no hours", () => {
+    const payload = { days: [mkDay([])] };
+    const out = adaptForecastToLevel(payload, "intermediate", spot);
+    expect(out.days[0].bestHour).toBe(null);
+  });
+});
+
+describe("spot without configuration (failed inference)", () => {
+  const bare = { type: "beach" };
+  it("scores finite with neutral multipliers and an explicit wind class", () => {
+    const r = scoreV2(mk({}), bare, "intermediate");
+    expect(Number.isFinite(r.score)).toBe(true);
+    expect(r.multipliers.wind).toBe(1.0);
+    expect(r.multipliers.dir).toBe(1.0);
+    const cls = classifyConditions("beginner", mk({}), bare);
+    expect(["clean", "bumpy", "blown"]).toContain(cls.wind);
+  });
+});
+
+describe("multi-swell tie", () => {
+  it("perfectly equal partitions → primary wins deterministically", () => {
+    const tie = mk({ secSwellH: 1.2, secSwellP: 12, secSwellDir: 240 });
+    expect(pickDominantSwell(tie, spot).isSecondary).toBe(false);
   });
 });
 
