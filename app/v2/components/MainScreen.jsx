@@ -33,7 +33,7 @@ import { track } from "../../lib/analytics";
 import { startVersionCheck } from "../../lib/versionCheck";
 import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
-import { fetchRealForecast } from "../lib/realFetch";
+import { fetchRealForecast, readCachedPayload, writeCachedPayload } from "../lib/realFetch";
 import {
   classifyConditions,
   getPersonalAdviceKey,
@@ -283,23 +283,34 @@ export default function MainScreen({ theme, setTheme }) {
   const [lastFetchAt, setLastFetchAt] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    // Seed with mock right away — no loading screen deadlock.
-    const mockDays = makeForecast(spot.id);
-    setPayload({ days: mockDays, sunByDay: {}, effectiveSpot: spot });
-    setDataSource("mock");
+    // Seed : le DERNIER forecast live de ce spot (cache localStorage,
+    // re-étiqueté par date) s'affiche instantanément — pas de mock, pas de
+    // bannière, pas d'attente. Le fetch frais le remplace en silence.
+    const cached = readCachedPayload(spot.id);
+    if (cached) {
+      setPayload(cached.payload);
+      setDataSource("cached");
+      setLastFetchAt(cached.cachedAt);
+      // De vraies données sont à l'écran → le splash peut tomber tout de suite.
+      if (typeof window !== "undefined") window.__appReady = true;
+    } else {
+      // Pas de cache (première visite / nouveau spot) : seed mock en source
+      // "loading" — AUCUNE bannière rouge pendant que le fetch tourne, et
+      // __appReady n'est posé qu'au settle du fetch (finally ci-dessous) :
+      // le splash vidéo couvre l'écran jusqu'aux vraies données, comme
+      // avant. Sans ça, l'utilisateur voyait 3-5s de scores mock + bannière
+      // "live forecast unavailable" à CHAQUE lancement et croyait l'app
+      // cassée. Le kill-switch layout.js est à 20s > timeout 15s : il ne
+      // peut pas se déclencher sur un fetch légitimement lent.
+      const mockDays = makeForecast(spot.id);
+      setPayload({ days: mockDays, sunByDay: {}, effectiveSpot: spot });
+      setDataSource("loading");
+    }
     setFetchError(null);
-    // The UI is interactive from this point (mock seed), so the recovery
-    // kill-switch in layout.js must stand down NOW — not after the first
-    // fetch resolves. Before, a legitimate 12-15s fetch on slow cellular
-    // tripped the kill-switch (SW unregister + cache wipe + reload) on
-    // exactly the users the 15s timeout was meant to protect.
-    if (typeof window !== "undefined") window.__appReady = true;
 
     // Open-Meteo's marine API can be slow (its two marine calls dominate the
-    // 4-request fan-out). 8s was cutting off legitimate-but-slow responses,
-    // especially on cellular. 15s timeout via AbortController so the four
-    // requests are actually cancelled (Promise.race left them running and
-    // burning mobile data in the background).
+    // 4-request fan-out). 15s timeout via AbortController so the four
+    // requests are actually cancelled.
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new Error("Fetch timed out after 15s")), 15000);
     (async () => {
@@ -310,15 +321,20 @@ export default function MainScreen({ theme, setTheme }) {
           setPayload(real);
           setDataSource("live");
           setLastFetchAt(Date.now());
+          writeCachedPayload(spot.id, real);
         }
       } catch (e) {
         if (cancelled) return;
         const msg = e?.message || String(e);
-        console.warn("[v2] real forecast failed, staying on mock:", e);
+        console.warn("[v2] real forecast failed:", e);
         setFetchError(msg);
+        // Échec : on reste sur le cache (bannière douce "cached") si on en
+        // avait un, sinon sur le mock (bannière rouge "sample data").
+        setDataSource(cached ? "cached-stale" : "mock");
         track("forecast_fetch_failed", { error: msg, spotId: spot.id });
       } finally {
         clearTimeout(timer);
+        if (typeof window !== "undefined") window.__appReady = true;
       }
     })();
     return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
@@ -352,6 +368,7 @@ export default function MainScreen({ theme, setTheme }) {
           setDataSource("live");
           setFetchError(null);
           setLastFetchAt(Date.now());
+          writeCachedPayload(spot.id, real);
         }
       } catch (e) {
         if (!cancelled) console.warn("[v2] visibility refetch failed:", e);
@@ -424,6 +441,7 @@ export default function MainScreen({ theme, setTheme }) {
         payload={payload}
         dataSource={dataSource}
         fetchError={fetchError}
+        lastFetchAt={lastFetchAt}
         theme={theme}
         setTheme={setTheme}
         t={t}
@@ -474,7 +492,7 @@ export default function MainScreen({ theme, setTheme }) {
 }
 
 function Loaded({
-  spot, payload: rawPayload, dataSource, fetchError,
+  spot, payload: rawPayload, dataSource, fetchError, lastFetchAt,
   theme, setTheme, t, lang,
   userLevel, setUserLevel,
   favorites, toggleFav,
@@ -562,17 +580,17 @@ function Loaded({
   const hour = day.hours[Math.min(selectedIdx, day.hours.length - 1)] || day.hours[0];
   const swapKey = useSwapKey(`${dayIdx}-${selectedIdx}`);
 
-  // "UPDATED Xm AGO" — derived from lastFetchAt (the outer MainScreen's
-  // timestamp of the most recent successful real fetch). Increments live
-  // every 30s, resets to 0 the moment a fresh visibilitychange refetch
-  // lands. Prevents the lie of "0M AGO" sticking forever after the initial
-  // mount even though no refetch happened.
-  const [ago, setAgo] = useState(0);
+  // "UPDATED Xm AGO" — dérivé de lastFetchAt (timestamp du dernier fetch
+  // réussi OU de la mise en cache pour un seed cached). L'ancien compteur
+  // remis à 0 à chaque swap de payload affichait "0M AGO" pour un cache
+  // d'il y a 3 heures.
+  const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    setAgo(0);
-    const tick = setInterval(() => setAgo((a) => a + 1), 60000);
+    const tick = setInterval(() => setNowTick(Date.now()), 60000);
     return () => clearInterval(tick);
-  }, [rawPayload]);
+  }, []);
+  const agoMin = lastFetchAt ? Math.max(0, Math.round((nowTick - lastFetchAt) / 60000)) : 0;
+  const agoLabel = agoMin < 60 ? `${agoMin}M` : `${Math.round(agoMin / 60)}H`;
 
   const verdict = coherentVerdict(hour);
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -783,9 +801,23 @@ function Loaded({
           <div className="spot-region">
             {spot.region} · {t(spot.type || "beach")}
           </div>
+          {/* Bannière rouge UNIQUEMENT après un vrai échec sans cache. Pendant
+              le chargement ("loading", visible seulement au changement de spot
+              mid-session — au lancement le splash couvre) : chip neutre. Échec
+              avec cache : bannière douce, les données affichées sont réelles. */}
           {dataSource === "mock" && (
             <div className="mock-banner" role="status">
               ⚠ {t("mock_banner") || "Live forecast unavailable — showing sample data. Check your connection."}
+            </div>
+          )}
+          {dataSource === "loading" && (
+            <div className="loading-banner" role="status">
+              {t("loading_banner") || "Loading live forecast…"}
+            </div>
+          )}
+          {dataSource === "cached-stale" && (
+            <div className="loading-banner" role="status">
+              {t("cached_banner") || "Can't refresh right now — showing the last live forecast."}
             </div>
           )}
         </div>
@@ -833,12 +865,12 @@ function Loaded({
           ))}
         </div>
 
-        {/* Freshness badge only when the data is actually live — showing
-            "UPDATED 0M AGO" above the mock banner contradicted it. */}
-        {dataSource === "live" && (
+        {/* Badge de fraîcheur pour toute donnée RÉELLE (live ou cache) —
+            jamais pour le mock ni pendant un chargement. */}
+        {(dataSource === "live" || dataSource === "cached" || dataSource === "cached-stale") && (
           <div className="rise-2" style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 4 }}>
             <span className="mono" style={{ fontSize: 9.5, color: "var(--text-dim)", letterSpacing: "0.12em" }}>
-              UPDATED {ago}M AGO
+              UPDATED {agoLabel} AGO
             </span>
           </div>
         )}

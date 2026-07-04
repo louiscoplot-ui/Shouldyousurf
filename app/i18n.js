@@ -15,6 +15,8 @@ export const LANGUAGES = [
 
 const T = {
   en: {
+    loading_banner: "Loading live forecast…",
+    cached_banner: "Can't refresh right now — showing the last live forecast.",
     brand: "Should You Surf?",
     loading: "Reading the ocean…",
     just_now: "now",
@@ -340,6 +342,8 @@ const T = {
     sheet_cta: "Got it",
   },
   fr: {
+    loading_banner: "Chargement des prévisions live…",
+    cached_banner: "Impossible de rafraîchir — dernières prévisions live affichées.",
     danger_banner: "⚠️ Conditions dangereuses pour ton niveau — vérifie sur place avant de te mettre à l'eau",
     footer_disclaimer: "Les prévisions de surf sont des estimations. Vérifie toujours les conditions sur place avant d'entrer dans l'eau. En cas de doute, ne te mets pas à l'eau.",
     mock_banner: "Prévisions live indisponibles — données d'exemple affichées. Vérifie ta connexion.",
@@ -642,6 +646,8 @@ const T = {
     sheet_cta: "OK, compris",
   },
   es: {
+    loading_banner: "Cargando pronóstico en vivo…",
+    cached_banner: "No se puede actualizar — mostrando el último pronóstico en vivo.",
     danger_banner: "⚠️ Condiciones peligrosas para tu nivel — comprueba in situ antes de remar",
     footer_disclaimer: "Los pronósticos de surf son estimaciones. Comprueba siempre las condiciones in situ antes de entrar al agua. Ante la duda, no entres.",
     mock_banner: "Pronóstico en vivo no disponible — mostrando datos de ejemplo. Revisa tu conexión.",
@@ -858,6 +864,8 @@ const T = {
     sheet_cta: "Vale",
   },
   pt: {
+    loading_banner: "Carregando previsão ao vivo…",
+    cached_banner: "Não foi possível atualizar — mostrando a última previsão ao vivo.",
     danger_banner: "⚠️ Condições perigosas para o seu nível — confira no local antes de remar",
     footer_disclaimer: "As previsões de surf são estimativas. Sempre confira as condições no local antes de entrar na água. Na dúvida, não entre.",
     mock_banner: "Previsão ao vivo indisponível — mostrando dados de exemplo. Verifique sua conexão.",
@@ -1074,6 +1082,8 @@ const T = {
     sheet_cta: "Beleza",
   },
   de: {
+    loading_banner: "Live-Vorhersage wird geladen…",
+    cached_banner: "Aktualisierung nicht möglich — letzte Live-Vorhersage wird angezeigt.",
     danger_banner: "⚠️ Gefährliche Bedingungen für dein Level — prüfe vor Ort, bevor du rauspaddelst",
     footer_disclaimer: "Surf-Vorhersagen sind Schätzungen. Prüfe die Bedingungen immer vor Ort, bevor du ins Wasser gehst. Im Zweifel: nicht rauspaddeln.",
     mock_banner: "Live-Vorhersage nicht verfügbar — Beispieldaten werden angezeigt. Prüfe deine Verbindung.",
@@ -1290,6 +1300,8 @@ const T = {
     sheet_cta: "Verstanden",
   },
   it: {
+    loading_banner: "Caricamento previsioni live…",
+    cached_banner: "Impossibile aggiornare — mostrate le ultime previsioni live.",
     danger_banner: "⚠️ Condizioni pericolose per il tuo livello — verifica sul posto prima di entrare",
     footer_disclaimer: "Le previsioni surf sono stime. Verifica sempre le condizioni sul posto prima di entrare in acqua. Nel dubbio, resta fuori.",
     mock_banner: "Previsioni live non disponibili — dati di esempio. Controlla la connessione.",
@@ -1506,6 +1518,8 @@ const T = {
     sheet_cta: "Ok",
   },
   nl: {
+    loading_banner: "Live voorspelling laden…",
+    cached_banner: "Kan niet verversen — laatste live voorspelling wordt getoond.",
     danger_banner: "⚠️ Gevaarlijke omstandigheden voor jouw niveau — check ter plekke voordat je het water in gaat",
     footer_disclaimer: "Surfvoorspellingen zijn schattingen. Controleer de omstandigheden altijd ter plekke voordat je het water in gaat. Bij twijfel: niet gaan.",
     mock_banner: "Live voorspelling niet beschikbaar — voorbeelddata wordt getoond. Controleer je verbinding.",
@@ -1722,6 +1736,8 @@ const T = {
     sheet_cta: "Begrepen",
   },
   ja: {
+    loading_banner: "ライブ予報を読み込み中…",
+    cached_banner: "更新できません — 最後のライブ予報を表示中。",
     danger_banner: "⚠️ あなたのレベルには危険なコンディション — 入水前に現地で確認を",
     footer_disclaimer: "サーフィン予報は推定値です。入水前に必ず現地でコンディションを確認してください。迷ったら入らないこと。",
     mock_banner: "ライブ予報を取得できません — サンプルデータを表示中。接続を確認してください。",
@@ -1938,6 +1954,8 @@ const T = {
     sheet_cta: "OK",
   },
   id: {
+    loading_banner: "Memuat prakiraan langsung…",
+    cached_banner: "Tidak dapat memperbarui — menampilkan prakiraan langsung terakhir.",
     danger_banner: "⚠️ Kondisi berbahaya untuk level Anda — periksa di lokasi sebelum masuk air",
     footer_disclaimer: "Prakiraan selancar adalah perkiraan. Selalu periksa kondisi di lokasi sebelum masuk air. Jika ragu, jangan masuk.",
     mock_banner: "Prakiraan langsung tidak tersedia — menampilkan data contoh. Periksa koneksi Anda.",
@@ -2154,6 +2172,8 @@ const T = {
     sheet_cta: "Sip",
   },
   ru: {
+    loading_banner: "Загрузка живого прогноза…",
+    cached_banner: "Не удаётся обновить — показан последний живой прогноз.",
     danger_banner: "⚠️ Опасные условия для вашего уровня — проверьте на месте, прежде чем заходить в воду",
     footer_disclaimer: "Прогнозы для сёрфинга — это оценки. Всегда проверяйте условия на месте перед заходом в воду. Сомневаетесь — не заходите.",
     mock_banner: "Живой прогноз недоступен — показаны примерные данные. Проверьте соединение.",
@@ -2370,6 +2390,8 @@ const T = {
     sheet_cta: "Понятно",
   },
   zh: {
+    loading_banner: "正在加载实时预报…",
+    cached_banner: "无法刷新 — 显示最近一次实时预报。",
     danger_banner: "⚠️ 当前海况对你的水平来说很危险 — 下水前请务必现场确认",
     footer_disclaimer: "冲浪预报仅为估算。下水前请务必现场确认海况。如有疑虑，请勿下水。",
     mock_banner: "无法获取实时预报 — 正在显示示例数据。请检查网络连接。",
@@ -2586,6 +2608,8 @@ const T = {
     sheet_cta: "知道了",
   },
   ko: {
+    loading_banner: "실시간 예보 불러오는 중…",
+    cached_banner: "새로고침할 수 없습니다 — 마지막 실시간 예보를 표시 중입니다.",
     danger_banner: "⚠️ 내 레벨에 위험한 컨디션 — 입수 전 현장에서 꼭 확인하세요",
     footer_disclaimer: "서핑 예보는 추정치입니다. 입수 전 반드시 현장에서 컨디션을 확인하세요. 확신이 없다면 들어가지 마세요.",
     mock_banner: "실시간 예보를 불러올 수 없습니다 — 샘플 데이터를 표시 중입니다. 연결을 확인하세요.",

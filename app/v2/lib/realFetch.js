@@ -82,6 +82,50 @@ function formatDayLabel(isoDate, todayStr) {
   return { label: dayName, isToday: false, isPast: diffDays < 0 };
 }
 
+// ── Cache stale-while-revalidate du dernier forecast LIVE ──────────────
+// À l'ouverture, MainScreen seed avec le dernier payload réel (re-étiqueté
+// par date) au lieu du mock : les habitués voient leurs vraies données
+// instantanément, le fetch frais les remplace en silence. 24h max — au-delà
+// un forecast n'a plus de valeur de seed.
+const CACHE_PREFIX = "surf-forecast-cache-";
+const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
+
+export function writeCachedPayload(spotId, payload) {
+  try {
+    localStorage.setItem(CACHE_PREFIX + spotId, JSON.stringify({ v: 1, cachedAt: Date.now(), payload }));
+  } catch {} // quota plein / privé — le cache est un bonus, jamais bloquant
+}
+
+export function readCachedPayload(spotId) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + spotId);
+    if (!raw) return null;
+    const { v, cachedAt, payload } = JSON.parse(raw);
+    if (v !== 1 || !payload?.days?.length || !Number.isFinite(cachedAt)) return null;
+    if (Date.now() - cachedAt > CACHE_MAX_AGE_MS) return null;
+    return rehydrateCachedPayload(payload, cachedAt);
+  } catch { return null; }
+}
+
+// Re-étiquette les jours d'un payload mis en cache : un cache d'hier a un
+// jour marqué isToday qui est en réalité le jour d'avant. Labels/isToday/
+// isPast sont recalculés depuis dateStr dans le fuseau du spot ; si le
+// cache ne couvre plus aujourd'hui, il est inutilisable (return null).
+export function rehydrateCachedPayload(payload, cachedAt) {
+  const tz = payload.effectiveSpot?.timezone;
+  const todayStr = isValidTz(tz)
+    ? new Date().toLocaleDateString("en-CA", { timeZone: tz })
+    : new Date().toLocaleDateString("en-CA");
+  const days = payload.days
+    .filter((d) => typeof d.dateStr === "string")
+    .map((d) => {
+      const meta = formatDayLabel(d.dateStr, todayStr);
+      return { ...d, label: meta.label, isToday: meta.isToday, isPast: meta.isPast };
+    });
+  if (!days.some((d) => d.isToday)) return null;
+  return { payload: { ...payload, days }, cachedAt };
+}
+
 // Fetches marine + forecast data for a spot. Returns { days, sunByDay, spot }.
 // `spot` on return is enriched with inferred idealSwellDir/offshoreWindDir when
 // they weren't curated — so scoring works for any coordinate the user picks.

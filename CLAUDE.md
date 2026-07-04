@@ -81,7 +81,9 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
   - `personalReason` useMemo : `pv` ← `getPersonalVerdict`, passé à `getPersonalAdviceKey`
   - `danger` useMemo : bandeau `.danger-banner` inline (learner + verdict no + hazard physique) — il n'y a PAS de composant DangerBanner.jsx séparé
   - `currentHour` calculé dans le **fuseau du spot** (Intl + effectiveSpot.timezone), pas le device
-  - fetch avec AbortController (timeout 15s annule vraiment) ; `window.__appReady = true` dès le seed mock (kill-switch layout.js à 20s)
+  - **Lancement cache-first (SWR)** : seed avec le dernier payload LIVE (localStorage `surf-forecast-cache-<spotId>`, 24h max, re-étiqueté par date via `rehydrateCachedPayload`) → vraies données en ~1s, remplacées en silence par le fetch frais. Sans cache : seed mock en dataSource "loading" (bannière neutre, pas rouge) et le splash reste jusqu'au settle du premier fetch. Bannière ROUGE = uniquement échec sans cache ; échec avec cache = bannière douce `cached_banner`.
+  - `window.__appReady = true` : au seed CACHE (vraies données à l'écran) OU au settle du premier fetch — jamais sur le mock nu. Kill-switch layout.js 20s > timeout fetch 15s ; plafond du poller splash 16s.
+  - fetch avec AbortController (timeout 15s annule vraiment) ; badge "UPDATED X AGO" dérivé de lastFetchAt (l'âge du cache est honnête, format M puis H)
   - resync jour par `dateStr` via `pickedDateRef` au swap de payload
   - analytics spot gardées par `spotEffectRanRef`/`restoredSpotRef` (pas de tracking au mount/restore)
 - `HourlyList.jsx` — Cards mode + List mode. Props `isToday`/`isPastDay` conditionnent le dimming "past". PAS de `key={level}` (reset le viewMode).
@@ -176,7 +178,8 @@ Body explique le POURQUOI, pas le quoi.
 - scoreV2 : + gustMult/chopMult (hors clamp) + houle secondaire (blend bi-partition) + atténuation par spot + 100% continu (sprint fixes-calculs 2026-07)
 - Face height : rampe continue 0.4-0.8m sur hauteur atténuée, honest sous 0.4m, `faceFtLow` peut être 0
 - Timezone : currentHour/Today/dimming/axe marée/sunrise-sunset tous en heure SPOT
-- Mock : dates générées du jour, banner traduit (12 langues), badge UPDATED masqué, scores mock jamais présentés comme frais
+- Lancement : cache-first SWR (dernières vraies données instantanées) ; splash-jusqu'aux-données sinon ; plus jamais de mock+bannière rouge pendant un simple chargement (c'était vécu comme "l'app est cassée")
+- Mock : dates générées du jour, banner traduit (12 langues), badge UPDATED masqué, scores mock jamais présentés comme frais — n'apparaît qu'après échec réel sans cache
 - DangerBanner learners re-porté (inline MainScreen + `.danger-banner` CSS)
 - Notifications locales via `registration.showNotification` (Android/iOS PWA ok)
 - SEO : metadataBase + OG/Twitter + robots.txt + sitemap.xml + redirect /v2→/ + headers sécurité

@@ -169,8 +169,9 @@ export default function RootLayout({ children }) {
           gtag('js', new Date());
           gtag('config', 'G-77RCEQZ2YS');
           // Recovery kill-switch. If the app hasn't signalled ready within
-          // 20s (window.__appReady = true, set from MainScreen as soon as
-          // the mock seed renders — i.e. the UI is interactive), we assume
+          // 20s (window.__appReady = true, set from MainScreen either when
+          // real CACHED data is on screen, or when the first fetch settles
+          // — success or failure, bounded by its 15s timeout), we assume
           // the user is stuck on a corrupt cached bundle / stale SW and
           // clear everything + reload. 20s > the 15s fetch timeout so a
           // slow-but-healthy network can never trip it.
@@ -280,9 +281,10 @@ export default function RootLayout({ children }) {
             var iv = setInterval(function(){
               tries++;
               if (window.__appReady) { clearInterval(iv); tryHide(); }
-              // Hard ceiling at 8s — don't leave the splash stuck on
-              // a broken app forever.
-              else if (tries > 80) { clearInterval(iv); hide(); }
+              // Hard ceiling at 16s — just past the app's 15s fetch timeout
+              // (__appReady fires at fetch settle when there's no cached
+              // forecast). Don't leave the splash stuck on a broken app.
+              else if (tries > 160) { clearInterval(iv); hide(); }
             }, 100);
           })();
         `}} />
