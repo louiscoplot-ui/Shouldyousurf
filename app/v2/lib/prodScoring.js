@@ -5,6 +5,25 @@
 export const mToFt = m => m * 3.281;
 export const knToKmh = kn => kn * 1.852;
 
+// currentVelToMs — normalise ocean_current_velocity vers des m/s quelle que
+// soit l'unité annoncée par l'API (response.hourly_units). Tout l'aval
+// suppose des m/s : les paliers hazard de classifyConditions (0.28 / 0.56)
+// et l'affichage UI (× 3.6 pour montrer des km/h). La Marine API Open-Meteo
+// sert ce champ en km/h par défaut selon la doc publique (invérifiable en
+// live depuis l'env de session, proxy 403) — d'où la lecture de l'unité
+// RÉELLE annoncée dans la réponse plutôt qu'un pari sur un défaut : si le
+// champ arrive déjà en m/s rien ne change, s'il arrive en km/h les seuils
+// sur-déclenchaient ×3.6 (bandeau "strong rip" sur un courant négligeable)
+// et le courant affiché était gonflé d'autant.
+export function currentVelToMs(v, unit) {
+  if (!Number.isFinite(v)) return null;
+  const u = typeof unit === "string" ? unit.trim().toLowerCase() : "";
+  if (u === "km/h" || u === "kmh" || u === "kph") return v / 3.6;
+  if (u === "kn" || u === "kt" || u === "knots") return v * 0.514444;
+  if (u === "mph") return v * 0.44704;
+  return v; // "m/s", vide ou inconnue → tel quel (comportement historique)
+}
+
 // Per-spot swell attenuation — offshore Hs is what the wave model sees at
 // the grid cell; sheltered spots (offshore banks, islands, headlands) only
 // receive a fraction of it. 1.0 = fully exposed (default, non-regression).
@@ -255,6 +274,14 @@ export function lookupDirMult(swellDelta) {
   return lerpTable(swellDelta, DIR_NODES);
 }
 
+// Dernière table à paliers du moteur passée en rampe (sprint continuité
+// 2026-07) : les anciens seuils secs <0.15→1.06 / <0.30→1.02 / >0.60→0.92
+// faisaient sauter le score de 4 à 8 pts pour 1 cm de marée aux frontières
+// de fenêtre. Nœuds aux CENTRES des anciennes bandes — mêmes valeurs
+// historiques, zéro recalibration, juste la forme continue (même méthode
+// que PERIOD_NODES / WIND_*_NODES / DIR_NODES).
+const TIDE_DELTA_NODES = [[0.075, 1.06], [0.225, 1.02], [0.45, 1.00], [0.75, 0.92]];
+
 export function lookupTideMult(tideCtx, idealTide, tideM) {
   if (!tideCtx || !idealTide || idealTide === "any" || tideM == null) return 1.00;
   const range = tideCtx.max - tideCtx.min;
@@ -262,11 +289,7 @@ export function lookupTideMult(tideCtx, idealTide, tideM) {
   const norm = (tideM - tideCtx.min) / range;
   const target = TIDE_TARGETS[idealTide];
   if (target == null) return 1.00;
-  const delta = Math.abs(norm - target);
-  if (delta < 0.15) return 1.06;
-  if (delta < 0.30) return 1.02;
-  if (delta > 0.60) return 0.92;
-  return 1.00;
+  return lerpTable(Math.abs(norm - target), TIDE_DELTA_NODES);
 }
 
 const FINAL_MULT_MIN = 0.40;
@@ -849,6 +872,14 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // sub-1.5ft is just a swim, not a session. First_timer / beginner
     // can still splash in the shorebreak so the "ok" path stays for them.
     if (size === "too_small" && userLevel === "early_int") return "no";
+    // Même plafond ABSOLU too_big que le chemin non-reform (upperMax × 1.3,
+    // cf. commentaire là-bas) : la branche reform court-circuitait le cap et
+    // laissait un MAYBE "inside rescue" sur du 9 ft pour un early_int — au
+    // large de sa marge et du cas D de la skill. First_timer / beginner
+    // gardent leur vraie rescue foamie-whitewash (leur too_big n'est pas
+    // le même océan : leurs zones coupent bien plus bas).
+    if (size === "too_big" && userLevel === "early_int"
+        && faceFt > USER_LEVEL_ZONES.early_int.upperMax * 1.3) return "no";
     // "strong" current (early_int only past the hard-no above) never lets a
     // GO through — same downgrade the non-reform path applies below, kept
     // consistent so the two chemins can't diverge on a rippy sweet day.
@@ -886,14 +917,17 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // monotonic (never stricter than beginner).
     if (userLevel === "first_timer" || userLevel === "beginner") return "no";
     // Plafond ABSOLU pour early_int / intermediate : au-delà de
-    // upperMax × 1.6 (≈ 9.6 ft pour leurs zones à upperMax 6), ce n'est
-    // plus "sur la limite, choisis tes vagues" mais double-overhead —
-    // l'audit montrait un MAYBE sur 13 ft glassy. Le ×1.6 laisse la
-    // marge raisonnable (upperMax +20-30%, soit 7.2-7.8 ft) en MAYBE et
-    // coupe net au-delà. Advanced/expert gardent leur jugement.
+    // upperMax × 1.3 (7.8 ft pour leurs zones à upperMax 6), ce n'est
+    // plus "sur la limite, choisis tes vagues" mais franchement overhead.
+    // L'intention d'origine (audit 2026-07) était une marge MAYBE de
+    // +20-30% au-dessus d'upperMax (7.2-7.8 ft) — le code disait ×1.6
+    // (9.6 ft) et laissait un MAYBE sur du 9 ft pour un early_int, en
+    // contradiction avec la skill scoring (cas D : 2.0m/14s ≈ 9.2 ft de
+    // face → SKIP early_int) et avec son propre commentaire. ×1.3 aligne
+    // les trois. Advanced/expert gardent leur jugement.
     if (userLevel === "early_int" || userLevel === "intermediate") {
       const z = USER_LEVEL_ZONES[userLevel];
-      if (faceFt > z.upperMax * 1.6) return "no";
+      if (faceFt > z.upperMax * 1.3) return "no";
     }
     return "ok";
   }

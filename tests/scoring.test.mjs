@@ -3,6 +3,7 @@
 // future doit passer ici AVANT push.
 import { describe, it, expect } from "vitest";
 import {
+  currentVelToMs,
   estimateFaceHeight,
   spotAttenuation,
   pickDominantSwell,
@@ -267,6 +268,37 @@ describe("safety holes closed (audit bloc 4)", () => {
   it("currents remain invisible for advanced+ (their call)", () => {
     expect(classifyConditions("advanced", mk({ currentVel: 0.7 }), spot).currentHazard).toBe("none");
   });
+  it("skill case D: 2.0m/14s clean ≈9.2ft face → hard no for early_int & intermediate", () => {
+    const h = mk({ swellHeight: 2.0, swellPeriod: 14, windSpeedKn: 5 });
+    expect(mToFt(estimateFaceHeight(2.0, 14))).toBeGreaterThan(9);
+    expect(getPersonalVerdict("early_int", h, spot)).toBe("no");
+    expect(getPersonalVerdict("intermediate", h, spot)).toBe("no");
+    expect(getPersonalVerdict("advanced", h, spot)).toBe("yes"); // adv 82-92 per skill
+  });
+});
+
+describe("currentVelToMs — unité normalisée d'après hourly_units", () => {
+  it("converts km/h (Marine API default), keeps m/s untouched", () => {
+    expect(currentVelToMs(1.08, "km/h")).toBeCloseTo(0.3, 5);
+    expect(currentVelToMs(0.3, "m/s")).toBe(0.3);
+    expect(currentVelToMs(0.3, "ms")).toBe(0.3);
+  });
+  it("handles knots and mph", () => {
+    expect(currentVelToMs(1, "kn")).toBeCloseTo(0.514444, 5);
+    expect(currentVelToMs(1, "mph")).toBeCloseTo(0.44704, 5);
+  });
+  it("unknown / missing unit or value → passthrough / null (non-régression)", () => {
+    expect(currentVelToMs(0.3, undefined)).toBe(0.3);
+    expect(currentVelToMs(0.3, "")).toBe(0.3);
+    expect(currentVelToMs(null, "km/h")).toBe(null);
+    expect(currentVelToMs(NaN, "km/h")).toBe(null);
+  });
+  it("a 1.1 km/h current no longer reads as a strong rip once normalized", () => {
+    // Repro bug terrain : l'app affichait "1.1 km/h" (raw 0.306 traité en
+    // m/s → strong). Si le raw ÉTAIT en km/h, normalisé = 0.085 m/s → none.
+    const norm = currentVelToMs(0.306, "km/h");
+    expect(classifyConditions("early_int", mk({ currentVel: norm }), spot).currentHazard).toBe("none");
+  });
 });
 
 describe("CLAUDE.md safety invariants", () => {
@@ -383,10 +415,19 @@ describe("lookupTideMult", () => {
     expect(lookupTideMult(ctx, "mid", null)).toBe(1.0);
     expect(lookupTideMult({ min: 0, max: 0.1 }, "mid", 0.05)).toBe(1.0);
   });
-  it("rewards the target window, penalizes the opposite phase", () => {
-    expect(lookupTideMult(ctx, "mid-high", 0.7)).toBe(1.06);
-    expect(lookupTideMult(ctx, "mid-high", 0.5)).toBe(1.02);
-    expect(lookupTideMult(ctx, "mid-high", 0.05)).toBe(0.92);
+  it("rewards the target window, penalizes the opposite phase (band-center anchors)", () => {
+    // Ancres aux centres des anciennes bandes (rampe continue, mêmes valeurs)
+    expect(lookupTideMult(ctx, "mid-high", 0.7)).toBe(1.06);    // delta 0 (plateau ≤0.075)
+    expect(lookupTideMult(ctx, "mid-high", 0.475)).toBeCloseTo(1.02, 5); // delta 0.225
+    expect(lookupTideMult(ctx, "mid-high", -0.05)).toBe(0.92);  // delta 0.75 (plateau ≥0.75)
+  });
+  it("is continuous — no cliff bigger than 0.5% per cm of tide", () => {
+    let prev = null;
+    for (let m = -0.2; m <= 1.2001; m += 0.01) {
+      const v = lookupTideMult(ctx, "mid-high", m);
+      if (prev != null) expect(Math.abs(v - prev)).toBeLessThan(0.005);
+      prev = v;
+    }
   });
   it("tideM outside the day's ctx does not explode", () => {
     const v = lookupTideMult({ min: -0.12, max: 0.12 }, "mid-high", 0.5);
