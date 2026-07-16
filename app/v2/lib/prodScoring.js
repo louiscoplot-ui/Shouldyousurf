@@ -295,6 +295,24 @@ export function lookupTideMult(tideCtx, idealTide, tideM) {
 const FINAL_MULT_MIN = 0.40;
 const FINAL_MULT_MAX = 1.35;
 
+// Plafond micro-swell PAR NIVEAU. L'ancien cap unique (12 à ≤0.35m → libéré
+// à 0.65m) disait "personne ne surfe 0.35m" — vrai pour un shortboard,
+// faux pour les niveaux dont la grille VIT là : le peak first_timer
+// (0.3m → baseSize 50, sa journée d'apprentissage idéale) était écrasé à
+// 12/100 rouge "Skip", et la zone montante beginner (0.45-0.55m) à 25.
+// Résultat : un first_timer n'avait JAMAIS un bon score, même le jour
+// parfait — le score ne portait aucune information pour lui (et le verdict
+// GO contredisait le hero rouge à l'écran). Le cap garde son rôle anti-
+// mensonge (sous le seuil bas de CHAQUE niveau, pas de vague = pas de
+// score) mais son domaine suit la grille du niveau : il se libère là où
+// la grille du niveau commence à exister, pas à un 0.65m universel.
+// intermediate+ : inchangé bit-à-bit.
+const MICRO_CAP_NODES = {
+  first_timer: [[0.10, 12], [0.20, 25], [0.30, 100]],
+  beginner:    [[0.20, 12], [0.35, 25], [0.50, 100]],
+};
+const MICRO_CAP_DEFAULT = [[0.35, 12], [0.50, 25], [0.65, 100]];
+
 // scoreV2 — la formule multiplicative.
 // Renvoie { score, notes, baseSize, multipliers } pour que ScoreSheet et
 // les diagnostics puissent inspecter la décomposition. Les `notes` sont
@@ -356,8 +374,10 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
     const rawCombined = periodMult * windMult * dirMult * tideMult;
     const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
     let s = baseSize * finalMult * gustMult * chopMult;
-    // Micro-swell : plafond en RAMPE 12 (≤0.35m) → 25 (0.5m) → libéré (0.65m).
-    if (hEff < 0.65) s = Math.min(s, lerpTable(hEff, [[0.35, 12], [0.5, 25], [0.65, 100]]));
+    // Micro-swell : plafond en RAMPE, domaine par niveau (cf. MICRO_CAP_NODES).
+    const capNodes = MICRO_CAP_NODES[level] || MICRO_CAP_DEFAULT;
+    const capEnd = capNodes[capNodes.length - 1][0];
+    if (hEff < capEnd) s = Math.min(s, lerpTable(hEff, capNodes));
     return { s, baseSize, periodMult, dirMult, chopMult, finalMult };
   };
 
@@ -580,11 +600,20 @@ export function isFoamieFriendly(userLevel, spot) {
 // mid-length, not a foamie, but they can still bail the outside and
 // surf whitewater / inside walls when conditions demand it. Beach breaks
 // only — heavy or reef spots don't offer this escape.
+//
+// Le plafond de la rescue est PAR NIVEAU. L'ancien ≤10 ft universel
+// promettait un MAYBE "inside rescue" à un first_timer sur un jour de
+// 9-10 ft de face : à cette taille le bord N'EST PAS un refuge (shorepound,
+// backwash, rips au maximum — les écoles de surf annulent bien avant).
+// Au-delà du plafond on retombe sur le chemin normal → too_big → "no"
+// dur + danger banner pour first_timer/beginner. 6 ft first_timer / 8 ft
+// beginner (aligné sur getBoardRec beginner qui coupait déjà à 8) /
+// 10 ft early_int (inchangé — il a le paddle pour rentrer).
+export const REFORM_MAX_FT = { first_timer: 6, beginner: 8, early_int: 10 };
+
 export function hasInsideReform(userLevel, faceFt, spot) {
-  const eligible = userLevel === "first_timer"
-                || userLevel === "beginner"
-                || userLevel === "early_int";
-  return eligible && spot.type !== "reef" && !spot.heavy && faceFt <= 10;
+  const maxFt = REFORM_MAX_FT[userLevel];
+  return maxFt != null && spot.type !== "reef" && !spot.heavy && faceFt <= maxFt;
 }
 
 // Advice key is verdict-aware: the tip must always match the SKIP / MAYBE /
@@ -672,13 +701,13 @@ export function getBoardRec(userLevel, faceFt, period, spot) {
   if (userLevel === "first_timer") {
     if (faceFt < 0.6) return { short: "—", long: "Not enough wave — save your wax" };
     if (faceFt <= 2)  return { short: "Foamie 8'+", long: "8' or bigger soft-top. Stay in the whitewash — catch re-formed waves near the sand, don't paddle past the break" };
-    if (foamie && faceFt <= 10) return { short: "Foamie inside only", long: "Peak is too much for a first-timer. Stay INSIDE on a foamie and ride the reform (smaller waves that form after the main wave breaks)" };
+    if (foamie && faceFt <= REFORM_MAX_FT.first_timer) return { short: "Foamie inside only", long: "Peak is too much for a first-timer. Stay INSIDE on a foamie and ride the reform (smaller waves that form after the main wave breaks)" };
     return { short: "Watch today", long: "Beyond a first-timer's kit. Watch the ocean, learn where the rip is, try again when it's smaller" };
   }
   if (userLevel === "beginner") {
     if (faceFt < 0.6) return { short: "—", long: "Not enough wave" };
     if (faceFt <= 3)  return { short: "Foamie 7'–8'", long: "Soft-top 7' to 8' — easy paddle, forgiving take-offs, safer for everyone if you lose it" };
-    if (foamie && faceFt <= 8) return { short: "Foamie inside", long: "Peak's getting big — stay on the foamie in the reform (the smaller foam waves close to shore)" };
+    if (foamie && faceFt <= REFORM_MAX_FT.beginner) return { short: "Foamie inside", long: "Peak's getting big — stay on the foamie in the reform (the smaller foam waves close to shore)" };
     return { short: "Wait smaller", long: "Too much for a beginner foamie — come back when it drops" };
   }
   if (userLevel === "early_int") {
@@ -737,8 +766,10 @@ export function getSessionNotes(userLevel, h, dayHours, spot) {
     out.push("Reef / heavy spot — know the entry, watch the locals, don't drop in");
   }
 
-  // Foamie inside advice for learners when conditions are too much
-  if (isFoamieFriendly(userLevel, spot) && (size === "too_big" || size === "upper" || wind === "blown") && cls.faceFt <= 10 && cls.faceFt >= 0.3) {
+  // Foamie inside advice for learners when conditions are too much — même
+  // plafond par niveau que la rescue du verdict (REFORM_MAX_FT), sinon la
+  // note promettrait un inside que getPersonalVerdict vient de refuser.
+  if (isFoamieFriendly(userLevel, spot) && (size === "too_big" || size === "upper" || wind === "blown") && hasInsideReform(userLevel, cls.faceFt, spot) && cls.faceFt >= 0.3) {
     out.push("Stay INSIDE on the foamie — ride the reform close to shore, smaller and forgiving");
   }
 

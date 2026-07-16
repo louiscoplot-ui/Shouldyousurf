@@ -301,6 +301,43 @@ describe("currentVelToMs — unité normalisée d'après hourly_units", () => {
   });
 });
 
+describe("score/verdict précis PAR NIVEAU (pas de bon surf raté, pas de danger masqué)", () => {
+  it("first_timer perfect day (0.3m clean whitewash) scores GOOD, not 12 red", () => {
+    // L'ancien cap micro-swell universel écrasait le peak first_timer à 12 :
+    // GO vert + hero "Skip 12" rouge → il restait chez lui son jour idéal.
+    const h = mk({ swellHeight: 0.3, swellPeriod: 10, windSpeedKn: 5 });
+    expect(getPersonalVerdict("first_timer", h, spot)).toBe("yes");
+    expect(scoreForLevel(h, spot, "first_timer").score).toBeGreaterThanOrEqual(45);
+  });
+  it("beginner rising zone (0.55m clean) scores like the sweet day it is", () => {
+    const h = mk({ swellHeight: 0.55, swellPeriod: 10, windSpeedKn: 5 });
+    expect(getPersonalVerdict("beginner", h, spot)).toBe("yes");
+    expect(scoreForLevel(h, spot, "beginner").score).toBeGreaterThanOrEqual(60);
+  });
+  it("micro-cap unchanged for intermediate+ (0.4m stays honest)", () => {
+    const h = mk({ swellHeight: 0.4, swellPeriod: 12 });
+    expect(scoreV2(h, spot, "intermediate").score).toBeLessThanOrEqual(17);
+    expect(scoreV2(h, spot, "advanced").score).toBeLessThanOrEqual(17);
+  });
+  it("flat ocean still scores ~nothing for first_timer (cap keeps its job)", () => {
+    const h = mk({ swellHeight: 0.1, swellPeriod: 8 });
+    expect(scoreV2(h, spot, "first_timer").score).toBeLessThanOrEqual(12);
+  });
+  it("9ft day → hard no for first_timer AND beginner (no 'inside rescue' MAYBE)", () => {
+    // L'ancien plafond reform ≤10ft universel promettait un MAYBE inside à
+    // un first_timer sur du 9ft — le bord n'est pas un refuge à cette taille.
+    const h = mk({ swellHeight: 2.0, swellPeriod: 14, windSpeedKn: 5 });
+    expect(getPersonalVerdict("first_timer", h, spot)).toBe("no");
+    expect(getPersonalVerdict("beginner", h, spot)).toBe("no");
+  });
+  it("reform rescue preserved below each level's ceiling", () => {
+    const seven = mk({ swellHeight: 1.5, swellPeriod: 14, windSpeedKn: 5 }); // ~6.9ft
+    expect(getPersonalVerdict("beginner", seven, spot)).toBe("ok");
+    const five = mk({ swellHeight: 1.1, swellPeriod: 14, windSpeedKn: 5 }); // ~5.1ft
+    expect(getPersonalVerdict("first_timer", five, spot)).toBe("ok");
+  });
+});
+
 describe("CLAUDE.md safety invariants", () => {
   it("reef/heavy spot → hard no for first_timer and beginner", () => {
     const h = mk({ swellHeight: 1.0 });
