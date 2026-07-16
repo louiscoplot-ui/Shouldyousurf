@@ -59,16 +59,16 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
   - `spotAttenuation(spot)` : fraction du Hs offshore qui atteint le break (`swellAttenuation` sur le spot, défaut 1.0). Perth métro 0.55-0.60 (Five Fathom Bank / Rottnest) — TODO calibration bouées. Appliquée UNE fois par chemin (estimateFaceHeight / hauteur effective de scoreV2).
   - `estimateFaceHeight(swell, period, attenuation)` : conversion swell → face avec period boost en rampe continue 0.4→0.8m (smoothstep sur la hauteur ATTÉNUÉE).
   - `swellPartitions(h, spot)` / `pickDominantSwell` / `getDominant(h, spot)` / `faceFtOf(h, spot)` : la partition dominante (poids = h² × dirMult × periodMult, porte secondaire en smoothstep 0.2-0.4m) est calculée UNE fois par heure dans realFetch (cache `hour.dom` + `hour.faceFt`) et lue partout via getDominant/faceFtOf. AUCUN lecteur ne pioche `h.swellHeight` direct.
-  - `scoreV2(...)` : multiplicatif baseSize(hauteur effective) × period × wind × dir × tide (clamp 0.40-1.35) × gustMult × chopMult (rampes, hors clamp). Le score est le BLEND des deux partitions autour du point de bascule (continuité). Période manquante = multiplicateur 1.00 exact. Caps sécurité en rampes (micro-swell 0.35-0.65m, onshore 28-42 km/h, cross 43-57 km/h).
+  - `scoreV2(...)` : multiplicatif baseSize(hauteur effective) × period × wind × dir × tide (clamp 0.40-1.35) × gustMult × chopMult (rampes, hors clamp). Le score est le BLEND des deux partitions autour du point de bascule (continuité). Période manquante = multiplicateur 1.00 exact. Caps sécurité en rampes (micro-swell PAR NIVEAU via MICRO_CAP_NODES — first_timer libéré dès 0.30m, beginner 0.50m, autres 0.65m ; onshore 28-42 km/h, cross 43-57 km/h). Le cap micro universel écrasait le peak first_timer (0.3m → 12/100 rouge + verdict GO) : son jour d'apprentissage idéal était illisible. `lookupTideMult` est en rampe continue (TIDE_DELTA_NODES, nœuds aux centres des anciennes bandes) — c'était la dernière table à paliers.
   - `windClass(deltaDeg)` : classification offshore/cross/onshore UNIQUE (les 4 copies ont été fusionnées) ; null si delta inconnu → neutre explicite côté appelant.
   - `tideNotes(h, spot, tideCtx)` : générateur de notes minimal (tags marée) — scoreSurf (ancien additif mort) a été supprimé.
   - `USER_LEVEL_ZONES` : matrice min/sweetLo/sweetHi/upperMax par niveau (6 niveaux)
-  - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`. currentHazard couvre first_timer/beginner/**early_int** (seuils 0.28/0.56 m/s). Verdict too_big : plafond absolu `faceFt > upperMax × 1.6` → no pour early_int/intermediate (plus de MAYBE sur 13 ft).
-  - `hasInsideReform(level, faceFt, spot)` : éligibilité fallback whitewash
+  - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`. currentHazard couvre first_timer/beginner/**early_int** (seuils 0.28/0.56 m/s — `currentVel` est normalisé en m/s par `currentVelToMs` dans realFetch d'après `hourly_units` de la réponse API, l'API peut servir des km/h). Verdict too_big : plafond absolu `faceFt > upperMax × 1.3` (7.8 ft) → no pour early_int/intermediate, appliqué AUSSI dans la branche inside-reform (skill cas D : 9.2 ft = SKIP early_int).
+  - `hasInsideReform(level, faceFt, spot)` : éligibilité fallback whitewash — plafond PAR NIVEAU (`REFORM_MAX_FT` : first_timer 6 ft, beginner 8 ft, early_int 10 ft). L'ancien ≤10 ft universel promettait un MAYBE "inside rescue" à un first_timer sur du 9-10 ft de face. Au-delà → too_big → no dur + danger banner. getBoardRec et getSessionNotes lisent le même plafond.
   - `getPersonalVerdict(level, h, spot)` → `"yes" | "ok" | "no"` — **SOURCE DE VÉRITÉ pour le label perso**
   - `getPersonalAdviceKey(level, h, spot, displayedVerdict)` : retourne tip key matching le verdict (4e param explicite, jamais re-dériver depuis le score)
   - `getPersonalModifier(level, h, spot)` : modifier optionnel
-  - `scoreForLevel(h, spot, level, tideCtx)` : score level-adjusted, plafond verdict-aware (≤38 SKIP, ≤70 MAYBE)
+  - `scoreForLevel(h, spot, level, tideCtx)` : score level-adjusted, plafond verdict-aware (≤38 SKIP, ≤70 MAYBE) rendu CONTINU par `flipProximity` : la proximité d'une bascule de bande est mesurée en sondant `getPersonalVerdict` sur des copies perturbées de l'heure (bisection sur 4 axes bruités : vent ±4 km/h, courant ±0.08 m/s, houle ±12%) et le score glisse vers le mapping de la bande suivante (BAND_MAPS) AVANT la bascule → zéro saut au moment où le label change. Ne JAMAIS re-dupliquer les seuils du verdict dans une table à côté : le probing suit automatiquement toute évolution des règles.
   - `adaptForecastToLevel(payload, level, spot)` : recompute tous les `hour.score` quand le user change de niveau
   - `getBoardRec(level, faceFt, period, spot)` : reco planche
   - `levelMatrixFor(hour, spot, fns)` : verdict par niveau (LevelMatrix)
@@ -130,10 +130,10 @@ Tous les `font-variation-settings: "SOFT" X, "opsz" Y` ont été cleanés → `"
 
 ⚠️ **Inside-reform branch learner — currents + blown wind = SKIP**
 `getPersonalVerdict` `hasInsideReform` :
-- `currentHazard === "strong"` → return "no"
+- `currentHazard === "strong"` → return "no" UNIQUEMENT pour first_timer/beginner (vrais foamie). Pour early_int (mid-length, vrai paddle) le palier bas "strong" plafonne à MAYBE, PAS un SKIP dur — sinon un courant modélisé bruité qui franchit 0.28 faisait basculer une matinée clean de 100 GO à 38 SKIP rouge (bug terrain 2026-07). Le palier haut `dangerous` (0.56) reste un `no` dur pour TOUS.
 - `wind === "blown"` → return "no"
 - `size === "too_small" && level === "early_int"` → return "no"
-Tip selector : `currentHazard !== "none"` pour learner → `tip_<level>_current` (rip = info safety prioritaire).
+Tip selector : `currentHazard !== "none"` pour learner en SKIP → `tip_<level>_current` (rip = info safety prioritaire). early_int en MAYBE sur "strong" : le caveat courant vit dans getSessionNotes ("noticeable current, surf between flags"), pas dans le tip SKIP.
 
 ---
 

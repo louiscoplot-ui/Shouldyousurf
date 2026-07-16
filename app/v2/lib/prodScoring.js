@@ -5,6 +5,25 @@
 export const mToFt = m => m * 3.281;
 export const knToKmh = kn => kn * 1.852;
 
+// currentVelToMs — normalise ocean_current_velocity vers des m/s quelle que
+// soit l'unité annoncée par l'API (response.hourly_units). Tout l'aval
+// suppose des m/s : les paliers hazard de classifyConditions (0.28 / 0.56)
+// et l'affichage UI (× 3.6 pour montrer des km/h). La Marine API Open-Meteo
+// sert ce champ en km/h par défaut selon la doc publique (invérifiable en
+// live depuis l'env de session, proxy 403) — d'où la lecture de l'unité
+// RÉELLE annoncée dans la réponse plutôt qu'un pari sur un défaut : si le
+// champ arrive déjà en m/s rien ne change, s'il arrive en km/h les seuils
+// sur-déclenchaient ×3.6 (bandeau "strong rip" sur un courant négligeable)
+// et le courant affiché était gonflé d'autant.
+export function currentVelToMs(v, unit) {
+  if (!Number.isFinite(v)) return null;
+  const u = typeof unit === "string" ? unit.trim().toLowerCase() : "";
+  if (u === "km/h" || u === "kmh" || u === "kph") return v / 3.6;
+  if (u === "kn" || u === "kt" || u === "knots") return v * 0.514444;
+  if (u === "mph") return v * 0.44704;
+  return v; // "m/s", vide ou inconnue → tel quel (comportement historique)
+}
+
 // Per-spot swell attenuation — offshore Hs is what the wave model sees at
 // the grid cell; sheltered spots (offshore banks, islands, headlands) only
 // receive a fraction of it. 1.0 = fully exposed (default, non-regression).
@@ -255,6 +274,14 @@ export function lookupDirMult(swellDelta) {
   return lerpTable(swellDelta, DIR_NODES);
 }
 
+// Dernière table à paliers du moteur passée en rampe (sprint continuité
+// 2026-07) : les anciens seuils secs <0.15→1.06 / <0.30→1.02 / >0.60→0.92
+// faisaient sauter le score de 4 à 8 pts pour 1 cm de marée aux frontières
+// de fenêtre. Nœuds aux CENTRES des anciennes bandes — mêmes valeurs
+// historiques, zéro recalibration, juste la forme continue (même méthode
+// que PERIOD_NODES / WIND_*_NODES / DIR_NODES).
+const TIDE_DELTA_NODES = [[0.075, 1.06], [0.225, 1.02], [0.45, 1.00], [0.75, 0.92]];
+
 export function lookupTideMult(tideCtx, idealTide, tideM) {
   if (!tideCtx || !idealTide || idealTide === "any" || tideM == null) return 1.00;
   const range = tideCtx.max - tideCtx.min;
@@ -262,15 +289,29 @@ export function lookupTideMult(tideCtx, idealTide, tideM) {
   const norm = (tideM - tideCtx.min) / range;
   const target = TIDE_TARGETS[idealTide];
   if (target == null) return 1.00;
-  const delta = Math.abs(norm - target);
-  if (delta < 0.15) return 1.06;
-  if (delta < 0.30) return 1.02;
-  if (delta > 0.60) return 0.92;
-  return 1.00;
+  return lerpTable(Math.abs(norm - target), TIDE_DELTA_NODES);
 }
 
 const FINAL_MULT_MIN = 0.40;
 const FINAL_MULT_MAX = 1.35;
+
+// Plafond micro-swell PAR NIVEAU. L'ancien cap unique (12 à ≤0.35m → libéré
+// à 0.65m) disait "personne ne surfe 0.35m" — vrai pour un shortboard,
+// faux pour les niveaux dont la grille VIT là : le peak first_timer
+// (0.3m → baseSize 50, sa journée d'apprentissage idéale) était écrasé à
+// 12/100 rouge "Skip", et la zone montante beginner (0.45-0.55m) à 25.
+// Résultat : un first_timer n'avait JAMAIS un bon score, même le jour
+// parfait — le score ne portait aucune information pour lui (et le verdict
+// GO contredisait le hero rouge à l'écran). Le cap garde son rôle anti-
+// mensonge (sous le seuil bas de CHAQUE niveau, pas de vague = pas de
+// score) mais son domaine suit la grille du niveau : il se libère là où
+// la grille du niveau commence à exister, pas à un 0.65m universel.
+// intermediate+ : inchangé bit-à-bit.
+const MICRO_CAP_NODES = {
+  first_timer: [[0.10, 12], [0.20, 25], [0.30, 100]],
+  beginner:    [[0.20, 12], [0.35, 25], [0.50, 100]],
+};
+const MICRO_CAP_DEFAULT = [[0.35, 12], [0.50, 25], [0.65, 100]];
 
 // scoreV2 — la formule multiplicative.
 // Renvoie { score, notes, baseSize, multipliers } pour que ScoreSheet et
@@ -333,8 +374,10 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
     const rawCombined = periodMult * windMult * dirMult * tideMult;
     const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
     let s = baseSize * finalMult * gustMult * chopMult;
-    // Micro-swell : plafond en RAMPE 12 (≤0.35m) → 25 (0.5m) → libéré (0.65m).
-    if (hEff < 0.65) s = Math.min(s, lerpTable(hEff, [[0.35, 12], [0.5, 25], [0.65, 100]]));
+    // Micro-swell : plafond en RAMPE, domaine par niveau (cf. MICRO_CAP_NODES).
+    const capNodes = MICRO_CAP_NODES[level] || MICRO_CAP_DEFAULT;
+    const capEnd = capNodes[capNodes.length - 1][0];
+    if (hEff < capEnd) s = Math.min(s, lerpTable(hEff, capNodes));
     return { s, baseSize, periodMult, dirMult, chopMult, finalMult };
   };
 
@@ -557,11 +600,20 @@ export function isFoamieFriendly(userLevel, spot) {
 // mid-length, not a foamie, but they can still bail the outside and
 // surf whitewater / inside walls when conditions demand it. Beach breaks
 // only — heavy or reef spots don't offer this escape.
+//
+// Le plafond de la rescue est PAR NIVEAU. L'ancien ≤10 ft universel
+// promettait un MAYBE "inside rescue" à un first_timer sur un jour de
+// 9-10 ft de face : à cette taille le bord N'EST PAS un refuge (shorepound,
+// backwash, rips au maximum — les écoles de surf annulent bien avant).
+// Au-delà du plafond on retombe sur le chemin normal → too_big → "no"
+// dur + danger banner pour first_timer/beginner. 6 ft first_timer / 8 ft
+// beginner (aligné sur getBoardRec beginner qui coupait déjà à 8) /
+// 10 ft early_int (inchangé — il a le paddle pour rentrer).
+export const REFORM_MAX_FT = { first_timer: 6, beginner: 8, early_int: 10 };
+
 export function hasInsideReform(userLevel, faceFt, spot) {
-  const eligible = userLevel === "first_timer"
-                || userLevel === "beginner"
-                || userLevel === "early_int";
-  return eligible && spot.type !== "reef" && !spot.heavy && faceFt <= 10;
+  const maxFt = REFORM_MAX_FT[userLevel];
+  return maxFt != null && spot.type !== "reef" && !spot.heavy && faceFt <= maxFt;
 }
 
 // Advice key is verdict-aware: the tip must always match the SKIP / MAYBE /
@@ -649,13 +701,13 @@ export function getBoardRec(userLevel, faceFt, period, spot) {
   if (userLevel === "first_timer") {
     if (faceFt < 0.6) return { short: "—", long: "Not enough wave — save your wax" };
     if (faceFt <= 2)  return { short: "Foamie 8'+", long: "8' or bigger soft-top. Stay in the whitewash — catch re-formed waves near the sand, don't paddle past the break" };
-    if (foamie && faceFt <= 10) return { short: "Foamie inside only", long: "Peak is too much for a first-timer. Stay INSIDE on a foamie and ride the reform (smaller waves that form after the main wave breaks)" };
+    if (foamie && faceFt <= REFORM_MAX_FT.first_timer) return { short: "Foamie inside only", long: "Peak is too much for a first-timer. Stay INSIDE on a foamie and ride the reform (smaller waves that form after the main wave breaks)" };
     return { short: "Watch today", long: "Beyond a first-timer's kit. Watch the ocean, learn where the rip is, try again when it's smaller" };
   }
   if (userLevel === "beginner") {
     if (faceFt < 0.6) return { short: "—", long: "Not enough wave" };
     if (faceFt <= 3)  return { short: "Foamie 7'–8'", long: "Soft-top 7' to 8' — easy paddle, forgiving take-offs, safer for everyone if you lose it" };
-    if (foamie && faceFt <= 8) return { short: "Foamie inside", long: "Peak's getting big — stay on the foamie in the reform (the smaller foam waves close to shore)" };
+    if (foamie && faceFt <= REFORM_MAX_FT.beginner) return { short: "Foamie inside", long: "Peak's getting big — stay on the foamie in the reform (the smaller foam waves close to shore)" };
     return { short: "Wait smaller", long: "Too much for a beginner foamie — come back when it drops" };
   }
   if (userLevel === "early_int") {
@@ -714,8 +766,10 @@ export function getSessionNotes(userLevel, h, dayHours, spot) {
     out.push("Reef / heavy spot — know the entry, watch the locals, don't drop in");
   }
 
-  // Foamie inside advice for learners when conditions are too much
-  if (isFoamieFriendly(userLevel, spot) && (size === "too_big" || size === "upper" || wind === "blown") && cls.faceFt <= 10 && cls.faceFt >= 0.3) {
+  // Foamie inside advice for learners when conditions are too much — même
+  // plafond par niveau que la rescue du verdict (REFORM_MAX_FT), sinon la
+  // note promettrait un inside que getPersonalVerdict vient de refuser.
+  if (isFoamieFriendly(userLevel, spot) && (size === "too_big" || size === "upper" || wind === "blown") && hasInsideReform(userLevel, cls.faceFt, spot) && cls.faceFt >= 0.3) {
     out.push("Stay INSIDE on the foamie — ride the reform close to shore, smaller and forgiving");
   }
 
@@ -820,12 +874,17 @@ export function getPersonalVerdict(userLevel, h, spot) {
 
   if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
-    // Strong current pulls a learner along the beach (or out) faster
-    // than they can paddle back even from the inside. The "dangerous"
-    // tier is already a hard no above; "strong" used to only cap to ok
-    // — promote it to no inside the reform branch since the rescue
-    // depends on staying close to the sand.
-    if (currentHazard === "strong") return "no";
+    // Strong current pulls a TRUE foamie learner (first_timer / beginner)
+    // along the beach faster than they can paddle back even from the
+    // inside → hard no. Early_int rides a mid-length with real paddle : the
+    // lower "strong" tier only CAPS them to MAYBE (via the downgrade below),
+    // it does not flip a perfect day to a red-banner SKIP. The "dangerous"
+    // tier (0.56, ~2× stronger) is already a hard no above for everyone.
+    // Fixes the 100→38 cliff : a 0.4 km/h bump in a noisy modeled current
+    // used to flip an early_int's whole clean morning from Unreal-GO to
+    // Fair-SKIP. "strong" stays surfaced as a caveat (session note +
+    // GO→MAYBE downgrade), not a false alarm.
+    if (currentHazard === "strong" && userLevel !== "early_int") return "no";
     // Wind === "blown" already means the surface is shredded enough
     // that the score collapses to ~0; the inside is just as choppy as
     // the outside in those conditions. Don't promise a learner an
@@ -844,7 +903,20 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // sub-1.5ft is just a swim, not a session. First_timer / beginner
     // can still splash in the shorebreak so the "ok" path stays for them.
     if (size === "too_small" && userLevel === "early_int") return "no";
-    if (size === "sweet" && wind === "clean") return "yes";
+    // Même plafond ABSOLU too_big que le chemin non-reform (upperMax × 1.3,
+    // cf. commentaire là-bas) : la branche reform court-circuitait le cap et
+    // laissait un MAYBE "inside rescue" sur du 9 ft pour un early_int — au
+    // large de sa marge et du cas D de la skill. First_timer / beginner
+    // gardent leur vraie rescue foamie-whitewash (leur too_big n'est pas
+    // le même océan : leurs zones coupent bien plus bas).
+    if (size === "too_big" && userLevel === "early_int"
+        && faceFt > USER_LEVEL_ZONES.early_int.upperMax * 1.3) return "no";
+    // "strong" current (early_int only past the hard-no above) never lets a
+    // GO through — same downgrade the non-reform path applies below, kept
+    // consistent so the two chemins can't diverge on a rippy sweet day.
+    const cap = currentHazard === "strong" ? "ok" : null;
+    const downgrade = (v) => (cap && v === "yes" ? cap : v);
+    if (size === "sweet" && wind === "clean") return downgrade("yes");
     return "ok";
   }
   if (wind === "blown") {
@@ -876,14 +948,17 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // monotonic (never stricter than beginner).
     if (userLevel === "first_timer" || userLevel === "beginner") return "no";
     // Plafond ABSOLU pour early_int / intermediate : au-delà de
-    // upperMax × 1.6 (≈ 9.6 ft pour leurs zones à upperMax 6), ce n'est
-    // plus "sur la limite, choisis tes vagues" mais double-overhead —
-    // l'audit montrait un MAYBE sur 13 ft glassy. Le ×1.6 laisse la
-    // marge raisonnable (upperMax +20-30%, soit 7.2-7.8 ft) en MAYBE et
-    // coupe net au-delà. Advanced/expert gardent leur jugement.
+    // upperMax × 1.3 (7.8 ft pour leurs zones à upperMax 6), ce n'est
+    // plus "sur la limite, choisis tes vagues" mais franchement overhead.
+    // L'intention d'origine (audit 2026-07) était une marge MAYBE de
+    // +20-30% au-dessus d'upperMax (7.2-7.8 ft) — le code disait ×1.6
+    // (9.6 ft) et laissait un MAYBE sur du 9 ft pour un early_int, en
+    // contradiction avec la skill scoring (cas D : 2.0m/14s ≈ 9.2 ft de
+    // face → SKIP early_int) et avec son propre commentaire. ×1.3 aligne
+    // les trois. Advanced/expert gardent leur jugement.
     if (userLevel === "early_int" || userLevel === "intermediate") {
       const z = USER_LEVEL_ZONES[userLevel];
-      if (faceFt > z.upperMax * 1.6) return "no";
+      if (faceFt > z.upperMax * 1.3) return "no";
     }
     return "ok";
   }
@@ -906,17 +981,31 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
   const v2 = scoreV2(h, spot, userLevel || "intermediate", tideCtx);
   if (!userLevel) return v2;
   const verdict = getPersonalVerdict(userLevel, h, spot);
-  let adj = v2.score;
-  // Compression douce de la queue haute au lieu d'un cap dur. Un
-  // Math.min(adj, 70) aplatissait À 70 toutes les heures dont le score
+  // Compression douce de la queue haute au lieu d'un cap dur (cf. BAND_MAPS).
+  // Un Math.min(adj, 70) aplatissait À 70 toutes les heures dont le score
   // brut dépassait 70 — fréquent pour early_int en zone upper/too_big
   // (verdict ok mais baseSize élevé) → "70 partout", zéro lisibilité sur
   // les meilleures heures. compressTail garde le score intact sous le
   // floor et remappe [floor..100] dans [floor..cap], donc le plafond
   // verdict est respecté (jamais de MAYBE en Unreal, ni de SKIP en Fair+)
   // tout en préservant l'ordre et la variation horaire.
-  if (verdict === "no") adj = compressTail(adj, 30, 38);
-  else if (verdict === "ok") adj = compressTail(adj, 55, 70);
+  let adj = BAND_MAPS[verdict](v2.score);
+  // ── Frontières de bande CONTINUES ──────────────────────────────────
+  // Le plafond verdict créait la dernière famille de falaises du moteur :
+  // 1 cm de houle ou 0.05 m/s de courant modélisé au-dessus d'une
+  // frontière (upperMax, seuil clean→bumpy, palier courant…) faisait
+  // basculer yes→ok et le score sautait de 100 à 70 d'une heure à
+  // l'autre — la même classe de bug que le 100→38 du bug terrain
+  // d'origine, en moins violent. Ici le score GLISSE vers le mapping de
+  // la bande suivante AVANT la bascule : à l'instant où le verdict
+  // change de bande, les deux mappings coïncident → zéro saut, et le
+  // label (GO/MAYBE) reste catégorique, lui.
+  if (verdict !== "no") {
+    const flip = flipProximity(userLevel, h, spot, verdict);
+    if (flip.p > 0 && flip.to) {
+      adj += (BAND_MAPS[flip.to](v2.score) - adj) * flip.p;
+    }
+  }
   return {
     score: Math.max(0, Math.min(100, Math.round(adj))),
     notes: v2.notes,
@@ -930,6 +1019,69 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
 function compressTail(s, floor, cap) {
   if (s <= floor) return s;
   return floor + (s - floor) * ((cap - floor) / (100 - floor));
+}
+
+// Mapping score brut → score affiché, par bande de verdict. compressTail
+// est ≤ identité partout : un blend entre deux mappings ne peut jamais
+// REMONTER un score au-dessus de sa bande (pas de floor artificiel).
+const BAND_MAPS = {
+  yes: (s) => s,
+  ok:  (s) => compressTail(s, 55, 70),
+  no:  (s) => compressTail(s, 30, 38),
+};
+
+// Échelles de bruit heure-à-heure des entrées modèle (Open-Meteo) : si une
+// variation de CET ordre suffit à faire basculer le verdict, l'heure est
+// "au bord" et son score doit déjà avoir rejoint la bande d'en face.
+const FLIP_NOISE = { windKmh: 4, currentMs: 0.08, swellRel: 0.12 };
+const VERDICT_ORDER = { no: 0, ok: 1, yes: 2 };
+
+// Évalue le verdict sur une copie perturbée de l'heure. Les caches posés
+// par realFetch (hour.dom / hour.faceFt) sont invalidés pour que la
+// perturbation de houle se propage réellement à la partition dominante
+// et à la face — getDominant/faceFtOf recalculent en fallback.
+function verdictWith(userLevel, h, spot, patch) {
+  return getPersonalVerdict(userLevel, { ...h, dom: undefined, faceFt: undefined, ...patch }, spot);
+}
+
+// flipProximity — p ∈ [0,1] : à quel point le verdict de l'heure est près
+// de basculer vers une bande INFÉRIEURE, et vers laquelle. La distance est
+// mesurée en SONDANT getPersonalVerdict lui-même (bisection sur chaque axe
+// bruité), pas en dupliquant ses seuils : toute évolution future des
+// règles de verdict est suivie automatiquement — c'est la duplication de
+// seuils qui a produit les "4 copies divergentes" des audits passés.
+// p=0 : bascule à plus d'un σ de bruit ; p→1 : bascule imminente.
+export function flipProximity(userLevel, h, spot, baseVerdict) {
+  const base = VERDICT_ORDER[baseVerdict];
+  const swellScale = (t, dir) => {
+    const f = 1 + dir * t * FLIP_NOISE.swellRel;
+    const patch = { swellHeight: (h.swellHeight || 0) * f };
+    if (Number.isFinite(h.secSwellH)) patch.secSwellH = h.secSwellH * f;
+    return patch;
+  };
+  const axes = [
+    (t) => ({ windSpeedKn: (Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0) + (t * FLIP_NOISE.windKmh) / 1.852 }),
+    (t) => ({ currentVel: (h.currentVel || 0) + t * FLIP_NOISE.currentMs }),
+    (t) => swellScale(t, +1), // houle qui monte (vers too_big / caps)
+    (t) => swellScale(t, -1), // houle qui tombe (vers too_small / min)
+  ];
+  let best = { p: 0, to: null };
+  for (const patchAt of axes) {
+    const vFull = verdictWith(userLevel, h, spot, patchAt(1));
+    if (VERDICT_ORDER[vFull] >= base) continue; // pas de bascule à 1σ sur cet axe
+    // Bisection du point de bascule t* ∈ (0,1] — 6 itérations ≈ 1.5% de
+    // résolution, largement sous le pas d'affichage d'un point de score.
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 6; i++) {
+      const mid = (lo + hi) / 2;
+      if (VERDICT_ORDER[verdictWith(userLevel, h, spot, patchAt(mid))] < base) hi = mid;
+      else lo = mid;
+    }
+    const raw = 1 - hi;
+    const p = raw * raw * (3 - 2 * raw); // smoothstep, C1 aux deux bouts
+    if (p > best.p) best = { p, to: vFull };
+  }
+  return best;
 }
 
 // Rebuilds a forecast payload so every hour.score is the level-adjusted

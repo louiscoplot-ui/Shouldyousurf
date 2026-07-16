@@ -49,7 +49,7 @@ Onshore >35km/h → SKIP tous niveaux.
 Multiplicateurs combinés plafonnés : max ×2.0, min ×0.40.
 
 ## 5 cas terrain de validation
-A : 0.3m/8s/offshore 10  → score MAX 12 tous niveaux, SKIP partout
+A : 0.3m/8s/offshore 10  → score MAX 12 tous niveaux SAUF first_timer (whitewash 0.2-0.4m = SA zone d'apprentissage, grille dédiée peak 35-65 — le cap micro-swell est par niveau et le laisse vivre), SKIP partout sauf first_timer GO
 B : 0.7m/10s/offshore 15 → early_int 55-70, beginner 45-60
 C : 1.2m/12s/offshore 12 → early_int 68-80, intermediate 72-85, beginner 20-30
 D : 2.0m/14s/offshore 10 → advanced 82-92, early_int SKIP <20

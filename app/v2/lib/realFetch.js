@@ -13,6 +13,7 @@ import {
   spotAttenuation,
   windClass,
   angDelta,
+  currentVelToMs,
   dayTideCtx,
   mToFt,
   knToKmh,
@@ -213,7 +214,13 @@ export async function fetchRealForecast(spot, signal) {
         airTemp: wind.hourly.temperature_2m?.[wi] ?? null,
         rainProb: wind.hourly.precipitation_probability?.[wi] ?? null,
         windGustKn: wind.hourly.wind_gusts_10m?.[wi] ?? null,
-        currentVel: marine.hourly.ocean_current_velocity?.[mi] ?? null,
+        // Normalisé en m/s d'après l'unité RÉELLE annoncée par la réponse —
+        // les seuils hazard (0.28/0.56 m/s) et l'affichage (×3.6) supposent
+        // des m/s, or l'API peut servir ce champ en km/h (son défaut doc).
+        currentVel: currentVelToMs(
+          marine.hourly.ocean_current_velocity?.[mi] ?? null,
+          marine.hourly_units?.ocean_current_velocity,
+        ),
         currentDir: marine.hourly.ocean_current_direction?.[mi] ?? null,
       };
     }).filter(Boolean);
