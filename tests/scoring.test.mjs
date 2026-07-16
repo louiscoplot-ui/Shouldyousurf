@@ -248,6 +248,22 @@ describe("safety holes closed (audit bloc 4)", () => {
     expect(getPersonalVerdict("early_int", ripStrong, spot)).not.toBe("yes");
     expect(classifyConditions("early_int", ripStrong, spot).currentHazard).toBe("strong");
   });
+  it("strong (not dangerous) current → early_int MAYBE, not SKIP cliff", () => {
+    // Repro du bug terrain : clean sweet-size day, le courant passe juste le
+    // palier bas "strong". early_int doit rester MAYBE (pas de SKIP rouge
+    // 100→38). first_timer/beginner gardent leur SKIP dur (foamie).
+    const clean = { swellHeight: 0.9, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null, currentVel: 0.4 };
+    expect(classifyConditions("early_int", clean, spot).currentHazard).toBe("strong");
+    expect(getPersonalVerdict("early_int", clean, spot)).toBe("ok");
+    // le score ne s'effondre plus dans la bande SKIP (≤38) — reste MAYBE (≥45)
+    expect(scoreForLevel(clean, spot, "early_int").score).toBeGreaterThan(45);
+    // vrais foamie : SKIP dur préservé
+    expect(getPersonalVerdict("first_timer", clean, spot)).toBe("no");
+    expect(getPersonalVerdict("beginner", clean, spot)).toBe("no");
+    // le palier haut "dangerous" reste un SKIP dur pour early_int
+    const danger = { ...clean, currentVel: 0.6 };
+    expect(getPersonalVerdict("early_int", danger, spot)).toBe("no");
+  });
   it("currents remain invisible for advanced+ (their call)", () => {
     expect(classifyConditions("advanced", mk({ currentVel: 0.7 }), spot).currentHazard).toBe("none");
   });

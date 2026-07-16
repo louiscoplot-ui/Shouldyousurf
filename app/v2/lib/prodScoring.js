@@ -820,12 +820,17 @@ export function getPersonalVerdict(userLevel, h, spot) {
 
   if (hasInsideReform(userLevel, faceFt, spot)) {
     if (faceFt < 0.3) return "no";
-    // Strong current pulls a learner along the beach (or out) faster
-    // than they can paddle back even from the inside. The "dangerous"
-    // tier is already a hard no above; "strong" used to only cap to ok
-    // — promote it to no inside the reform branch since the rescue
-    // depends on staying close to the sand.
-    if (currentHazard === "strong") return "no";
+    // Strong current pulls a TRUE foamie learner (first_timer / beginner)
+    // along the beach faster than they can paddle back even from the
+    // inside → hard no. Early_int rides a mid-length with real paddle : the
+    // lower "strong" tier only CAPS them to MAYBE (via the downgrade below),
+    // it does not flip a perfect day to a red-banner SKIP. The "dangerous"
+    // tier (0.56, ~2× stronger) is already a hard no above for everyone.
+    // Fixes the 100→38 cliff : a 0.4 km/h bump in a noisy modeled current
+    // used to flip an early_int's whole clean morning from Unreal-GO to
+    // Fair-SKIP. "strong" stays surfaced as a caveat (session note +
+    // GO→MAYBE downgrade), not a false alarm.
+    if (currentHazard === "strong" && userLevel !== "early_int") return "no";
     // Wind === "blown" already means the surface is shredded enough
     // that the score collapses to ~0; the inside is just as choppy as
     // the outside in those conditions. Don't promise a learner an
@@ -844,7 +849,12 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // sub-1.5ft is just a swim, not a session. First_timer / beginner
     // can still splash in the shorebreak so the "ok" path stays for them.
     if (size === "too_small" && userLevel === "early_int") return "no";
-    if (size === "sweet" && wind === "clean") return "yes";
+    // "strong" current (early_int only past the hard-no above) never lets a
+    // GO through — same downgrade the non-reform path applies below, kept
+    // consistent so the two chemins can't diverge on a rippy sweet day.
+    const cap = currentHazard === "strong" ? "ok" : null;
+    const downgrade = (v) => (cap && v === "yes" ? cap : v);
+    if (size === "sweet" && wind === "clean") return downgrade("yes");
     return "ok";
   }
   if (wind === "blown") {

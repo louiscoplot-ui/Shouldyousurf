@@ -130,10 +130,10 @@ Tous les `font-variation-settings: "SOFT" X, "opsz" Y` ont été cleanés → `"
 
 ⚠️ **Inside-reform branch learner — currents + blown wind = SKIP**
 `getPersonalVerdict` `hasInsideReform` :
-- `currentHazard === "strong"` → return "no"
+- `currentHazard === "strong"` → return "no" UNIQUEMENT pour first_timer/beginner (vrais foamie). Pour early_int (mid-length, vrai paddle) le palier bas "strong" plafonne à MAYBE, PAS un SKIP dur — sinon un courant modélisé bruité qui franchit 0.28 faisait basculer une matinée clean de 100 GO à 38 SKIP rouge (bug terrain 2026-07). Le palier haut `dangerous` (0.56) reste un `no` dur pour TOUS.
 - `wind === "blown"` → return "no"
 - `size === "too_small" && level === "early_int"` → return "no"
-Tip selector : `currentHazard !== "none"` pour learner → `tip_<level>_current` (rip = info safety prioritaire).
+Tip selector : `currentHazard !== "none"` pour learner en SKIP → `tip_<level>_current` (rip = info safety prioritaire). early_int en MAYBE sur "strong" : le caveat courant vit dans getSessionNotes ("noticeable current, surf between flags"), pas dans le tip SKIP.
 
 ---
 
