@@ -338,6 +338,53 @@ describe("score/verdict précis PAR NIVEAU (pas de bon surf raté, pas de danger
   });
 });
 
+describe("frontières de bande continues (plafond verdict sans falaise)", () => {
+  it("courant qui monte à travers 0.28 : le score glisse, ne saute pas (early_int)", () => {
+    // Bug d'origine : GO 100 → MAYBE 70 sec quand le courant franchit le
+    // palier. Le score doit avoir rejoint le mapping MAYBE AVANT la bascule.
+    let prev = null;
+    for (let cur = 0.15; cur <= 0.40001; cur += 0.005) {
+      const s = scoreForLevel(mk({ swellHeight: 1.0, swellPeriod: 10, currentVel: cur }), spot, "early_int").score;
+      if (prev != null) expect(Math.abs(s - prev)).toBeLessThanOrEqual(4);
+      prev = s;
+    }
+  });
+  it("houle qui monte à travers upperMax : plus de 100→70 sec (intermediate)", () => {
+    let prev = null;
+    for (let sw = 1.5; sw <= 2.1001; sw += 0.01) {
+      const s = scoreForLevel(mk({ swellHeight: sw, swellPeriod: 10 }), spot, "intermediate").score;
+      if (prev != null) expect(Math.abs(s - prev)).toBeLessThanOrEqual(4);
+      prev = s;
+    }
+  });
+  it("vent qui monte à travers le seuil clean : glisse aussi (beginner, cross-shore)", () => {
+    let prev = null;
+    for (let kmh = 4; kmh <= 14.001; kmh += 0.25) {
+      const s = scoreForLevel(mk({ swellHeight: 0.6, swellPeriod: 10, windSpeedKn: kmh / 1.852, windDir: 0 }), spot, "beginner").score;
+      if (prev != null) expect(Math.abs(s - prev)).toBeLessThanOrEqual(4);
+      prev = s;
+    }
+  });
+  it("loin de toute frontière : le score GO reste le brut exact (pas de compression fantôme)", () => {
+    const h = mk({ swellHeight: 1.0, swellPeriod: 10 });
+    expect(getPersonalVerdict("early_int", h, spot)).toBe("yes");
+    expect(scoreForLevel(h, spot, "early_int").score).toBe(scoreV2(h, spot, "early_int").score);
+  });
+  it("les plafonds de bande restent inviolés (MAYBE ≤ 70, SKIP ≤ 38)", () => {
+    for (let sw = 0.2; sw <= 3.0001; sw += 0.05) {
+      for (const cur of [0, 0.3, 0.6]) {
+        for (const lvl of USER_LEVELS) {
+          const h = mk({ swellHeight: sw, swellPeriod: 11, currentVel: cur });
+          const v = getPersonalVerdict(lvl, h, spot);
+          const s = scoreForLevel(h, spot, lvl).score;
+          if (v === "ok") expect(s).toBeLessThanOrEqual(70);
+          if (v === "no") expect(s).toBeLessThanOrEqual(38);
+        }
+      }
+    }
+  });
+});
+
 describe("CLAUDE.md safety invariants", () => {
   it("reef/heavy spot → hard no for first_timer and beginner", () => {
     const h = mk({ swellHeight: 1.0 });

@@ -68,7 +68,7 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
   - `getPersonalVerdict(level, h, spot)` → `"yes" | "ok" | "no"` — **SOURCE DE VÉRITÉ pour le label perso**
   - `getPersonalAdviceKey(level, h, spot, displayedVerdict)` : retourne tip key matching le verdict (4e param explicite, jamais re-dériver depuis le score)
   - `getPersonalModifier(level, h, spot)` : modifier optionnel
-  - `scoreForLevel(h, spot, level, tideCtx)` : score level-adjusted, plafond verdict-aware (≤38 SKIP, ≤70 MAYBE)
+  - `scoreForLevel(h, spot, level, tideCtx)` : score level-adjusted, plafond verdict-aware (≤38 SKIP, ≤70 MAYBE) rendu CONTINU par `flipProximity` : la proximité d'une bascule de bande est mesurée en sondant `getPersonalVerdict` sur des copies perturbées de l'heure (bisection sur 4 axes bruités : vent ±4 km/h, courant ±0.08 m/s, houle ±12%) et le score glisse vers le mapping de la bande suivante (BAND_MAPS) AVANT la bascule → zéro saut au moment où le label change. Ne JAMAIS re-dupliquer les seuils du verdict dans une table à côté : le probing suit automatiquement toute évolution des règles.
   - `adaptForecastToLevel(payload, level, spot)` : recompute tous les `hour.score` quand le user change de niveau
   - `getBoardRec(level, faceFt, period, spot)` : reco planche
   - `levelMatrixFor(hour, spot, fns)` : verdict par niveau (LevelMatrix)

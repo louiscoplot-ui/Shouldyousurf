@@ -981,17 +981,31 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
   const v2 = scoreV2(h, spot, userLevel || "intermediate", tideCtx);
   if (!userLevel) return v2;
   const verdict = getPersonalVerdict(userLevel, h, spot);
-  let adj = v2.score;
-  // Compression douce de la queue haute au lieu d'un cap dur. Un
-  // Math.min(adj, 70) aplatissait À 70 toutes les heures dont le score
+  // Compression douce de la queue haute au lieu d'un cap dur (cf. BAND_MAPS).
+  // Un Math.min(adj, 70) aplatissait À 70 toutes les heures dont le score
   // brut dépassait 70 — fréquent pour early_int en zone upper/too_big
   // (verdict ok mais baseSize élevé) → "70 partout", zéro lisibilité sur
   // les meilleures heures. compressTail garde le score intact sous le
   // floor et remappe [floor..100] dans [floor..cap], donc le plafond
   // verdict est respecté (jamais de MAYBE en Unreal, ni de SKIP en Fair+)
   // tout en préservant l'ordre et la variation horaire.
-  if (verdict === "no") adj = compressTail(adj, 30, 38);
-  else if (verdict === "ok") adj = compressTail(adj, 55, 70);
+  let adj = BAND_MAPS[verdict](v2.score);
+  // ── Frontières de bande CONTINUES ──────────────────────────────────
+  // Le plafond verdict créait la dernière famille de falaises du moteur :
+  // 1 cm de houle ou 0.05 m/s de courant modélisé au-dessus d'une
+  // frontière (upperMax, seuil clean→bumpy, palier courant…) faisait
+  // basculer yes→ok et le score sautait de 100 à 70 d'une heure à
+  // l'autre — la même classe de bug que le 100→38 du bug terrain
+  // d'origine, en moins violent. Ici le score GLISSE vers le mapping de
+  // la bande suivante AVANT la bascule : à l'instant où le verdict
+  // change de bande, les deux mappings coïncident → zéro saut, et le
+  // label (GO/MAYBE) reste catégorique, lui.
+  if (verdict !== "no") {
+    const flip = flipProximity(userLevel, h, spot, verdict);
+    if (flip.p > 0 && flip.to) {
+      adj += (BAND_MAPS[flip.to](v2.score) - adj) * flip.p;
+    }
+  }
   return {
     score: Math.max(0, Math.min(100, Math.round(adj))),
     notes: v2.notes,
@@ -1005,6 +1019,69 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
 function compressTail(s, floor, cap) {
   if (s <= floor) return s;
   return floor + (s - floor) * ((cap - floor) / (100 - floor));
+}
+
+// Mapping score brut → score affiché, par bande de verdict. compressTail
+// est ≤ identité partout : un blend entre deux mappings ne peut jamais
+// REMONTER un score au-dessus de sa bande (pas de floor artificiel).
+const BAND_MAPS = {
+  yes: (s) => s,
+  ok:  (s) => compressTail(s, 55, 70),
+  no:  (s) => compressTail(s, 30, 38),
+};
+
+// Échelles de bruit heure-à-heure des entrées modèle (Open-Meteo) : si une
+// variation de CET ordre suffit à faire basculer le verdict, l'heure est
+// "au bord" et son score doit déjà avoir rejoint la bande d'en face.
+const FLIP_NOISE = { windKmh: 4, currentMs: 0.08, swellRel: 0.12 };
+const VERDICT_ORDER = { no: 0, ok: 1, yes: 2 };
+
+// Évalue le verdict sur une copie perturbée de l'heure. Les caches posés
+// par realFetch (hour.dom / hour.faceFt) sont invalidés pour que la
+// perturbation de houle se propage réellement à la partition dominante
+// et à la face — getDominant/faceFtOf recalculent en fallback.
+function verdictWith(userLevel, h, spot, patch) {
+  return getPersonalVerdict(userLevel, { ...h, dom: undefined, faceFt: undefined, ...patch }, spot);
+}
+
+// flipProximity — p ∈ [0,1] : à quel point le verdict de l'heure est près
+// de basculer vers une bande INFÉRIEURE, et vers laquelle. La distance est
+// mesurée en SONDANT getPersonalVerdict lui-même (bisection sur chaque axe
+// bruité), pas en dupliquant ses seuils : toute évolution future des
+// règles de verdict est suivie automatiquement — c'est la duplication de
+// seuils qui a produit les "4 copies divergentes" des audits passés.
+// p=0 : bascule à plus d'un σ de bruit ; p→1 : bascule imminente.
+export function flipProximity(userLevel, h, spot, baseVerdict) {
+  const base = VERDICT_ORDER[baseVerdict];
+  const swellScale = (t, dir) => {
+    const f = 1 + dir * t * FLIP_NOISE.swellRel;
+    const patch = { swellHeight: (h.swellHeight || 0) * f };
+    if (Number.isFinite(h.secSwellH)) patch.secSwellH = h.secSwellH * f;
+    return patch;
+  };
+  const axes = [
+    (t) => ({ windSpeedKn: (Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0) + (t * FLIP_NOISE.windKmh) / 1.852 }),
+    (t) => ({ currentVel: (h.currentVel || 0) + t * FLIP_NOISE.currentMs }),
+    (t) => swellScale(t, +1), // houle qui monte (vers too_big / caps)
+    (t) => swellScale(t, -1), // houle qui tombe (vers too_small / min)
+  ];
+  let best = { p: 0, to: null };
+  for (const patchAt of axes) {
+    const vFull = verdictWith(userLevel, h, spot, patchAt(1));
+    if (VERDICT_ORDER[vFull] >= base) continue; // pas de bascule à 1σ sur cet axe
+    // Bisection du point de bascule t* ∈ (0,1] — 6 itérations ≈ 1.5% de
+    // résolution, largement sous le pas d'affichage d'un point de score.
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 6; i++) {
+      const mid = (lo + hi) / 2;
+      if (VERDICT_ORDER[verdictWith(userLevel, h, spot, patchAt(mid))] < base) hi = mid;
+      else lo = mid;
+    }
+    const raw = 1 - hi;
+    const p = raw * raw * (3 - 2 * raw); // smoothstep, C1 aux deux bouts
+    if (p > best.p) best = { p, to: vFull };
+  }
+  return best;
 }
 
 // Rebuilds a forecast payload so every hour.score is the level-adjusted
