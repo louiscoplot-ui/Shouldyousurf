@@ -9,9 +9,8 @@
 
 import {
   degToCompass,
-  estimateFaceHeight,
+  faceFtOf,
   knToKmh,
-  mToFt,
   tideTrend as computeTideTrend,
   findNextTideEvent,
   getWindTypeKey,
@@ -54,9 +53,16 @@ export default function StickyInfoBar({
   // hours that were built without the shaped fields). Avoids the divergence
   // we used to have where the sticky bar said "1–1 ft" while the cards said
   // "0–1 ft" for the same hour.
-  const faceM = estimateFaceHeight(sel.swellHeight, sel.swellPeriod);
-  const faceFtLow  = sel.faceFtLow != null ? sel.faceFtLow : Math.max(0, Math.floor(mToFt(faceM) - 0.5));
-  const faceFtHigh = sel.faceFtHigh != null ? sel.faceFtHigh : Math.max(1, Math.ceil(mToFt(faceM) + 0.5));
+  // Fallback via faceFtOf : partition DOMINANTE + atténuation du spot,
+  // exactement la même entrée que le score. L'ancien fallback appelait
+  // estimateFaceHeight(sel.swellHeight, …) — la houle PRIMAIRE, sans
+  // atténuation — les deux écarts que CLAUDE.md interdit ("aucun lecteur ne
+  // pioche h.swellHeight direct"). Sur un spot abrité (Perth 0.55-0.60) ou
+  // un jour où la dominante est la secondaire, la barre affichait une face
+  // sans rapport avec le score juste à côté.
+  const faceFtEst = faceFtOf(sel2, effectiveSpot);
+  const faceFtLow  = sel.faceFtLow != null ? sel.faceFtLow : Math.max(0, Math.floor(faceFtEst - 0.5));
+  const faceFtHigh = sel.faceFtHigh != null ? sel.faceFtHigh : Math.max(1, Math.ceil(faceFtEst + 0.5));
 
   // Wind kmh + trend arrow (same logic as v1 Loaded section)
   const windKmh = Math.round(knToKmh(sel.windSpeedKn));

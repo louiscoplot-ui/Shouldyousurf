@@ -385,6 +385,92 @@ describe("frontières de bande continues (plafond verdict sans falaise)", () => 
   });
 });
 
+// Sprint 2026-07 (audit vent) : la suite continuité ne balayait le vent que
+// sur scoreV2 (déjà continu) et, côté scoreForLevel, que 4→14 km/h — donc
+// JAMAIS les seuils "blown" (18/20 onshore, 30 cross, 40, 45/55 offshore) où
+// vivaient les vraies falaises. Ces cas verrouillent l'axe vent de bout en
+// bout et la monotonie taille/vent du verdict.
+describe("vent — monotonie et continuité du score affiché", () => {
+  const LEVELS_ALL = ["first_timer", "beginner", "early_int", "intermediate", "advanced", "expert"];
+  const RANK = { no: 0, ok: 1, yes: 2 };
+  const DIRS = [90, 190, 270]; // offshore / cross / onshore vs offshoreWindDir 90
+
+  it("un vent qui EMPIRE ne peut jamais améliorer le verdict", () => {
+    // Bug d'origine : la branche `wind === "blown"` court-circuitait le
+    // plafond de taille et retombait sur "ok". Un 8.5 ft (au-delà du plafond
+    // absolu 7.8 ft d'un intermediate) rendait NO à 29 km/h cross et OK à
+    // 30 km/h — le vent qui empire faisait REMONTER le verdict. 54 cas.
+    for (const lvl of LEVELS_ALL) {
+      for (const windDir of DIRS) {
+        for (let sw = 0.3; sw <= 3.2001; sw += 0.1) {
+          let prev = null;
+          for (let kmh = 0; kmh <= 60; kmh += 0.5) {
+            const v = getPersonalVerdict(lvl, mk({ swellHeight: +sw.toFixed(2), windSpeedKn: kmh / 1.852, windDir }), spot);
+            if (prev != null) expect(RANK[v]).toBeLessThanOrEqual(RANK[prev]);
+            prev = v;
+          }
+        }
+      }
+    }
+  });
+
+  it("une vague qui GROSSIT au-delà du plafond ne peut pas re-devenir surfable", () => {
+    // Corollaire du même bug : once too_big → "no", grossir encore ne doit
+    // jamais rendre "ok". 60 cas de récupération mesurés avant fix.
+    for (const lvl of ["early_int", "intermediate"]) {
+      for (const windDir of DIRS) {
+        for (const kmh of [5, 15, 25, 35]) {
+          let seenNo = false;
+          for (let sw = 1.0; sw <= 4.0001; sw += 0.05) {
+            const h = mk({ swellHeight: +sw.toFixed(2), windSpeedKn: kmh / 1.852, windDir });
+            const cls = classifyConditions(lvl, h, spot);
+            if (cls.size !== "too_big") continue;
+            const v = getPersonalVerdict(lvl, h, spot);
+            if (v === "no") seenNo = true;
+            else if (seenNo) expect(`${lvl} dir${windDir} ${kmh}km/h ${sw.toFixed(2)}m recovered to ${v}`).toBe("no recovery");
+          }
+        }
+      }
+    }
+  });
+
+  it("le score affiché glisse sur tout l'axe vent 0→60 km/h (pas de falaise)", () => {
+    // Falaises mesurées avant fix : 31 pts (offshore @40), 27 (cross @30),
+    // 22 (onshore @20) pour 0.25 km/h. scoreV2 brut, lui, était continu :
+    // la discontinuité venait du label vent catégoriel remontant dans
+    // flipProximity. Limite à 8 pts = marge sur les rampes légitimes.
+    for (const lvl of LEVELS_ALL) {
+      for (const windDir of DIRS) {
+        for (const sw of [0.5, 1.1, 1.8, 2.6]) {
+          let prev = null;
+          for (let kmh = 0; kmh <= 60; kmh += 0.25) {
+            const s = scoreForLevel(mk({ swellHeight: sw, windSpeedKn: kmh / 1.852, windDir }), spot, lvl).score;
+            if (prev != null) expect(Math.abs(s - prev)).toBeLessThanOrEqual(8);
+            prev = s;
+          }
+        }
+      }
+    }
+  });
+
+  it("le seuil offshore 'blown' par niveau est réellement atteignable", () => {
+    // `kmh >= 40` en OU non gardé préemptait `isOffshore && kmh >= galeOffshore`
+    // (45 learner / 55 sinon) : la branche était morte, tout offshore passait
+    // blown à 40 quel que soit le niveau. Offshore = windDir aligné sur
+    // spot.offshoreWindDir (delta 0).
+    const off = (kmh, lvl) => classifyConditions(lvl, mk({ swellHeight: 1.5, windSpeedKn: kmh / 1.852, windDir: 90 }), spot).wind;
+    expect(off(42, "beginner")).toBe("bumpy");   // < 45 → pas encore blown
+    expect(off(46, "beginner")).toBe("blown");   // ≥ 45
+    expect(off(42, "intermediate")).toBe("bumpy");
+    expect(off(50, "intermediate")).toBe("bumpy"); // < 55
+    expect(off(56, "intermediate")).toBe("blown"); // ≥ 55
+    // Les seuils non-offshore restent inchangés.
+    const nonOff = (kmh, dir) => classifyConditions("intermediate", mk({ swellHeight: 1.5, windSpeedKn: kmh / 1.852, windDir: dir }), spot).wind;
+    expect(nonOff(31, 190)).toBe("blown"); // cross ≥ 30
+    expect(nonOff(21, 270)).toBe("blown"); // onshore ≥ 20
+  });
+});
+
 describe("CLAUDE.md safety invariants", () => {
   it("reef/heavy spot → hard no for first_timer and beginner", () => {
     const h = mk({ swellHeight: 1.0 });
