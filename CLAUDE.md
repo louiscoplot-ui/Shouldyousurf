@@ -63,12 +63,12 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
   - `windClass(deltaDeg)` : classification offshore/cross/onshore UNIQUE (les 4 copies ont été fusionnées) ; null si delta inconnu → neutre explicite côté appelant.
   - `tideNotes(h, spot, tideCtx)` : générateur de notes minimal (tags marée) — scoreSurf (ancien additif mort) a été supprimé.
   - `USER_LEVEL_ZONES` : matrice min/sweetLo/sweetHi/upperMax par niveau (6 niveaux)
-  - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`. currentHazard couvre first_timer/beginner/**early_int** (seuils 0.28/0.56 m/s — `currentVel` est normalisé en m/s par `currentVelToMs` dans realFetch d'après `hourly_units` de la réponse API, l'API peut servir des km/h). Verdict too_big : plafond absolu `faceFt > upperMax × 1.3` (7.8 ft) → no pour early_int/intermediate, appliqué AUSSI dans la branche inside-reform (skill cas D : 9.2 ft = SKIP early_int).
-  - `hasInsideReform(level, faceFt, spot)` : éligibilité fallback whitewash — plafond PAR NIVEAU (`REFORM_MAX_FT` : first_timer 6 ft, beginner 8 ft, early_int 10 ft). L'ancien ≤10 ft universel promettait un MAYBE "inside rescue" à un first_timer sur du 9-10 ft de face. Au-delà → too_big → no dur + danger banner. getBoardRec et getSessionNotes lisent le même plafond.
+  - `classifyConditions(level, h, spot)` → `{ size, wind, reefTooMuch, faceFt, currentHazard }`. currentHazard couvre first_timer/beginner/**early_int** (seuils 0.28/0.56 m/s — `currentVel` est normalisé en m/s par `currentVelToMs` dans realFetch d'après `hourly_units` de la réponse API, l'API peut servir des km/h). Verdict too_big : plafond absolu `faceFt > upperMax × 1.3` → no, pour TOUS les niveaux, appliqué AUSSI dans la branche inside-reform (first_timer 2.9 ft, beginner 3.9 ft, early_int/intermediate 7.8 ft).
+  - `hasInsideReform(level, faceFt, spot)` : éligibilité fallback whitewash — plafond PAR NIVEAU (`REFORM_MAX_FT` : first_timer 6 ft, beginner 8 ft, early_int 10 ft). ⚠️ Ce plafond n'est PLUS le garde-fou principal : le verdict applique en plus `upperMax × 1.3` DANS la branche reform pour tous les niveaux (cf. ci-dessus), ce qui coupe bien avant (beginner 3.9 ft, pas 8). REFORM_MAX_FT ne gouverne plus que getBoardRec / getSessionNotes.
   - `getPersonalVerdict(level, h, spot)` → `"yes" | "ok" | "no"` — **SOURCE DE VÉRITÉ pour le label perso**
   - `getPersonalAdviceKey(level, h, spot, displayedVerdict)` : retourne tip key matching le verdict (4e param explicite, jamais re-dériver depuis le score)
   - `getPersonalModifier(level, h, spot)` : modifier optionnel
-  - `scoreForLevel(h, spot, level, tideCtx)` : score level-adjusted, plafond verdict-aware (≤38 SKIP, ≤70 MAYBE) rendu CONTINU par `flipProximity` : la proximité d'une bascule de bande est mesurée en sondant `getPersonalVerdict` sur des copies perturbées de l'heure (bisection sur 4 axes bruités : vent ±4 km/h, courant ±0.08 m/s, houle ±12%) et le score glisse vers le mapping de la bande suivante (BAND_MAPS) AVANT la bascule → zéro saut au moment où le label change. Ne JAMAIS re-dupliquer les seuils du verdict dans une table à côté : le probing suit automatiquement toute évolution des règles.
+  - `scoreForLevel(h, spot, level, tideCtx)` : score level-adjusted, plafond verdict-aware (≤29 SKIP, ≤59 MAYBE — calés sur les bornes de SCORE_SCALE) rendu CONTINU par `flipProximity` : la proximité d'une bascule de bande est mesurée en sondant `getPersonalVerdict` sur des copies perturbées de l'heure (bisection sur 6 axes bruités : vent ±4 km/h, courant ±0.08 m/s, houle ±12%, plus 2 axes COMBINÉS vent+houle ; la bande cible est lue AU POINT DE BASCULE et le score glisse séquentiellement bande par bande) et le score glisse vers le mapping de la bande suivante (BAND_MAPS) AVANT la bascule → zéro saut au moment où le label change. Ne JAMAIS re-dupliquer les seuils du verdict dans une table à côté : le probing suit automatiquement toute évolution des règles.
   - `adaptForecastToLevel(payload, level, spot)` : recompute tous les `hour.score` quand le user change de niveau
   - `getBoardRec(level, faceFt, period, spot)` : reco planche
   - `levelMatrixFor(hour, spot, fns)` : verdict par niveau (LevelMatrix)
@@ -106,7 +106,13 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
 ## DÉCISIONS À NE PAS DÉFAIRE
 
 ⚠️ **Score honnête, pas de floor artificiel**
-Première itération avait floor=39 pour MAYBE → tuait la résolution. Conserver SEULEMENT le ceiling (≤38 SKIP, ≤70 MAYBE).
+Première itération avait floor=39 pour MAYBE → tuait la résolution. Conserver SEULEMENT le ceiling (≤29 SKIP, ≤59 MAYBE).
+
+⚠️ **Les plafonds de bande sont CALÉS SUR LES LIBELLÉS de `SCORE_SCALE`, pas sur des nombres ronds**
+MAYBE ≤ 59 = haut de "Good" ; SKIP ≤ 29 = haut de "Poor". Avant : MAYBE plafonnait à 70 alors que "excellent" démarre à 60 → un MAYBE s'affichait **"Excellent"** en gros vert pendant que le conseil dessous disait "the main break isn't for you today — too big". Une beginner a conduit 40 min et s'est retrouvée dans des conditions au-dessus de sa tête : elle a lu le titre, pas le conseil. Si tu touches à `SCORE_SCALE`, re-cale `BAND_MAPS` dans la foulée — le test "un verdict ne peut jamais être contredit par le libellé du score" échouera sinon.
+
+⚠️ **L'inverse (score bas + verdict optimiste) est VOULU, ne pas le "corriger" avec un floor**
+"Poor 26 + GO" pour un first_timer sur 0.8 ft clean = correct : les conditions sont objectivement mauvaises, la session reste bonne pour LUI. Seul le sens dangereux (libellé flatteur sur un verdict prudent) est un bug.
 
 ⚠️ **Label perso = `getPersonalVerdict()` direct, jamais dérivé du score**
 Score et label sont 2 dimensions distinctes. "Poor 31 + MAYBE" pour un early_int sur small clean = correct. Ne pas re-coupler.

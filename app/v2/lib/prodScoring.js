@@ -903,14 +903,20 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // sub-1.5ft is just a swim, not a session. First_timer / beginner
     // can still splash in the shorebreak so the "ok" path stays for them.
     if (size === "too_small" && userLevel === "early_int") return "no";
-    // Même plafond ABSOLU too_big que le chemin non-reform (upperMax × 1.3,
-    // cf. commentaire là-bas) : la branche reform court-circuitait le cap et
-    // laissait un MAYBE "inside rescue" sur du 9 ft pour un early_int — au
-    // large de sa marge et du cas D de la skill. First_timer / beginner
-    // gardent leur vraie rescue foamie-whitewash (leur too_big n'est pas
-    // le même océan : leurs zones coupent bien plus bas).
-    if (size === "too_big" && userLevel === "early_int"
-        && faceFt > USER_LEVEL_ZONES.early_int.upperMax * 1.3) return "no";
+    // Plafond ABSOLU too_big — pour TOUS les niveaux de la branche reform,
+    // plus seulement early_int. Le garde-fou upperMax × 1.3 n'existait que
+    // pour early_int ; first_timer et beginner n'avaient QUE REFORM_MAX_FT
+    // (6 / 8 ft) pour les retenir. Or l'upperMax d'une beginner est 3 ft :
+    // elle recevait donc "WORTH IT — reste au bord sur un foamie" jusqu'à
+    // 8 ft de face, soit 2.7× son maximum, sans jamais déclencher le
+    // bandeau danger (qui exige un verdict "no"). Cas réel : beginner
+    // envoyée à l'eau sur une houle bien au-dessus de sa tête. Le seuil
+    // suit désormais la zone du niveau (first_timer 2.9 ft, beginner 3.9 ft,
+    // early_int 7.8 ft) : au-delà c'est un "no" franc + bandeau danger.
+    if (size === "too_big") {
+      const zr = USER_LEVEL_ZONES[userLevel];
+      if (zr && faceFt > zr.upperMax * 1.3) return "no";
+    }
     // "strong" current (early_int only past the hard-no above) never lets a
     // GO through — same downgrade the non-reform path applies below, kept
     // consistent so the two chemins can't diverge on a rippy sweet day.
@@ -1043,10 +1049,25 @@ function compressTail(s, floor, cap) {
 // Mapping score brut → score affiché, par bande de verdict. compressTail
 // est ≤ identité partout : un blend entre deux mappings ne peut jamais
 // REMONTER un score au-dessus de sa bande (pas de floor artificiel).
+// Les plafonds sont CALÉS SUR LES LIBELLÉS de SCORE_SCALE (verdict.js), pas
+// sur des nombres ronds. Avant : ok plafonnait à 70 alors que la bande
+// "excellent" commence à 60 → un MAYBE s'affichait "Excellent" en gros vert
+// (recouvrement 60-70). C'est le bug qui a envoyé une beginner à l'eau : son
+// écran disait « Excellent 62 » pendant que le conseil juste en dessous
+// disait « the main break isn't for you today — too big ». Elle a lu le
+// titre. Idem pour "no" qui plafonnait à 38 = "Fair — Surfable but
+// unremarkable", en contradiction directe avec SKIP.
+// Nouveau calage (bornes hautes exactes des bandes de SCORE_SCALE) :
+//   yes  → jusqu'à 100  (Good / Excellent / Unreal)
+//   ok   → 59 = haut de "Good"  (jamais "Excellent")
+//   no   → 29 = haut de "Poor"  (jamais "Fair"/"surfable")
+// Les floors descendent avec les caps pour garder la même amplitude de
+// résolution qu'avant (14 pts pour ok, 9 pour no) — pas de floor artificiel
+// ajouté, la règle "seulement des ceilings" de CLAUDE.md tient.
 const BAND_MAPS = {
   yes: (s) => s,
-  ok:  (s) => compressTail(s, 55, 70),
-  no:  (s) => compressTail(s, 30, 38),
+  ok:  (s) => compressTail(s, 45, 59),
+  no:  (s) => compressTail(s, 20, 29),
 };
 
 // Échelles de bruit heure-à-heure des entrées modèle (Open-Meteo) : si une

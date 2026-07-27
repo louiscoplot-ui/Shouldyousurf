@@ -330,11 +330,44 @@ describe("score/verdict précis PAR NIVEAU (pas de bon surf raté, pas de danger
     expect(getPersonalVerdict("first_timer", h, spot)).toBe("no");
     expect(getPersonalVerdict("beginner", h, spot)).toBe("no");
   });
-  it("reform rescue preserved below each level's ceiling", () => {
-    const seven = mk({ swellHeight: 1.5, swellPeriod: 14, windSpeedKn: 5 }); // ~6.9ft
-    expect(getPersonalVerdict("beginner", seven, spot)).toBe("ok");
-    const five = mk({ swellHeight: 1.1, swellPeriod: 14, windSpeedKn: 5 }); // ~5.1ft
-    expect(getPersonalVerdict("first_timer", five, spot)).toBe("ok");
+  it("reform rescue bornée par la ZONE du niveau, pas par un plafond en pieds", () => {
+    // Ce cas verrouillait l'inverse : beginner "ok" sur ~6.9 ft et
+    // first_timer "ok" sur ~5.1 ft, au nom de REFORM_MAX_FT (8 / 6 ft).
+    // Or l'upperMax d'une beginner est 3 ft : la rescue lui promettait
+    // "reste au bord sur un foamie" jusqu'à 2.7× son maximum, sans bandeau
+    // danger (qui exige un verdict "no"). Incident réel : beginner envoyée
+    // à l'eau sur une houle très au-dessus de sa tête. Le plafond suit
+    // maintenant upperMax × 1.3, comme early_int l'avait déjà.
+    // Sous le plafond : la rescue existe toujours.
+    expect(getPersonalVerdict("beginner", mk({ swellHeight: 0.8, swellPeriod: 14, windSpeedKn: 5 }), spot)).toBe("ok");   // 3.67 ft < 3.9
+    expect(getPersonalVerdict("first_timer", mk({ swellHeight: 0.65, swellPeriod: 14, windSpeedKn: 5 }), spot)).toBe("ok"); // 2.72 ft < 2.86
+    // Au-dessus : "no" franc, plus de faux MAYBE "inside rescue".
+    expect(getPersonalVerdict("beginner", mk({ swellHeight: 0.85, swellPeriod: 14, windSpeedKn: 5 }), spot)).toBe("no");  // 3.90 ft
+    expect(getPersonalVerdict("beginner", mk({ swellHeight: 1.5, swellPeriod: 14, windSpeedKn: 5 }), spot)).toBe("no");   // 6.89 ft
+    expect(getPersonalVerdict("first_timer", mk({ swellHeight: 1.1, swellPeriod: 14, windSpeedKn: 5 }), spot)).toBe("no"); // 5.05 ft
+  });
+
+  it("un verdict ne peut jamais être contredit par le libellé du score", () => {
+    // Bug qui a envoyé une beginner à l'eau : son écran affichait
+    // « Excellent 62 » (bande ok plafonnée à 70, or "excellent" démarre à
+    // 60) pendant que le conseil dessous disait « the main break isn't for
+    // you today — too big ». Les plafonds sont désormais calés sur les
+    // bornes de SCORE_SCALE : MAYBE ≤ 59 (haut de "Good"), SKIP ≤ 29
+    // (haut de "Poor"). Un MAYBE ne peut plus lire "Excellent", ni un
+    // SKIP lire "Fair — surfable".
+    for (const lvl of USER_LEVELS) {
+      for (let sw = 0.2; sw <= 4.0001; sw += 0.05) {
+        for (const p of [7, 10, 13, 16]) {
+          for (const wk of [3, 12, 22, 32]) {
+            const h = mk({ swellHeight: +sw.toFixed(2), swellPeriod: p, windSpeedKn: wk / 1.852 });
+            const v = getPersonalVerdict(lvl, h, spot);
+            const s = scoreForLevel(h, spot, lvl).score;
+            if (v === "ok") expect(s).toBeLessThanOrEqual(59);
+            if (v === "no") expect(s).toBeLessThanOrEqual(29);
+          }
+        }
+      }
+    }
   });
 });
 
