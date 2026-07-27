@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "node scripts/gen-version.mjs && next build",
     "start": "next start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint:undef": "eslint --config eslint.undef.config.mjs app/"
   },
   "dependencies": {
     "next": "14.2.35",

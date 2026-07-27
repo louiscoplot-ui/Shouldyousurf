@@ -147,7 +147,15 @@ Tip selector : `currentHazard !== "none"` pour learner en SKIP → `tip_<level>_
 
 ### Process strict
 1. Édite le code
-2. `npm test` (obligatoire si scoring touché) puis `npm run build` pour vérifier
+2. `npm test` (obligatoire si scoring touché), `npm run lint:undef` puis `npm run build` pour vérifier
+
+⚠️ `npm run build` NE DÉTECTE PAS une variable supprimée mais encore utilisée dans le JSX.
+Les composants v2 ne sont jamais rendus pendant la génération statique (le splash occupe
+l'écran tant que `payload` est null), donc un `ReferenceError` dans StickyInfoBar/HourlyList
+passe le build et ne casse qu'en prod, à l'écran de l'utilisateur — page blanche
+"Application error: a client-side exception has occurred". C'est arrivé le 27/07 (variable
+`faceM` retirée d'un calcul mais toujours lue dans le rendu). `npm run lint:undef` attrape
+exactement ça : à lancer avant tout push touchant un composant.
 3. `public/version.json` est gitignoré (build artifact, régénéré par gen-version) — plus de `git restore` nécessaire
 4. `git add` les fichiers spécifiques (pas `-A`)
 5. Commit avec body clair sur le POURQUOI

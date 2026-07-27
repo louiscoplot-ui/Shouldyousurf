@@ -63,6 +63,10 @@ export default function StickyInfoBar({
   const faceFtEst = faceFtOf(sel2, effectiveSpot);
   const faceFtLow  = sel.faceFtLow != null ? sel.faceFtLow : Math.max(0, Math.floor(faceFtEst - 0.5));
   const faceFtHigh = sel.faceFtHigh != null ? sel.faceFtHigh : Math.max(1, Math.ceil(faceFtEst + 0.5));
+  // `faceM` est rendu plus bas (« X.X m · … ») — il DOIT rester déclaré ici.
+  // Il vient maintenant de faceFtEst (dominante + atténuation), donc la
+  // conversion en mètres raconte la même vague que les pieds au-dessus.
+  const faceM = faceFtEst / 3.281;
 
   // Wind kmh + trend arrow (same logic as v1 Loaded section)
   const windKmh = Math.round(knToKmh(sel.windSpeedKn));
