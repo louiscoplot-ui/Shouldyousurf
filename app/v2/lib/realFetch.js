@@ -59,6 +59,43 @@ function degToCardinal(deg) {
   return degToCompass(((deg % 360) + 360) % 360);
 }
 
+// ── Endpoint Open-Meteo : gratuit (non-commercial) vs commercial ───────
+// Le tier gratuit est non-commercial ET rate-limité. Quand il refuse une
+// requête (429/403), la réponse d'erreur ne porte PAS les headers CORS →
+// le navigateur ne voit jamais le code HTTP, il rejette avec un
+// `TypeError: Load failed` générique → notre catch tombe sur le mock après
+// timeout. C'est LE symptôme "charge 20s puis données fausses".
+//
+// Avec un abonnement Open-Meteo, on reçoit une clé et un endpoint dédié
+// `customer-*.open-meteo.com` : mêmes params, on ajoute `&apikey=`. Dès que
+// NEXT_PUBLIC_OPENMETEO_KEY est posée (Vercel env), on bascule dessus et
+// l'accès est restauré — plus de blocage non-commercial, quota dédié.
+const OM_KEY =
+  (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_OPENMETEO_KEY) || "";
+const OM_MARINE_HOST = OM_KEY ? "customer-marine-api.open-meteo.com" : "marine-api.open-meteo.com";
+const OM_FORECAST_HOST = OM_KEY ? "customer-api.open-meteo.com" : "api.open-meteo.com";
+const OM_KEY_PARAM = OM_KEY ? `&apikey=${encodeURIComponent(OM_KEY)}` : "";
+
+// Un seul retry immédiat sur échec TRANSITOIRE (5xx, 429, ou rejet réseau
+// type "Load failed"). Une abort réelle (timeout / changement de spot) n'est
+// jamais retentée. Sans ça, un unique hoquet Open-Meteo = mock direct : le
+// code n'avait aucune tolérance à la panne passagère.
+async function fetchResilient(url, signal, tries = 2) {
+  let lastErr = null;
+  for (let attempt = 0; attempt < tries; attempt++) {
+    try {
+      const res = await fetch(url, { signal });
+      // 4xx hors 429 = erreur permanente (mauvais param) : inutile de retenter.
+      if (res.ok || (res.status < 500 && res.status !== 429)) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      if (signal?.aborted) throw e; // vrai timeout / annulation → on sort
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("fetch failed");
+}
+
 // Wraps the single shared windClass (prodScoring) — the UI string uses
 // "cross-shore" where the engine says "cross"; unknown delta (no
 // offshoreWindDir on the spot) maps to the explicit neutral "cross-shore".
@@ -155,24 +192,26 @@ export async function fetchRealForecast(spot, signal) {
   const marineModels = "best_match";
 
   const tzParam = encodeURIComponent(requestTz);
-  const pastMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
+  const pastMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
   // Past wind from the FORECAST API (not the ERA5 archive). The archive has
   // a ~5-day reanalysis lag, so it returned nulls for yesterday / the day
   // before → the past hours got filtered out (windKn == null) → no past
   // days showed at all. The forecast API keeps recent past days from the
   // same GFS model with no lag and accepts start_date/end_date + timezone=auto.
-  const pastWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}`;
-  const futureMarineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&timezone=${tzParam}&forecast_days=5`;
-  const futureWindUrl = `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5`;
+  const pastWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
+  const futureMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&timezone=${tzParam}&forecast_days=5${OM_KEY_PARAM}`;
+  const futureWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5${OM_KEY_PARAM}`;
 
   // `signal` (AbortController) lets the caller actually cancel the four
   // requests on timeout / spot change — the previous Promise.race timeout
-  // left them running and burning mobile data in the background.
+  // left them running and burning mobile data in the background. Les deux
+  // requêtes FUTUR (critiques) passent par fetchResilient (1 retry sur panne
+  // transitoire) ; le passé reste best-effort (.catch → null).
   const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
     fetch(pastMarineUrl, { signal }).catch(() => null),
     fetch(pastWindUrl, { signal }).catch(() => null),
-    fetch(futureMarineUrl, { signal }),
-    fetch(futureWindUrl, { signal }),
+    fetchResilient(futureMarineUrl, signal),
+    fetchResilient(futureWindUrl, signal),
   ]);
 
   if (!futureMarineRes.ok) throw new Error(`Marine API: HTTP ${futureMarineRes.status}`);
@@ -349,6 +388,17 @@ export async function fetchRealForecast(spot, signal) {
       bestLevel: getV2Level(bestHour.score),
       tideCtx,
     });
+  }
+  // Échec BRUYANT si l'API a répondu 200 mais qu'aucune heure exploitable
+  // n'en sort (champs swell/vent tous null — typique d'un modèle qui ne sert
+  // pas la zone, d'un rate-limit qui renvoie un corps vide, ou d'une réponse
+  // partielle). Avant, `days` vide remontait en silence : MainScreen voyait
+  // `real.days.length === 0`, n'entrait pas dans le `if`, et laissait le mock
+  // + la bannière "Loading…" à l'écran POUR TOUJOURS, sans jamais tracker
+  // `forecast_fetch_failed`. On était aveugles à cette panne. Maintenant on
+  // throw → catch MainScreen → bannière rouge honnête + event tracké.
+  if (!days.length) {
+    throw new Error("Open-Meteo returned no usable hours (empty/null fields — likely rate-limited or blocked)");
   }
   return { days, sunByDay, effectiveSpot };
 }

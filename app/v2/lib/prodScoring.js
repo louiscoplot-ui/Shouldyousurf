@@ -565,8 +565,8 @@ export function classifyConditions(userLevel, h, spot) {
   else if (
     (isOnshore && kmh >= blownNonOffshore) ||   // onshore dans la face = blown tôt
     (isCross && kmh >= 30) ||                     // cross-shore tient jusqu'à 30
-    kmh >= 40 ||                                  // n'importe quelle direction à 40+
-    (isOffshore && kmh >= galeOffshore)           // offshore gale
+    (!isOffshore && kmh >= 40) ||                 // filet non-offshore (déjà couvert ci-dessus)
+    (isOffshore && kmh >= galeOffshore)           // offshore gale (45 learner / 55 sinon)
   ) wind = "blown";
   else wind = "bumpy";
 
@@ -903,14 +903,20 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // sub-1.5ft is just a swim, not a session. First_timer / beginner
     // can still splash in the shorebreak so the "ok" path stays for them.
     if (size === "too_small" && userLevel === "early_int") return "no";
-    // Même plafond ABSOLU too_big que le chemin non-reform (upperMax × 1.3,
-    // cf. commentaire là-bas) : la branche reform court-circuitait le cap et
-    // laissait un MAYBE "inside rescue" sur du 9 ft pour un early_int — au
-    // large de sa marge et du cas D de la skill. First_timer / beginner
-    // gardent leur vraie rescue foamie-whitewash (leur too_big n'est pas
-    // le même océan : leurs zones coupent bien plus bas).
-    if (size === "too_big" && userLevel === "early_int"
-        && faceFt > USER_LEVEL_ZONES.early_int.upperMax * 1.3) return "no";
+    // Plafond ABSOLU too_big — pour TOUS les niveaux de la branche reform,
+    // plus seulement early_int. Le garde-fou upperMax × 1.3 n'existait que
+    // pour early_int ; first_timer et beginner n'avaient QUE REFORM_MAX_FT
+    // (6 / 8 ft) pour les retenir. Or l'upperMax d'une beginner est 3 ft :
+    // elle recevait donc "WORTH IT — reste au bord sur un foamie" jusqu'à
+    // 8 ft de face, soit 2.7× son maximum, sans jamais déclencher le
+    // bandeau danger (qui exige un verdict "no"). Cas réel : beginner
+    // envoyée à l'eau sur une houle bien au-dessus de sa tête. Le seuil
+    // suit désormais la zone du niveau (first_timer 2.9 ft, beginner 3.9 ft,
+    // early_int 7.8 ft) : au-delà c'est un "no" franc + bandeau danger.
+    if (size === "too_big") {
+      const zr = USER_LEVEL_ZONES[userLevel];
+      if (zr && faceFt > zr.upperMax * 1.3) return "no";
+    }
     // "strong" current (early_int only past the hard-no above) never lets a
     // GO through — same downgrade the non-reform path applies below, kept
     // consistent so the two chemins can't diverge on a rippy sweet day.
@@ -920,7 +926,16 @@ export function getPersonalVerdict(userLevel, h, spot) {
     return "ok";
   }
   if (wind === "blown") {
-    if (size === "upper") return "no";
+    // too_big est traité AU MOINS aussi strictement que upper. Avant, la
+    // branche blown court-circuitait le plafond de taille et retombait sur
+    // `return "ok"` : un 8.5 ft (bien au-delà du plafond absolu 7.8 ft d'un
+    // intermediate) rendait NO par vent faible et OK dès que le vent passait
+    // "blown" — autrement dit le vent qui EMPIRE faisait REMONTER le verdict
+    // (mesuré : cross 29→30 km/h = NO→OK, score 36→63 ; onshore 10→20 km/h =
+    // NO→OK, 34→55). L'inversion valait aussi à taille égale : upper (plus
+    // petit) = "no" mais too_big (plus gros) = "ok". Une taille hors de
+    // portée le reste quel que soit l'état de la surface.
+    if (size === "upper" || size === "too_big") return "no";
     if (size === "too_small") return "no";
     // Safety-first: blown wind + foamie-eligible learner (first_timer /
     // beginner) = HARD no. They can't punch through chop yet — the inside
@@ -1002,8 +1017,18 @@ export function scoreForLevel(h, spot, userLevel, tideCtx) {
   // label (GO/MAYBE) reste catégorique, lui.
   if (verdict !== "no") {
     const flip = flipProximity(userLevel, h, spot, verdict);
-    if (flip.p > 0 && flip.to) {
-      adj += (BAND_MAPS[flip.to](v2.score) - adj) * flip.p;
+    // Glissement SÉQUENTIEL sur l'échelle des bandes (meilleure → pire),
+    // chaque bande tirant avec SA propre proximité. L'ancien code n'appliquait
+    // que la bande de l'axe le plus proche : dès que l'axe gagnant changeait
+    // de cible ("ok" → "no"), le score sautait de 77 à 52 d'un pas de vent,
+    // alors que les deux proximités bougeaient continûment de part et d'autre.
+    // Le lerp en chaîne est continu en chaque p et reste ≤ au mapping de base
+    // (BAND_MAPS ≤ identité), donc les plafonds de bande restent inviolés.
+    for (const band of ["ok", "no"]) {
+      const p = flip.byBand?.[band] || 0;
+      if (p > 0 && VERDICT_ORDER[band] < VERDICT_ORDER[verdict]) {
+        adj += (BAND_MAPS[band](v2.score) - adj) * p;
+      }
     }
   }
   return {
@@ -1024,10 +1049,25 @@ function compressTail(s, floor, cap) {
 // Mapping score brut → score affiché, par bande de verdict. compressTail
 // est ≤ identité partout : un blend entre deux mappings ne peut jamais
 // REMONTER un score au-dessus de sa bande (pas de floor artificiel).
+// Les plafonds sont CALÉS SUR LES LIBELLÉS de SCORE_SCALE (verdict.js), pas
+// sur des nombres ronds. Avant : ok plafonnait à 70 alors que la bande
+// "excellent" commence à 60 → un MAYBE s'affichait "Excellent" en gros vert
+// (recouvrement 60-70). C'est le bug qui a envoyé une beginner à l'eau : son
+// écran disait « Excellent 62 » pendant que le conseil juste en dessous
+// disait « the main break isn't for you today — too big ». Elle a lu le
+// titre. Idem pour "no" qui plafonnait à 38 = "Fair — Surfable but
+// unremarkable", en contradiction directe avec SKIP.
+// Nouveau calage (bornes hautes exactes des bandes de SCORE_SCALE) :
+//   yes  → jusqu'à 100  (Good / Excellent / Unreal)
+//   ok   → 59 = haut de "Good"  (jamais "Excellent")
+//   no   → 29 = haut de "Poor"  (jamais "Fair"/"surfable")
+// Les floors descendent avec les caps pour garder la même amplitude de
+// résolution qu'avant (14 pts pour ok, 9 pour no) — pas de floor artificiel
+// ajouté, la règle "seulement des ceilings" de CLAUDE.md tient.
 const BAND_MAPS = {
   yes: (s) => s,
-  ok:  (s) => compressTail(s, 55, 70),
-  no:  (s) => compressTail(s, 30, 38),
+  ok:  (s) => compressTail(s, 45, 59),
+  no:  (s) => compressTail(s, 20, 29),
 };
 
 // Échelles de bruit heure-à-heure des entrées modèle (Open-Meteo) : si une
@@ -1059,13 +1099,39 @@ export function flipProximity(userLevel, h, spot, baseVerdict) {
     if (Number.isFinite(h.secSwellH)) patch.secSwellH = h.secSwellH * f;
     return patch;
   };
+  const windUp = (t) => ({
+    windSpeedKn: (Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0) + (t * FLIP_NOISE.windKmh) / 1.852,
+  });
   const axes = [
-    (t) => ({ windSpeedKn: (Number.isFinite(h.windSpeedKn) ? h.windSpeedKn : 0) + (t * FLIP_NOISE.windKmh) / 1.852 }),
+    windUp,
     (t) => ({ currentVel: (h.currentVel || 0) + t * FLIP_NOISE.currentMs }),
     (t) => swellScale(t, +1), // houle qui monte (vers too_big / caps)
     (t) => swellScale(t, -1), // houle qui tombe (vers too_small / min)
+    // ── Axes COMBINÉS (vent + houle) ────────────────────────────────
+    // Certaines bascules ne sont atteignables qu'en bougeant DEUX entrées
+    // à la fois : ex. le vent franchit bumpy→blown ET la houle retombe de
+    // too_big vers upper → getPersonalVerdict passe "ok"→"no". Sondé axe
+    // par axe, aucun des deux mouvements ne bascule seul, donc p=0 et le
+    // score reste plein — jusqu'à ce que le label vent bascule tout seul
+    // au seuil dur, où la bascule devient soudain atteignable et le score
+    // s'effondre d'un coup. Falaises mesurées : 31 pts (offshore 40 km/h),
+    // 27 (cross 30), 22 (onshore 20) pour 0.25 km/h de vent — alors que
+    // scoreV2 brut, lui, est parfaitement continu là. Le sondage JOINT
+    // voit la bascule venir et fait glisser le score avant, exactement
+    // comme les axes simples le font déjà pour les seuils qu'ils couvrent.
+    (t) => ({ ...windUp(t), ...swellScale(t, -1) }),
+    (t) => ({ ...windUp(t), ...swellScale(t, +1) }),
   ];
   let best = { p: 0, to: null };
+  // Proximité par BANDE CIBLE, pas seulement le meilleur axe. Plusieurs
+  // axes peuvent mener à des bandes différentes en même temps (typique :
+  // la houle qui monte mène à "ok" pendant que le vent qui monte mène
+  // directement à "no"). En ne gardant que le max, le mapping cible
+  // basculait d'un coup quand l'axe gagnant changeait — falaise mesurée de
+  // 25 pts à 23.75 km/h (early_int) alors que les deux proximités
+  // évoluaient continûment. scoreForLevel applique maintenant les bandes
+  // en séquence, chacune avec sa propre proximité.
+  const byBand = { ok: 0, no: 0 };
   for (const patchAt of axes) {
     const vFull = verdictWith(userLevel, h, spot, patchAt(1));
     if (VERDICT_ORDER[vFull] >= base) continue; // pas de bascule à 1σ sur cet axe
@@ -1079,9 +1145,19 @@ export function flipProximity(userLevel, h, spot, baseVerdict) {
     }
     const raw = 1 - hi;
     const p = raw * raw * (3 - 2 * raw); // smoothstep, C1 aux deux bouts
-    if (p > best.p) best = { p, to: vFull };
+    // Bande cible = celle atteinte AU POINT DE BASCULE (t*), pas à 1σ.
+    // `vFull` est le verdict au bout de l'axe : il peut être PIRE que la
+    // bande réellement franchie en premier (ex. houle+vent à 1σ donne "no"
+    // alors que la bascule à t*=0.33 n'est encore que "ok"). Classer p sous
+    // vFull faisait apparaître une proximité "no" pleine là où l'heure n'est
+    // en réalité qu'au bord de "ok" — score effondré d'un coup (48 au lieu
+    // de 77). On lit donc le verdict juste après la bascule.
+    const vAt = verdictWith(userLevel, h, spot, patchAt(hi));
+    const to = VERDICT_ORDER[vAt] < base ? vAt : vFull;
+    if (p > best.p) best = { p, to };
+    if (p > (byBand[to] || 0)) byBand[to] = p;
   }
-  return best;
+  return { ...best, byBand };
 }
 
 // Rebuilds a forecast payload so every hour.score is the level-adjusted
