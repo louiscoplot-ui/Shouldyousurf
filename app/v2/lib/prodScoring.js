@@ -98,6 +98,38 @@ export function swellPartitions(h, spot) {
     const g = Math.max(0, Math.min(1, (secH - 0.2) / 0.2));
     w2 = weight(sec) * (g * g * (3 - 2 * g));
   }
+  // ── Le WINDSWELL est une vague, pas seulement du bruit ────────────────
+  // `wind_wave_height` n'entrait dans le moteur QUE comme pénalité (chopMult)
+  // : il pouvait faire baisser le score, jamais grossir la vague. Or un
+  // windswell d'1 m à 8 s est une vraie vague surfable — désordonnée, mais
+  // réelle. Résultat : les jours où l'essentiel de l'énergie est dans la
+  // partition windsea, l'app annonçait "0-2 ft / 17-100" alors qu'il y avait
+  // de quoi surfer (cas terrain Trigg 30/07 : houle lue 0.4 m, vagues bien
+  // plus grosses en vrai). Le windswell devient donc une partition candidate
+  // à part entière, jugée au MÊME poids (h² × période × direction) que les
+  // deux houles : sa période courte le pénalise déjà lourdement via
+  // lookupPeriodMult et le periodFactor de la face — il ne gagne que quand
+  // il porte réellement le plus d'énergie surfable. Même porte en smoothstep
+  // 0.2→0.4 m que la secondaire, pour la continuité.
+  const wndH = Number.isFinite(h.windWaveHeight) ? h.windWaveHeight : null;
+  let wnd = null, w3 = 0;
+  if (wndH != null && wndH > 0.2) {
+    const wndPKnown = Number.isFinite(h.windWavePeriod);
+    wnd = {
+      swellHeight: wndH,
+      swellPeriod: wndPKnown ? h.windWavePeriod : 6, // windsea typique ≈ 6 s
+      swellDir: Number.isFinite(h.windWaveDir) ? h.windWaveDir : null,
+      isSecondary: true,
+      isWind: true,
+      periodKnown: wndPKnown,
+    };
+    const g = Math.max(0, Math.min(1, (wndH - 0.2) / 0.2));
+    w3 = weight(wnd) * (g * g * (3 - 2 * g));
+  }
+  // La primaire garde sa place (le blend de scoreV2 suppose pri = houle
+  // primaire pour rester continu) ; le second slot revient au challenger le
+  // plus lourd entre houle secondaire et windswell.
+  if (w3 > w2) return { pri, sec: wnd, w1, w2: w3 };
   return { pri, sec, w1, w2 };
 }
 
@@ -120,10 +152,31 @@ export function getDominant(h, spot) {
 // faceFtOf — LA hauteur de face (ft) d'une heure : partition dominante +
 // atténuation du spot, calculée une fois dans shapeHour (hour.faceFt) et
 // recalculée seulement en fallback (heures mock / synthétiques).
+// faceMOf — la face en MÈTRES, fondue entre les deux partitions avec
+// EXACTEMENT le même poids que le blend de scoreV2. La face suivait jusqu'ici
+// un argmax sec (pickDominantSwell) : au basculement, elle sautait. Tant que
+// les deux candidates étaient des houles de périodes voisines, le saut restait
+// discret ; avec le windswell (période très courte, hauteur parfois plus
+// grande) il devenait brutal — face mesurée passant de 5.91 à 4.20 ft pour
+// 1 cm de windsea, et le saut se propageait dans la taille classifiée puis
+// dans le verdict et le score (36 pts). Fondre la face avec le même
+// smoothstep que le score règle les deux d'un coup et garantit que la face
+// affichée et le score parlent toujours de la même vague.
+export function faceMOf(h, spot) {
+  const att = spotAttenuation(spot);
+  const { pri, sec, w1, w2 } = swellPartitions(h, spot);
+  const fPri = estimateFaceHeight(pri.swellHeight, pri.swellPeriod, att);
+  if (!sec || w2 <= 0 || (w1 + w2) <= 0) return fPri;
+  const fSec = estimateFaceHeight(sec.swellHeight, sec.swellPeriod, att);
+  const t = w2 / (w1 + w2);
+  const b = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
+  const blend = b * b * (3 - 2 * b); // identique au blend de scoreV2
+  return fPri + (fSec - fPri) * blend;
+}
+
 export function faceFtOf(h, spot) {
   if (h && Number.isFinite(h.faceFt)) return h.faceFt;
-  const dom = getDominant(h, spot);
-  return mToFt(estimateFaceHeight(dom.swellHeight, dom.swellPeriod, spotAttenuation(spot)));
+  return mToFt(faceMOf(h, spot));
 }
 
 export const TIDE_TARGETS = { "low": 0.1, "mid-low": 0.3, "mid": 0.5, "mid-high": 0.7, "high": 0.9 };
@@ -364,8 +417,14 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
     // Chop windswell : pénalité en rampe sur le ratio (anciens paliers
     // 0.5→0.91 / 0.8→0.82 comme ancres), modulée par une porte de période
     // qui s'éteint entre 9.5s et 11s (avant : conditions sèches <10s/<11s).
+    // `!part.isWind` : quand la partition NOTÉE est le windswell lui-même, le
+    // ratio windWave/hEff vaut ~1/atténuation → pénalité maximale appliquée à
+    // une vague contre elle-même. Le chop modélise le clapot PARASITE qui
+    // dégrade la face d'une houle ; si le windsea EST la vague qu'on surfe,
+    // sa médiocrité est déjà portée par sa période courte (periodMult +
+    // periodFactor). Sans cette garde on comptait la pénalité deux fois.
     let chopMult = 1.0;
-    if (Number.isFinite(h.windWaveHeight) && hEff > 0.3 && part.periodKnown) {
+    if (!part.isWind && Number.isFinite(h.windWaveHeight) && hEff > 0.3 && part.periodKnown) {
       const ratio = h.windWaveHeight / Math.max(0.3, hEff);
       const ratioPenalty = lerpTable(ratio, [[0.4, 1.0], [0.65, 0.91], [0.9, 0.82]]);
       const pGate = 1 - Math.max(0, Math.min(1, (part.swellPeriod - 9.5) / 1.5));
@@ -1097,6 +1156,11 @@ export function flipProximity(userLevel, h, spot, baseVerdict) {
     const f = 1 + dir * t * FLIP_NOISE.swellRel;
     const patch = { swellHeight: (h.swellHeight || 0) * f };
     if (Number.isFinite(h.secSwellH)) patch.secSwellH = h.secSwellH * f;
+    // Le windswell est devenu une partition qui DIMENSIONNE la vague : il doit
+    // être bruité comme les deux autres, sinon le lisseur est aveugle sur
+    // l'axe qui porte le verdict les jours de windsea dominante — et le score
+    // saute de 35 pts au moment où la bascule arrive sans avoir été anticipée.
+    if (Number.isFinite(h.windWaveHeight)) patch.windWaveHeight = h.windWaveHeight * f;
     return patch;
   };
   const windUp = (t) => ({

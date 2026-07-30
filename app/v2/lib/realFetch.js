@@ -10,6 +10,7 @@ import {
   scoreV2,
   estimateFaceHeight,
   pickDominantSwell,
+  faceMOf,
   spotAttenuation,
   windClass,
   angDelta,
@@ -188,7 +189,7 @@ export async function fetchRealForecast(spot, signal) {
   // sea_level_height_msl + courants restent servis pour tous les spots
   // (l'API est inaccessible depuis l'env de session, proxy 403).
   const marineFields =
-    "swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
+    "swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,wind_wave_period,wind_wave_direction,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
   const marineModels = "best_match";
 
   const tzParam = encodeURIComponent(requestTz);
@@ -245,6 +246,10 @@ export async function fetchRealForecast(spot, signal) {
         windSpeedKn: windKn,
         windDir: windDirDeg,
         windWaveHeight: marine.hourly.wind_wave_height?.[mi] ?? null,
+        // Période + direction du windsea : sans elles la partition windswell
+        // (swellPartitions) ne pourrait ni être pondérée ni convertie en face.
+        windWavePeriod: marine.hourly.wind_wave_period?.[mi] ?? null,
+        windWaveDir: marine.hourly.wind_wave_direction?.[mi] ?? null,
         secSwellH: marine.hourly.secondary_swell_wave_height?.[mi] ?? null,
         secSwellP: marine.hourly.secondary_swell_wave_period?.[mi] ?? null,
         secSwellDir: marine.hourly.secondary_swell_wave_direction?.[mi] ?? null,
@@ -314,13 +319,13 @@ export async function fetchRealForecast(spot, signal) {
   }
 
   const shapeHour = (raw, tideCtx) => {
-    // Face height display follows the DOMINANT swell partition (primary
-    // or secondary) — same pick as scoreV2/classifyConditions, so the
-    // "2–3 ft" the user reads is the wave the score is scoring. The
-    // spot's swellAttenuation applies here too (once, inside
-    // estimateFaceHeight).
+    // `dom` nomme la partition qui porte le plus d'énergie (affichage de la
+    // ligne SWELL : hauteur / période / direction). La FACE, elle, passe par
+    // faceMOf : elle est FONDUE entre les deux partitions avec le même poids
+    // que le blend de scoreV2, donc elle ne saute pas au basculement et
+    // raconte toujours la même vague que le score affiché à côté.
     const domSwell = pickDominantSwell(raw, effectiveSpot);
-    const faceM = estimateFaceHeight(domSwell.swellHeight, domSwell.swellPeriod, spotAttenuation(effectiveSpot));
+    const faceM = faceMOf(raw, effectiveSpot);
     const faceFt = mToFt(faceM);
     // Score with the prod engine using the raw degrees — BEFORE we overwrite
     // swellDir/windDir below with the cardinal string the v2 components want.

@@ -504,6 +504,65 @@ describe("vent — monotonie et continuité du score affiché", () => {
   });
 });
 
+describe("windswell — une vague, pas seulement du bruit", () => {
+  // `wind_wave_height` n'entrait dans le moteur QUE comme pénalité (chopMult) :
+  // il faisait baisser le score, jamais grossir la vague. Les jours où
+  // l'essentiel de l'énergie est dans la partition windsea, l'app annonçait
+  // "0-2 ft" alors qu'il y avait de quoi surfer (cas terrain Trigg 30/07).
+  const wmk = (o) => mk({ swellHeight: 0.4, swellPeriod: 10, ...o });
+
+  it("sans windswell : bit-à-bit identique (non-régression stricte)", () => {
+    for (const sw of [0.3, 0.8, 1.5, 2.5]) {
+      for (const lvl of USER_LEVELS) {
+        const a = scoreForLevel(mk({ swellHeight: sw }), spot, lvl).score;
+        const b = scoreForLevel(mk({ swellHeight: sw, windWaveHeight: null }), spot, lvl).score;
+        expect(a).toBe(b);
+      }
+    }
+  });
+
+  it("un windswell qui porte plus d'énergie devient la partition dominante", () => {
+    const petit = wmk({ windWaveHeight: 0.25, windWavePeriod: 6, windWaveDir: 240 });
+    expect(pickDominantSwell(petit, spot).isWind).toBeFalsy(); // porte 0.2-0.4 m
+    const gros = wmk({ windWaveHeight: 1.2, windWavePeriod: 8, windWaveDir: 240 });
+    expect(pickDominantSwell(gros, spot).isWind).toBe(true);
+    // …et la vague grossit réellement au lieu de rester à la houle seule
+    expect(faceFtOf(gros, spot)).toBeGreaterThan(faceFtOf(petit, spot));
+  });
+
+  it("sa période courte le pénalise — il ne vaut jamais une houle longue à taille égale", () => {
+    const houle = mk({ swellHeight: 1.2, swellPeriod: 15 });
+    const windsea = mk({ swellHeight: 0.2, windWaveHeight: 1.2, windWavePeriod: 6, windWaveDir: 240 });
+    expect(scoreV2(windsea, spot, "intermediate").score)
+      .toBeLessThan(scoreV2(houle, spot, "intermediate").score);
+  });
+
+  it("pas de double pénalité : le chop ne s'applique pas au windswell contre lui-même", () => {
+    // Quand la partition notée EST le windsea, le ratio windWave/hEff vaut
+    // ~1/atténuation → pénalité maximale d'une vague contre elle-même.
+    const h = mk({ swellHeight: 0.2, windWaveHeight: 1.0, windWavePeriod: 8, windWaveDir: 240 });
+    expect(scoreV2(h, spot, "intermediate").multipliers.chop).toBe(1);
+  });
+
+  it("aucune falaise sur l'axe windswell 0→2.5 m (score ET face)", () => {
+    for (const lvl of USER_LEVELS) {
+      for (const sw of [0.3, 1.5]) {
+        for (const wp of [5, 9]) {
+          let ps = null, pf = null;
+          for (let wh = 0; wh <= 2.5001; wh += 0.01) {
+            const h = mk({ swellHeight: sw, windWaveHeight: +wh.toFixed(2), windWavePeriod: wp, windWaveDir: 240 });
+            const s = scoreForLevel(h, spot, lvl).score;
+            const f = faceFtOf(h, spot);
+            if (ps != null) expect(Math.abs(s - ps)).toBeLessThanOrEqual(8);
+            if (pf != null) expect(Math.abs(f - pf)).toBeLessThanOrEqual(0.5);
+            ps = s; pf = f;
+          }
+        }
+      }
+    }
+  });
+});
+
 describe("CLAUDE.md safety invariants", () => {
   it("reef/heavy spot → hard no for first_timer and beginner", () => {
     const h = mk({ swellHeight: 1.0 });
