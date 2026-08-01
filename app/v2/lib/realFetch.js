@@ -83,19 +83,82 @@ function degToCardinal(deg) {
 // du spot : comportement d'avant, jamais pire.
 const MARINE_OFFSET_KM = 5;
 
-export function marineSamplePoint(spot) {
+// Déplace un point de `km` selon un cap (0 = N, 90 = E).
+export function offsetPoint(lat, lng, bearingDeg, km) {
+  const rad = (bearingDeg * Math.PI) / 180;
+  const dLat = (km * Math.cos(rad)) / 110.574;
+  const cosLat = Math.max(0.05, Math.cos((lat * Math.PI) / 180));
+  const dLng = (km * Math.sin(rad)) / (111.320 * cosLat);
+  return { lat: +(lat + dLat).toFixed(4), lng: +(lng + dLng).toFixed(4) };
+}
+
+// `bearing` explicite = cap du large. Sinon on prend idealSwellDir (la houle
+// vient de la mer). Aucun des deux → coordonnées du spot, comportement d'avant.
+export function marineSamplePoint(spot, bearing) {
   if (Number.isFinite(spot?.marineLat) && Number.isFinite(spot?.marineLng)) {
     return { lat: spot.marineLat, lng: spot.marineLng };
   }
-  const dir = spot?.idealSwellDir;
+  const dir = Number.isFinite(bearing) ? bearing : spot?.idealSwellDir;
   if (!Number.isFinite(dir) || !Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) {
     return { lat: spot.lat, lng: spot.lng };
   }
-  const rad = (dir * Math.PI) / 180;
-  const dLat = (MARINE_OFFSET_KM * Math.cos(rad)) / 110.574;
-  const cosLat = Math.max(0.05, Math.cos((spot.lat * Math.PI) / 180));
-  const dLng = (MARINE_OFFSET_KM * Math.sin(rad)) / (111.320 * cosLat);
-  return { lat: +(spot.lat + dLat).toFixed(4), lng: +(spot.lng + dLng).toFixed(4) };
+  return offsetPoint(spot.lat, spot.lng, dir, MARINE_OFFSET_KM);
+}
+
+// ── Spots PERSONNALISÉS : trouver où est la mer ───────────────────────
+// Les 111 spots du catalogue portent tous `idealSwellDir`, donc le décalage
+// vers le large marche pour eux. Un spot choisi par l'utilisateur (recherche
+// libre, pin sur la carte, GPS) n'en a pas : `inferSpotProfile` ne tourne
+// qu'APRÈS le fetch. Ces spots gardaient donc le bug de la cellule terrestre.
+//
+// On sonde une couronne de 8 caps à 5 km — l'API accepte plusieurs points en
+// UNE requête (latitude=a,b,c). La cellule la plus au large est celle qui
+// porte la plus grosse houle moyenne : les points à terre sont masqués,
+// nuls ou fortement atténués. Ça donne le cap du large, qu'on réinjecte dans
+// exactement la même logique que les spots curés — pas de traitement à part.
+//
+// Best-effort de bout en bout : une sonde qui échoue, qui est annulée ou qui
+// ne conclut pas laisse le comportement d'avant. Le résultat est mis en cache
+// par coordonnées (la position de la mer ne bouge pas), donc une seule sonde
+// par spot et par appareil.
+const PROBE_BEARINGS = [0, 45, 90, 135, 180, 225, 270, 315];
+const PROBE_KEY = "surf-marine-bearing-";
+
+export async function probeOffshoreBearing(spot, marineModels, signal) {
+  if (!Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) return null;
+  const key = `${PROBE_KEY}${spot.lat.toFixed(3)},${spot.lng.toFixed(3)}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(key) || "null");
+    if (Number.isFinite(cached?.bearing)) return cached.bearing;
+  } catch {}
+
+  const pts = PROBE_BEARINGS.map((b) => offsetPoint(spot.lat, spot.lng, b, MARINE_OFFSET_KM));
+  const url = `https://${OM_MARINE_HOST}/v1/marine?latitude=${pts.map((p) => p.lat).join(",")}`
+    + `&longitude=${pts.map((p) => p.lng).join(",")}`
+    + `&hourly=swell_wave_height&models=${marineModels}&forecast_days=1${OM_KEY_PARAM}`;
+
+  let json = null;
+  try {
+    const res = await fetch(url, { signal });
+    if (!res.ok) return null;
+    json = await res.json();
+  } catch { return null; }
+
+  // Multi-points → tableau ; point unique → objet. On normalise.
+  const locs = Array.isArray(json) ? json : [json];
+  let best = null;
+  locs.forEach((loc, i) => {
+    const series = loc?.hourly?.swell_wave_height;
+    if (!Array.isArray(series)) return;
+    const vals = series.filter((v) => Number.isFinite(v));
+    if (vals.length < 6) return; // cellule à terre : masquée ou quasi vide
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    if (!best || mean > best.mean) best = { mean, bearing: PROBE_BEARINGS[i] };
+  });
+  if (!best) return null;
+
+  try { localStorage.setItem(key, JSON.stringify({ bearing: best.bearing, at: Date.now() })); } catch {}
+  return best.bearing;
 }
 
 // ── Endpoint Open-Meteo : gratuit (non-commercial) vs commercial ───────
@@ -233,7 +296,13 @@ export async function fetchRealForecast(spot, signal) {
   // Les requêtes MARINES partent du point au large (cf. marineSamplePoint) ;
   // le VENT reste aux coordonnées du spot — c'est le vent au bord qui coiffe
   // ou lisse la vague, et l'API forecast gère très bien un point à terre.
-  const mp = marineSamplePoint(spot);
+  // Spot personnalisé (pas d'idealSwellDir curé) : on sonde d'abord où est la
+  // mer, une seule fois par appareil et par position. Échec → null → on
+  // retombe sur les coordonnées du spot, exactement comme avant.
+  const probedBearing = Number.isFinite(spot.idealSwellDir)
+    ? null
+    : await probeOffshoreBearing(spot, marineModels, signal);
+  const mp = marineSamplePoint(spot, probedBearing);
 
   const tzParam = encodeURIComponent(requestTz);
   const pastMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${mp.lat}&longitude=${mp.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
@@ -328,7 +397,17 @@ export async function fetchRealForecast(spot, signal) {
   const allRaw = [...pastRaw, ...futureRaw];
   // Infer spot profile if the curated spot didn't pre-fill idealSwellDir.
   const needsInfer = spot.idealSwellDir == null || spot.offshoreWindDir == null;
-  const inferred = needsInfer ? inferSpotProfile(allRaw) : null;
+  // inferSpotProfile lit la direction RÉELLE de la houle sur la période : plus
+  // fin que le cap sondé (résolution 45°), on le garde en premier. Mais il
+  // renvoie null quand il n'a pas assez d'heures exploitables — dans ce cas le
+  // spot restait sans idealSwellDir DU TOUT (dirMult neutre, vent non
+  // classifiable). Le cap du large fait alors un repli honnête.
+  const inferred = needsInfer
+    ? (inferSpotProfile(allRaw)
+       || (Number.isFinite(probedBearing)
+           ? { idealSwellDir: probedBearing, offshoreWindDir: (probedBearing + 180) % 360 }
+           : null))
+    : null;
   // Resolve the spot's actual timezone from the API response (returned when
   // we sent `timezone=auto`). Fall back to whatever the spot already had,
   // then to the local browser tz, then to the safety net. After this point

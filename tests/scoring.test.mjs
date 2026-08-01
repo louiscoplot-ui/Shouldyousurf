@@ -1,7 +1,7 @@
 // Invariants du moteur de scoring — verrouille les "décisions à ne pas
 // défaire" de CLAUDE.md et les fixes de l'audit 2026-07. Toute recalibration
 // future doit passer ici AVANT push.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   currentVelToMs,
   estimateFaceHeight,
@@ -22,7 +22,7 @@ import {
   mToFt,
 } from "../app/v2/lib/prodScoring.js";
 import { BREAKS } from "../app/breaks.js";
-import { marineSamplePoint } from "../app/v2/lib/realFetch.js";
+import { marineSamplePoint, offsetPoint, probeOffshoreBearing } from "../app/v2/lib/realFetch.js";
 import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE, scoreBreakdown, drivingChipsFor } from "../app/v2/lib/verdict.js";
 
 const spot = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
@@ -550,6 +550,69 @@ describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
   it("marineLat/marineLng forcent le point quand ils sont fournis", () => {
     const mp = marineSamplePoint({ lat: -31.9, lng: 115.75, idealSwellDir: 240, marineLat: -31.8, marineLng: 115.6 });
     expect(mp).toEqual({ lat: -31.8, lng: 115.6 });
+  });
+
+  it("offsetPoint respecte cap et distance", () => {
+    const o = offsetPoint(-31.88, 115.75, 270, 5); // plein ouest
+    expect(o.lng).toBeLessThan(115.75);
+    expect(o.lat).toBeCloseTo(-31.88, 3);
+    expect(distKm({ lat: -31.88, lng: 115.75 }, o)).toBeCloseTo(5, 1);
+    const n = offsetPoint(-31.88, 115.75, 0, 5); // plein nord
+    expect(n.lat).toBeGreaterThan(-31.88);
+    expect(n.lng).toBeCloseTo(115.75, 3);
+  });
+
+  it("un cap explicite pilote le décalage (cas du spot personnalisé sondé)", () => {
+    const custom = { lat: -31.88, lng: 115.75 }; // pas d'idealSwellDir
+    expect(marineSamplePoint(custom)).toEqual({ lat: -31.88, lng: 115.75 }); // sans cap : inchangé
+    const mp = marineSamplePoint(custom, 240);
+    expect(mp.lng).toBeLessThan(115.75); // sondé vers le large → part à l'ouest
+    expect(distKm(custom, mp)).toBeCloseTo(5, 1);
+  });
+});
+
+describe("sonde du large (spots personnalisés) — best-effort strict", () => {
+  const custom = { lat: -31.88, lng: 115.75 };
+  const origFetch = globalThis.fetch;
+  afterEach(() => { globalThis.fetch = origFetch; });
+
+  it("réseau en échec → null, jamais d'exception (on retombe sur le comportement d'avant)", async () => {
+    globalThis.fetch = () => Promise.reject(new Error("Load failed"));
+    await expect(probeOffshoreBearing(custom, "best_match", undefined)).resolves.toBeNull();
+  });
+
+  it("réponse HTTP non-ok → null", async () => {
+    globalThis.fetch = () => Promise.resolve({ ok: false, status: 429, json: async () => ({}) });
+    await expect(probeOffshoreBearing(custom, "best_match", undefined)).resolves.toBeNull();
+  });
+
+  it("choisit le cap dont la houle moyenne est la plus forte (= le large)", async () => {
+    // 8 caps : 0,45,90,135,180,225,270,315. On met la mer plein ouest (270).
+    const series = (v) => ({ hourly: { swell_wave_height: Array(24).fill(v) } });
+    globalThis.fetch = () => Promise.resolve({
+      ok: true,
+      json: async () => [
+        series(0.1), series(0.1), series(0.1), series(0.1),
+        series(0.2), series(0.9), series(1.8), series(0.9),
+      ],
+    });
+    await expect(probeOffshoreBearing(custom, "best_match", undefined)).resolves.toBe(270);
+  });
+
+  it("cellules à terre (séries vides ou trop courtes) sont ignorées", async () => {
+    const short = { hourly: { swell_wave_height: [null, null, 0.4] } };
+    const good = { hourly: { swell_wave_height: Array(24).fill(1.1) } };
+    globalThis.fetch = () => Promise.resolve({
+      ok: true,
+      json: async () => [short, short, short, short, short, short, short, good], // 315 seul valide
+    });
+    await expect(probeOffshoreBearing(custom, "best_match", undefined)).resolves.toBe(315);
+  });
+
+  it("aucune cellule exploitable → null", async () => {
+    const dead = { hourly: { swell_wave_height: [] } };
+    globalThis.fetch = () => Promise.resolve({ ok: true, json: async () => Array(8).fill(dead) });
+    await expect(probeOffshoreBearing(custom, "best_match", undefined)).resolves.toBeNull();
   });
 });
 
