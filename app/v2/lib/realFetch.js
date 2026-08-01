@@ -60,6 +60,44 @@ function degToCardinal(deg) {
   return degToCompass(((deg % 360) + 360) % 360);
 }
 
+// ── Point d'échantillonnage MARIN ─────────────────────────────────────
+// Les modèles de vagues tournent sur une grille de ~1/12° (≈ 9 km). Un spot
+// posé sur le trait de côte tombe donc souvent dans une cellule à dominante
+// TERRESTRE, dont la sortie est un artefact de bord, pas de la physique.
+// Mesuré à Trigg (-31.8826, 115.7519) le 01/08 : l'API snappe sur la cellule
+// centrée 115.79167 — soit 3.8 km vers l'INTÉRIEUR, une cellule qui court
+// jusqu'à 115.83 en pleine banlieue de Perth. Comparaison à la même heure :
+//   115.79167 (cellule de bord, terre) → 1.32 m   ← ce que l'app lisait
+//   115.70836 (première cellule 100% eau) → 1.64 m  (+24 %)
+//   115.62501 (au large du Five Fathom Bank) → 2.02 m  (+53 %)
+// Le modèle avait donc DÉJÀ atténué 2.02 → 1.32 (×0.65) avant qu'on applique
+// notre swellAttenuation 0.60 par-dessus : atténuation réelle 0.39, on jetait
+// 61 % de la houle. D'où les "vagues bien plus grosses en vrai" du terrain.
+//
+// On décale le point d'interrogation MARIN vers le large. La direction du
+// large est donnée par `idealSwellDir` : la houle vient de la mer, par
+// définition. Ça généralise à n'importe quel spot du monde (côte est → décalé
+// à l'est, côte ouest → à l'ouest) sans table codée en dur. `marineLat` /
+// `marineLng` sur le spot permettent de forcer un point précis si besoin.
+// Sans idealSwellDir (spot custom avant inférence) on garde les coordonnées
+// du spot : comportement d'avant, jamais pire.
+const MARINE_OFFSET_KM = 5;
+
+export function marineSamplePoint(spot) {
+  if (Number.isFinite(spot?.marineLat) && Number.isFinite(spot?.marineLng)) {
+    return { lat: spot.marineLat, lng: spot.marineLng };
+  }
+  const dir = spot?.idealSwellDir;
+  if (!Number.isFinite(dir) || !Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) {
+    return { lat: spot.lat, lng: spot.lng };
+  }
+  const rad = (dir * Math.PI) / 180;
+  const dLat = (MARINE_OFFSET_KM * Math.cos(rad)) / 110.574;
+  const cosLat = Math.max(0.05, Math.cos((spot.lat * Math.PI) / 180));
+  const dLng = (MARINE_OFFSET_KM * Math.sin(rad)) / (111.320 * cosLat);
+  return { lat: +(spot.lat + dLat).toFixed(4), lng: +(spot.lng + dLng).toFixed(4) };
+}
+
 // ── Endpoint Open-Meteo : gratuit (non-commercial) vs commercial ───────
 // Le tier gratuit est non-commercial ET rate-limité. Quand il refuse une
 // requête (429/403), la réponse d'erreur ne porte PAS les headers CORS →
@@ -192,15 +230,20 @@ export async function fetchRealForecast(spot, signal) {
     "swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,wind_wave_period,wind_wave_direction,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
   const marineModels = "best_match";
 
+  // Les requêtes MARINES partent du point au large (cf. marineSamplePoint) ;
+  // le VENT reste aux coordonnées du spot — c'est le vent au bord qui coiffe
+  // ou lisse la vague, et l'API forecast gère très bien un point à terre.
+  const mp = marineSamplePoint(spot);
+
   const tzParam = encodeURIComponent(requestTz);
-  const pastMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
+  const pastMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${mp.lat}&longitude=${mp.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
   // Past wind from the FORECAST API (not the ERA5 archive). The archive has
   // a ~5-day reanalysis lag, so it returned nulls for yesterday / the day
   // before → the past hours got filtered out (windKn == null) → no past
   // days showed at all. The forecast API keeps recent past days from the
   // same GFS model with no lag and accepts start_date/end_date + timezone=auto.
   const pastWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
-  const futureMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${spot.lat}&longitude=${spot.lng}&hourly=${marineFields}&models=${marineModels}&timezone=${tzParam}&forecast_days=5${OM_KEY_PARAM}`;
+  const futureMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${mp.lat}&longitude=${mp.lng}&hourly=${marineFields}&models=${marineModels}&timezone=${tzParam}&forecast_days=5${OM_KEY_PARAM}`;
   const futureWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5${OM_KEY_PARAM}`;
 
   // `signal` (AbortController) lets the caller actually cancel the four

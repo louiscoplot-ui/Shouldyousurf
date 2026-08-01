@@ -22,6 +22,7 @@ import {
   mToFt,
 } from "../app/v2/lib/prodScoring.js";
 import { BREAKS } from "../app/breaks.js";
+import { marineSamplePoint } from "../app/v2/lib/realFetch.js";
 import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE, scoreBreakdown, drivingChipsFor } from "../app/v2/lib/verdict.js";
 
 const spot = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
@@ -501,6 +502,54 @@ describe("vent — monotonie et continuité du score affiché", () => {
     const nonOff = (kmh, dir) => classifyConditions("intermediate", mk({ swellHeight: 1.5, windSpeedKn: kmh / 1.852, windDir: dir }), spot).wind;
     expect(nonOff(31, 190)).toBe("blown"); // cross ≥ 30
     expect(nonOff(21, 270)).toBe("blown"); // onshore ≥ 20
+  });
+});
+
+describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
+  // Un spot sur le trait de côte tombe dans une cellule à dominante TERRESTRE
+  // dont la sortie est un artefact de bord. Mesuré à Trigg le 01/08, même
+  // heure : cellule côtière 1.32 m / première cellule 100% eau 1.64 m (+24 %)
+  // / au large du Five Fathom Bank 2.02 m (+53 %). Le modèle avait donc déjà
+  // atténué ×0.65 avant notre swellAttenuation 0.60 → 0.39 réel.
+  const KM = 5;
+  const distKm = (a, b) => {
+    const dLat = (b.lat - a.lat) * 110.574;
+    const dLng = (b.lng - a.lng) * 111.320 * Math.cos((a.lat * Math.PI) / 180);
+    return Math.sqrt(dLat * dLat + dLng * dLng);
+  };
+
+  it("décale de 5 km vers le large (direction donnée par idealSwellDir)", () => {
+    for (const b of BREAKS) {
+      if (!Number.isFinite(b.idealSwellDir)) continue;
+      const mp = marineSamplePoint(b);
+      expect(distKm(b, mp)).toBeCloseTo(KM, 1);
+      // Le décalage doit suivre idealSwellDir : la houle vient de la mer.
+      const bearing = (Math.atan2(
+        (mp.lng - b.lng) * Math.cos((b.lat * Math.PI) / 180),
+        mp.lat - b.lat,
+      ) * 180) / Math.PI;
+      const delta = Math.abs(((bearing - b.idealSwellDir + 540) % 360) - 180);
+      expect(delta).toBeLessThan(2);
+    }
+  });
+
+  it("Trigg atterrit sur la cellule 100% eau, pas sur celle de bord", () => {
+    const trigg = BREAKS.find((x) => x.id === "trigg");
+    const mp = marineSamplePoint(trigg);
+    // Snap sur la grille observée dans les réponses Open-Meteo (k/12 + 1/24).
+    const snap = (v) => Math.round((v - 1 / 24) * 12) / 12 + 1 / 24;
+    expect(snap(mp.lng)).toBeCloseTo(115.70836, 3); // et NON 115.79167 (terre)
+    expect(snap(mp.lat)).toBeCloseTo(-31.875, 3);
+  });
+
+  it("sans idealSwellDir : retombe sur les coordonnées du spot (jamais pire qu'avant)", () => {
+    const mp = marineSamplePoint({ lat: -31.9, lng: 115.75 });
+    expect(mp).toEqual({ lat: -31.9, lng: 115.75 });
+  });
+
+  it("marineLat/marineLng forcent le point quand ils sont fournis", () => {
+    const mp = marineSamplePoint({ lat: -31.9, lng: 115.75, idealSwellDir: 240, marineLat: -31.8, marineLng: 115.6 });
+    expect(mp).toEqual({ lat: -31.8, lng: 115.6 });
   });
 });
 
