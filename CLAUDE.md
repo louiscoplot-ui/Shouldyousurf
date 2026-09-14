@@ -207,7 +207,8 @@ Body explique le POURQUOI, pas le quoi.
 - DangerBanner learners re-porté (inline MainScreen + `.danger-banner` CSS)
 - Notifications locales via `registration.showNotification` (Android/iOS PWA ok)
 - SEO : metadataBase + OG/Twitter + robots.txt + sitemap.xml + redirect /v2→/ + headers sécurité
-- Tests vitest : `tests/scoring.test.mjs` (52 cas) — invariants verdict/ceilings/grille/NaN + continuité + dominante + sécurité ; `tests/wind-sample.test.mjs` (25 cas) — géométrie du point vent, sélection de la cellule la plus proche qui sort vraiment de la terre, garde-fous du recollage mer/spot
+- Tests vitest : `tests/scoring.test.mjs` (99 cas, dont les cas terrain) — invariants verdict/ceilings/grille/NaN + continuité + dominante + sécurité ; `tests/wind-sample.test.mjs` (25 cas) — géométrie du point vent, sélection de la cellule la plus proche qui sort vraiment de la terre, garde-fous du recollage mer/spot
+- **Cas terrain verrouillés** (`describe("cas terrain Trigg")` dans scoring.test.mjs) : deux journées réellement vécues par Louis, qui encadrent le moteur par les DEUX bouts. **Jeudi 10/09 aprem** (5-7 km/h, 1-3 ft, "super top") → beginner doit rendre GO + score ≥ 60 : c'est le contre-exemple qui interdit de sur-resserrer, les après-midi sans vent existent. **Lundi 14/09 17h** (1.3 m/11 s, SE cross-shore, 2-4 ft, très venteux, trajet pour rien) → beginner doit rendre SKIP dès 15 km/h, et le libellé ne doit pas flatter. ⚠️ Si un de ces tests casse, ce n'est PAS le test qu'il faut ajuster : c'est que le moteur s'est remis à mentir sur une journée dont on connaît la réponse. Ajouter un cas ici à chaque fois que Louis remonte une session du terrain.
 - `early_int` zone min : 1.5 ft ; `early_int + too_small` → SKIP
 
 ### Bugs identifiés non fixés

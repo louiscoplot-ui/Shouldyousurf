@@ -892,3 +892,74 @@ describe("NaN guards", () => {
     expect(Number.isFinite(mToFt(1))).toBe(true);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// CAS TERRAIN — sessions réellement vécues par Louis à Trigg.
+//
+// Ce ne sont pas des cas inventés : ce sont deux journées qu'il a faites,
+// avec son verdict à lui. Elles encadrent le moteur par les DEUX bouts, et
+// c'est ça qui compte — resserrer pour éviter un trajet inutile ne doit
+// jamais faire rater une bonne session, et l'inverse non plus.
+//
+// Si un de ces deux tests casse un jour, ce n'est pas le test qu'il faut
+// ajuster : c'est que le moteur s'est remis à mentir sur une journée dont
+// on connaît la réponse.
+// ─────────────────────────────────────────────────────────────────────
+describe("cas terrain Trigg", () => {
+  const TRIGG_REEL = {
+    id: "trigg", lat: -31.8826, lng: 115.7519, idealSwellDir: 240,
+    offshoreWindDir: 90, idealTide: "mid-high", swellAttenuation: 0.60, type: "beach",
+  };
+  const hour = (over) => ({
+    time: "2026-09-10T15:00", hour: 15,
+    swellPeriod: 11, swellDir: 250,
+    windWaveHeight: 0.15, windWavePeriod: 4, windWaveDir: 220,
+    tideM: 0.4, seaTemp: 18, airTemp: 24, rainProb: 0, currentVel: 0.08,
+    ...over,
+  });
+
+  // JEUDI APRÈS-MIDI — "5-7 km/h de vent, 1-3 ft, c'était super top".
+  // Le contre-exemple qui interdit de sur-resserrer : les après-midi sans
+  // vent existent, et il ne faut pas les enterrer sous un plafond trop bas.
+  it("jeudi aprem sans vent, 1-3 ft : GO franc pour un beginner", () => {
+    const h = hour({ swellHeight: 0.8, windSpeedKn: 6 / 1.852, windGustKn: 8 / 1.852, windDir: 120 });
+    expect(faceFtOf(h, TRIGG_REEL)).toBeGreaterThan(1);
+    expect(faceFtOf(h, TRIGG_REEL)).toBeLessThan(3);
+    expect(classifyConditions("beginner", h, TRIGG_REEL).wind).toBe("clean");
+    expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).toBe("yes");
+    // Et le libellé doit suivre : un GO sur une session "super top" ne peut
+    // pas s'afficher en Poor.
+    expect(scoreForLevel(h, TRIGG_REEL, "beginner").score).toBeGreaterThanOrEqual(60);
+  });
+
+  it("jeudi reste GO sur toute la plage de vent qu'il a pu y avoir (5-7 km/h)", () => {
+    [5, 6, 7].forEach((kmh) => {
+      const h = hour({ swellHeight: 0.8, windSpeedKn: kmh / 1.852, windGustKn: (kmh * 1.4) / 1.852, windDir: 120 });
+      expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).toBe("yes");
+    });
+  });
+
+  // LUNDI 14/09 17h — l'app affichait "Good 49 · WORTH IT", il a conduit,
+  // c'était très venteux et pas surfable. Valeurs exactes de son écran.
+  // Le vent affiché (10 km/h) était lui-même sous-lu : le vrai était 20+.
+  it("lundi 14/09 venteux, 2-4 ft : SKIP pour un beginner dès 15 km/h", () => {
+    [15, 18, 20, 25].forEach((kmh) => {
+      const h = hour({
+        time: "2026-09-14T17:00", swellHeight: 1.3, swellDir: 270,
+        windWaveHeight: 0.4, windWaveDir: 200, tideM: 0.1, currentVel: 0.6 / 3.6,
+        windSpeedKn: kmh / 1.852, windGustKn: (kmh * 1.5) / 1.852, windDir: 145, // SE cross-shore
+      });
+      expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).toBe("no");
+    });
+  });
+
+  it("lundi : le libellé du score ne peut pas flatter un SKIP", () => {
+    const h = hour({
+      time: "2026-09-14T17:00", swellHeight: 1.3, swellDir: 270,
+      windWaveHeight: 0.4, windWaveDir: 200, tideM: 0.1, currentVel: 0.6 / 3.6,
+      windSpeedKn: 20 / 1.852, windGustKn: 30 / 1.852, windDir: 145,
+    });
+    // SKIP plafonne à 29 = haut de "Poor" (cf. BAND_MAPS). Jamais "Good".
+    expect(scoreForLevel(h, TRIGG_REEL, "beginner").score).toBeLessThanOrEqual(29);
+  });
+});
