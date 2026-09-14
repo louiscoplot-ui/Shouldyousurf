@@ -240,7 +240,7 @@ const WIND_PROBE_KM = [4, 8, 14];
 // Repli quand la sonde n'a pas encore tourné (premier chargement, jours
 // passés) : au milieu des candidats, assez pour sortir d'une cellule 0.1°.
 const WIND_OFFSET_KM = 8;
-const WIND_PT_KEY = "surf-wind-offset-";
+const WIND_PT_KEY = "surf-wind-offset-v2-"; // v2 : l'ancien cache a pu graver un candidat qui partageait la cellule de la plage
 
 function windOffsetCacheKey(spot) {
   return `${WIND_PT_KEY}${spot.lat.toFixed(3)},${spot.lng.toFixed(3)}`;
@@ -316,19 +316,32 @@ function seawardGainKm(sea, base, bearingDeg) {
   return north * Math.cos(rad) + east * Math.sin(rad);
 }
 
-// Réponse multi-points = TABLEAU [spot, candidat1, candidat2, …] du plus
-// proche au plus lointain. On retient le PREMIER candidat exploitable dont
-// le centre de cellule est réellement au large : le plus proche du break
-// qui corrige quand même l'artefact de bord. Vent (+ rafales) sur cette
-// cellule, tout le reste (air, pluie, lever/coucher) sur la cellule du
-// SPOT — c'est la température de la plage que l'utilisateur ressent.
+// Deux séries strictement identiques = l'API a servi LA MÊME cellule pour
+// les deux points. C'est le seul critère de "on a changé de cellule" qui ne
+// repose sur aucune hypothèse : les valeurs viennent de la même réponse,
+// sérialisées pareil, donc l'égalité stricte est fiable.
 //
-// Best-effort strict : pas de tableau, aucun candidat exploitable, ou
-// aucun qui sorte de la cellule du spot → réponse du spot intégrale,
-// exactement le comportement d'avant le fix.
-// `centre de cellule` indisponible (champ absent) → on ne peut pas
-// mesurer le gain, on fait confiance à la géométrie et on prend le
-// premier candidat exploitable.
+// Le critère précédent comparait `latitude`/`longitude` de la réponse en
+// supposant que c'est le CENTRE DE CELLULE. Si l'API renvoie plutôt le point
+// demandé, ce test est toujours vrai : on retenait le candidat le plus
+// proche, qui partage la cellule de la plage, donc la MÊME valeur de vent —
+// le fix ne mordait pas, et le mauvais choix partait en cache. Symptôme
+// terrain : l'écran continuait d'afficher 10 km/h le soir.
+function sameSeries(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  return a.every((v, i) => v === b[i]);
+}
+
+// Réponse multi-points = TABLEAU [spot, candidat1, candidat2, …] du plus
+// proche au plus lointain. On retient le PREMIER candidat qui sert vraiment
+// une AUTRE cellule que la plage : le plus proche du break qui corrige quand
+// même l'artefact de bord. Vent (+ rafales) sur cette cellule, tout le reste
+// (air, pluie, lever/coucher) sur la cellule du SPOT — c'est la température
+// de la plage que l'utilisateur ressent.
+//
+// Best-effort strict : pas de tableau, aucun candidat exploitable, ou tous
+// identiques à la cellule du spot → réponse du spot intégrale, exactement le
+// comportement d'avant le fix.
 export function resolveSeaWind(json, candidateKm = [], bearingDeg = null) {
   if (!Array.isArray(json)) return { wind: json, pickedKm: null };
   const base = json[0] || null;
@@ -337,12 +350,19 @@ export function resolveSeaWind(json, candidateKm = [], bearingDeg = null) {
   for (let i = 1; i < json.length; i++) {
     const sea = json[i];
     if (!seaWindIsUsable(sea, base)) continue;
+    // Même cellule que la plage → rien à gagner, on va chercher plus loin.
+    if (
+      sameSeries(sea.hourly.wind_speed_10m, base.hourly.wind_speed_10m) &&
+      sameSeries(sea.hourly.wind_direction_10m, base.hourly.wind_direction_10m)
+    ) continue;
+    // Garde-fou géométrique, secondaire : on ne rejette QUE si le centre
+    // renvoyé part franchement vers la TERRE (côte qui se replie, île en
+    // face). Volontairement permissif — les coordonnées de la réponse ne
+    // sont pas une source sûre, c'est la comparaison des séries ci-dessus
+    // qui fait le vrai travail.
     if (Number.isFinite(bearingDeg)) {
       const gain = seawardGainKm(sea, base, bearingDeg);
-      // NaN = l'API n'a pas renvoyé de centre de cellule : on ne bloque pas
-      // là-dessus. Un gain nul ou négatif = même cellule (ou pire) : on
-      // tente le candidat suivant, plus loin.
-      if (Number.isFinite(gain) && gain <= 0.5) continue;
+      if (Number.isFinite(gain) && gain < -0.5) continue;
     }
     return {
       wind: {
@@ -354,6 +374,7 @@ export function resolveSeaWind(json, candidateKm = [], bearingDeg = null) {
           wind_gusts_10m: sea.hourly.wind_gusts_10m ?? base.hourly.wind_gusts_10m,
         },
         windSampledOffshore: true,
+        windSampleKm: candidateKm[i - 1] ?? null,
       },
       pickedKm: candidateKm[i - 1] ?? null,
     };

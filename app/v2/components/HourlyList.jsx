@@ -280,12 +280,13 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
-                <div className="hly-cp-cell-val">
-                  {windKmhR}<span className="hly-cp-cell-unit">km/h</span>
-                  {showGust && <span className="hly-cp-cell-gust">G{gustKmh}</span>}
-                </div>
+                <div className="hly-cp-cell-val">{windKmhR}<span className="hly-cp-cell-unit">km/h</span></div>
                 <div className="hly-cp-cell-sub">
                   {windDir} · {h.windType}
+                  {/* "G23" ne voulait rien dire pour personne. La rafale est
+                      l'info qui explique "ça souffle plus que le chiffre" :
+                      elle doit être écrite en toutes lettres, pas codée. */}
+                  {showGust && <span className="hly-cp-cell-gust"> · gusts {gustKmh}</span>}
                   {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
                 </div>
               </div>
