@@ -198,6 +198,94 @@ async function fetchResilient(url, signal, tries = 2) {
   throw lastErr || new Error("fetch failed");
 }
 
+// ── Point d'échantillonnage du VENT ───────────────────────────────────
+// Même artefact de bord que la houle, mais sur la grille ATMOSPHÉRIQUE.
+// L'API forecast snappe sur la cellule la plus proche d'un modèle global
+// (0.1° à 0.25° = 11 à 28 km). Un spot posé sur le trait de côte tombe donc
+// dans une cellule dont le CENTRE est à l'intérieur des terres — à Trigg,
+// exactement la cellule banlieue déjà mesurée pour le marin (3.8 km inland).
+//
+// Ce n'est pas un détail de quelques pourcents : le vent 10 m est un
+// DIAGNOSTIC, extrapolé depuis le vent d'altitude par la loi log avec la
+// rugosité de la cellule. Banlieue z0 ≈ 0.3 m contre mer z0 ≈ 0.0002 m :
+//   terre : ln(10/0.3)   / ln(60/0.3)    = 0.66
+//   mer   : ln(10/2e-4)  / ln(60/2e-4)   = 0.86      → ×1.3 rien que là.
+// Et pour un vent OFFSHORE (qui sort de la terre et passe sur l'eau) la
+// couche limite interne se reconstruit sur les premiers kilomètres : le
+// vent dans la zone de surf est couramment 1.5 à 2× celui lu 4 km à
+// l'intérieur. C'est le cas terrain Trigg 14/09 : app 10 km/h SE, réel
+// 20+ sur la plage. Le score, le verdict et le tip lisent tous
+// `h.windSpeedKn` — une sous-lecture à la source rend TOUTE la chaîne
+// optimiste, ce que l'utilisateur vit comme "conditions plus compliquées
+// que ce qu'annonce l'app".
+//
+// On interroge donc le vent sur un point MER, avec exactement la même
+// machinerie de cap que marineSamplePoint (idealSwellDir pour les spots
+// curés, cap sondé pour les spots personnalisés). Décalage plus grand que
+// le marin : il faut sortir de la cellule atmosphérique, pas seulement de
+// la cellule de vagues. 12 km couvre une cellule jusqu'à ~0.22° tout en
+// restant dans le régime de vent côtier (une brise de mer est à son
+// maximum au niveau du trait de côte, pas 50 km au large).
+// ⚠️ NON CALIBRÉ contre un anémomètre. La vérité terrain pour Perth ce
+// sont les stations BoM Ocean Reef / Swanbourne. Ne pas bouger au doigt
+// mouillé — c'est la même règle que swellAttenuation.
+// Override possible par spot via `windLat` / `windLng`.
+const WIND_OFFSET_KM = 12;
+
+export function windSamplePoint(spot, bearing) {
+  if (Number.isFinite(spot?.windLat) && Number.isFinite(spot?.windLng)) {
+    return { lat: spot.windLat, lng: spot.windLng };
+  }
+  const dir = Number.isFinite(bearing) ? bearing : spot?.idealSwellDir;
+  if (!Number.isFinite(dir) || !Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) {
+    return null; // pas de cap connu → coordonnées du spot, comportement d'avant
+  }
+  return offsetPoint(spot.lat, spot.lng, dir, WIND_OFFSET_KM);
+}
+
+// Le point décalé peut retomber SUR LA TERRE : baie fermée, île en face,
+// côte qui se replie. On lirait alors une AUTRE cellule terrestre — aucun
+// gain, risque d'être pire. Le DEM Copernicus servi par Open-Meteo rend
+// 0 m sur l'eau, donc `elevation` tranche. Absente → on fait confiance à
+// la géométrie (idealSwellDir pointe vers la mer par définition).
+function seaWindIsUsable(sea, base) {
+  if (!sea?.hourly || !base?.hourly) return false;
+  const spd = sea.hourly.wind_speed_10m;
+  const dir = sea.hourly.wind_direction_10m;
+  if (!Array.isArray(spd) || !Array.isArray(dir)) return false;
+  // Les deux points partent des mêmes paramètres (même tz, mêmes dates) donc
+  // les séries sont alignées par index. Si jamais elles ne le sont pas, on
+  // ne tente pas de recoller : on garde la réponse du spot.
+  if (spd.length !== base.hourly.wind_speed_10m?.length) return false;
+  if (!spd.some((v) => Number.isFinite(v))) return false;
+  if (Number.isFinite(sea.elevation) && sea.elevation > 2) return false;
+  return true;
+}
+
+// Réponse multi-points = TABLEAU [spot, mer]. On prend le VENT sur la
+// cellule mer et tout le reste (air, pluie, lever/coucher) sur la cellule
+// du spot : c'est la température de la plage que l'utilisateur ressent,
+// pas celle du large. Best-effort strict : pas de tableau, série
+// inexploitable ou point retombé à terre → réponse du spot intégrale,
+// exactement le comportement d'avant.
+export function mergeSeaWind(json) {
+  if (!Array.isArray(json)) return json;
+  const base = json[0] || null;
+  if (!base?.hourly) return base;
+  const sea = json[1];
+  if (!seaWindIsUsable(sea, base)) return base;
+  return {
+    ...base,
+    hourly: {
+      ...base.hourly,
+      wind_speed_10m: sea.hourly.wind_speed_10m,
+      wind_direction_10m: sea.hourly.wind_direction_10m,
+      wind_gusts_10m: sea.hourly.wind_gusts_10m ?? base.hourly.wind_gusts_10m,
+    },
+    windSampledOffshore: true,
+  };
+}
+
 // Wraps the single shared windClass (prodScoring) — the UI string uses
 // "cross-shore" where the engine says "cross"; unknown delta (no
 // offshoreWindDir on the spot) maps to the explicit neutral "cross-shore".
@@ -293,9 +381,10 @@ export async function fetchRealForecast(spot, signal) {
     "swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,wind_wave_period,wind_wave_direction,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,secondary_swell_wave_height,secondary_swell_wave_period,secondary_swell_wave_direction,sea_level_height_msl";
   const marineModels = "best_match";
 
-  // Les requêtes MARINES partent du point au large (cf. marineSamplePoint) ;
-  // le VENT reste aux coordonnées du spot — c'est le vent au bord qui coiffe
-  // ou lisse la vague, et l'API forecast gère très bien un point à terre.
+  // Les requêtes MARINES partent du point au large (cf. marineSamplePoint).
+  // Le VENT part lui aussi d'un point MER (cf. windSamplePoint) : la cellule
+  // atmosphérique du trait de côte est à dominante TERRE et son vent 10 m est
+  // diagnostiqué avec une rugosité de banlieue → sous-lecture systématique.
   // Spot personnalisé (pas d'idealSwellDir curé) : on sonde d'abord où est la
   // mer, une seule fois par appareil et par position. Échec → null → on
   // retombe sur les coordonnées du spot, exactement comme avant.
@@ -303,6 +392,12 @@ export async function fetchRealForecast(spot, signal) {
     ? null
     : await probeOffshoreBearing(spot, marineModels, signal);
   const mp = marineSamplePoint(spot, probedBearing);
+  // Deux coordonnées dans la MÊME requête : [0] le spot (air, pluie,
+  // lever/coucher), [1] la mer (vent). mergeSeaWind recolle et retombe sur
+  // [0] seul si le point mer n'est pas exploitable.
+  const wp = windSamplePoint(spot, probedBearing);
+  const windLatParam = wp ? `${spot.lat},${wp.lat}` : `${spot.lat}`;
+  const windLngParam = wp ? `${spot.lng},${wp.lng}` : `${spot.lng}`;
 
   const tzParam = encodeURIComponent(requestTz);
   const pastMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${mp.lat}&longitude=${mp.lng}&hourly=${marineFields}&models=${marineModels}&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
@@ -311,9 +406,9 @@ export async function fetchRealForecast(spot, signal) {
   // before → the past hours got filtered out (windKn == null) → no past
   // days showed at all. The forecast API keeps recent past days from the
   // same GFS model with no lag and accepts start_date/end_date + timezone=auto.
-  const pastWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
+  const pastWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${windLatParam}&longitude=${windLngParam}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&wind_speed_unit=kn&start_date=${pastStart}&end_date=${pastEnd}&timezone=${tzParam}${OM_KEY_PARAM}`;
   const futureMarineUrl = `https://${OM_MARINE_HOST}/v1/marine?latitude=${mp.lat}&longitude=${mp.lng}&hourly=${marineFields}&models=${marineModels}&timezone=${tzParam}&forecast_days=5${OM_KEY_PARAM}`;
-  const futureWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${spot.lat}&longitude=${spot.lng}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5${OM_KEY_PARAM}`;
+  const futureWindUrl = `https://${OM_FORECAST_HOST}/v1/forecast?latitude=${windLatParam}&longitude=${windLngParam}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability&daily=sunrise,sunset&timezone=${tzParam}&wind_speed_unit=kn&forecast_days=5${OM_KEY_PARAM}`;
 
   // `signal` (AbortController) lets the caller actually cancel the four
   // requests on timeout / spot change — the previous Promise.race timeout
@@ -330,8 +425,8 @@ export async function fetchRealForecast(spot, signal) {
   if (!futureMarineRes.ok) throw new Error(`Marine API: HTTP ${futureMarineRes.status}`);
   if (!futureWindRes.ok) throw new Error(`Wind API: HTTP ${futureWindRes.status}`);
   const futureMarine = await futureMarineRes.json();
-  const futureWind = await futureWindRes.json();
-  if (!futureMarine.hourly || !futureWind.hourly) throw new Error("Invalid API response");
+  const futureWind = mergeSeaWind(await futureWindRes.json());
+  if (!futureMarine.hourly || !futureWind?.hourly) throw new Error("Invalid API response");
 
   const buildRawHours = (marine, wind, isPast) => {
     // Wind rows are matched to marine rows by TIMESTAMP, not by array
@@ -387,8 +482,8 @@ export async function fetchRealForecast(spot, signal) {
   if (pastMarineRes?.ok && pastWindRes?.ok) {
     try {
       const pastMarine = await pastMarineRes.json();
-      const pastWind = await pastWindRes.json();
-      if (pastMarine.hourly && pastWind.hourly) {
+      const pastWind = mergeSeaWind(await pastWindRes.json());
+      if (pastMarine.hourly && pastWind?.hourly) {
         pastRaw = buildRawHours(pastMarine, pastWind, true);
       }
     } catch {}
