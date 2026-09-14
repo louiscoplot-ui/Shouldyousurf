@@ -236,6 +236,27 @@ async function fetchResilient(url, signal, tries = 2) {
 // anémomètre. Vérité terrain Perth : stations BoM Ocean Reef / Swanbourne.
 // Même règle que swellAttenuation — ne pas bouger au doigt mouillé.
 // Override possible par spot via `windLat` / `windLng`.
+// ⚠️ MESURÉ, PAS SUPPOSÉ — Trigg, 14/09 18h15, réponse Open-Meteo brute
+// pour les 4 points que ce code interrogeait (plage, +4, +8, +14 km) :
+//   les QUATRE renvoient le même centre de cellule, -31.880493 / 115.77618,
+//   et exactement le même vent (10.3 km/h, rafales 22.3, 125°).
+// Le centre est à 2.3 km du spot vers l'intérieur, et le point à 14 km au
+// large est encore à 16.1 km de ce centre SANS changer de cellule. La grille
+// servie ici est donc bien trop grossière pour qu'un décalage de quelques
+// kilomètres serve à quoi que ce soit : on doublait le nombre de requêtes
+// pour lire deux fois la même valeur.
+//
+// Le raisonnement physique du décalage (rugosité de banlieue contre rugosité
+// mer) reste juste ; c'est la RÉSOLUTION du modèle qui le rend inopérant. On
+// garde donc toute la machinerie, testée et best-effort, derrière ce drapeau :
+// elle se rallume en une ligne le jour où on passe à un modèle assez fin pour
+// que la cellule change. Ce jour-là, refaire la mesure ci-dessus AVANT de
+// rallumer.
+//
+// Ce qui explique réellement l'écart ressenti n'était pas le point de mesure
+// mais la RAFALE (facteur 2.17 sur ce relevé), désormais prise en compte par
+// feltWindKmh dans prodScoring.
+const WIND_OFFSET_ENABLED = false;
 const WIND_PROBE_KM = [4, 8, 14];
 // Repli quand la sonde n'a pas encore tourné (premier chargement, jours
 // passés) : au milieu des candidats, assez pour sortir d'une cellule 0.1°.
@@ -505,7 +526,8 @@ export async function fetchRealForecast(spot, signal) {
   // rendraient 3 fois le même point, on brûlerait du quota pour rien.
   const hasWindOverride = Number.isFinite(spot?.windLat) && Number.isFinite(spot?.windLng);
   const windCandidateKm =
-    hasWindOverride ? [WIND_OFFSET_KM]
+    !WIND_OFFSET_ENABLED ? []
+    : hasWindOverride ? [WIND_OFFSET_KM]
     : cachedWindKm === undefined ? WIND_PROBE_KM
     : cachedWindKm === null ? []
     : [cachedWindKm];
@@ -519,7 +541,8 @@ export async function fetchRealForecast(spot, signal) {
   };
   const futureWindCoords = buildWindCoords(windCandidateKm);
   const pastWindCoords = buildWindCoords(
-    cachedWindKm === undefined ? [WIND_OFFSET_KM] : windCandidateKm,
+    !WIND_OFFSET_ENABLED ? []
+    : cachedWindKm === undefined ? [WIND_OFFSET_KM] : windCandidateKm,
   );
   const windLatParam = futureWindCoords.lat;
   const windLngParam = futureWindCoords.lng;
