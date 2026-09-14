@@ -402,8 +402,15 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // centres — un delta de rafale de 14.9 vs 15.1 km/h ne saute plus.
   let gustMult = 1.0;
   if (Number.isFinite(h.windGustKn)) {
-    const gustDelta = knToKmh(h.windGustKn) - kmh;
-    gustMult = lerpTable(gustDelta, [[10, 1.0], [20, 0.93], [30, 0.85]]);
+    // Le delta seul est trompeur : +12 km/h sur une moyenne de 40 c'est du
+    // bruit, sur une moyenne de 10 c'est un vent qui double par bourrasques.
+    // On note donc le RATIO, qui est ce que la surface encaisse. Mesure
+    // Trigg 14/09 : 10.3 / 22.3 = 2.17, l'ancienne table donnait 0.986.
+    const gustKmh = knToKmh(h.windGustKn);
+    const ratio = kmh > 1 ? gustKmh / kmh : 1;
+    const byRatio = lerpTable(ratio, [[1.3, 1.0], [1.8, 0.92], [2.4, 0.82]]);
+    const byDelta = lerpTable(gustKmh - kmh, [[10, 1.0], [20, 0.93], [30, 0.85]]);
+    gustMult = Math.min(byRatio, byDelta);
   }
 
   // ── Score d'une partition : hauteur EFFECTIVE (× atténuation spot,
@@ -580,6 +587,38 @@ export const USER_LEVEL_ZONES = {
   expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
 };
 
+// ── Vent RESSENTI : la moyenne ne dit pas ce qu'on subit ──────────────
+// Mesure réelle Trigg, 14/09 18h15, relevé Open-Meteo brut :
+//   moyenne 10.3 km/h · rafales 22.3 km/h → facteur de rafale 2.17
+// L'app affichait "10 km/h". Louis, sur place : "ça doit être bien pire".
+// Il a raison, et ce n'est pas un défaut de la donnée : un humain debout
+// sur une plage, et la SURFACE DE L'EAU, encaissent les rafales, pas la
+// moyenne sur 10 minutes. Un facteur 2 comme ici, ce sont des bourrasques
+// qui hachent la face entre deux accalmies.
+//
+// Le moteur ne regardait QUE la moyenne pour classer clean/bumpy/blown et
+// pour le plafond du verdict. La rafale n'entrait que par `gustMult`, si
+// mou qu'un écart de 12 km/h coûtait 1.4 % du score. Autrement dit : le
+// signal qui explique le ressenti du terrain était dans la réponse API
+// depuis toujours, et on le jetait.
+//
+// ⚠️ GUST_WEIGHT n'est PAS calibré — 0.5 est le point neutre, à mi-chemin
+// entre moyenne et rafale, choisi pour ne pas inventer un coefficient
+// précis sans mesure. Même règle que swellAttenuation : pour le bouger il
+// faut des relevés (stations BoM Swanbourne / Ocean Reef), pas une
+// impression.
+const GUST_WEIGHT = 0.5;
+
+export function feltWindKmh(h) {
+  const mean = knToKmh(Number.isFinite(h?.windSpeedKn) ? h.windSpeedKn : 0);
+  if (!Number.isFinite(h?.windGustKn)) return mean;
+  const gust = knToKmh(h.windGustKn);
+  // Rafale absente, aberrante ou inférieure à la moyenne → on ne fabrique
+  // rien, on garde la moyenne.
+  if (!(gust > mean)) return mean;
+  return mean + (gust - mean) * GUST_WEIGHT;
+}
+
 // ── Plafond de vent des LEARNERS, par niveau ──────────────────────────
 // Au-dessus de ce vent, un learner n'a pas de session : c'est du clapot,
 // de la dérive et de la rame. Sert de SOURCE UNIQUE à deux endroits qui
@@ -658,6 +697,10 @@ export function classifyConditions(userLevel, h, spot) {
 
   let wind;
   if (cap) {
+    // Les learners sont jugés sur le vent RESSENTI (moyenne + rafale), pas
+    // sur la moyenne seule : c'est la rafale qui les déséquilibre au
+    // take-off et qui hache la face entre deux séries.
+    const felt = feltWindKmh(h);
     // Marge offshore : un vent de terre lisse la face au lieu de la hacher,
     // mais il creuse le take-off, freine la planche au moment de se lever
     // et décolle le nez d'un foamie léger. Moins pire qu'un onshore, pas
@@ -665,8 +708,8 @@ export function classifyConditions(userLevel, h, spot) {
     const blown = isOffshore ? cap.offshore : cap.other;
     // La zone "bumpy" fait toujours les 6 derniers km/h avant le blown :
     // un learner ne passe jamais de "clean" à "blown" sans palier lisible.
-    if (kmh >= blown) wind = "blown";
-    else if (kmh < 8 || (isOffshore && kmh < blown - 6)) wind = "clean";
+    if (felt >= blown) wind = "blown";
+    else if (felt < 8 || (isOffshore && felt < blown - 6)) wind = "clean";
     else wind = "bumpy";
   } else {
     // intermediate et au-dessus : inchangé. Onshore dans la face = blown
@@ -1008,7 +1051,7 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // direction. `wind === "blown"` juste au-dessus couvre déjà le cas ;
     // cette ligne reste le filet si la table et le label divergent.
     const learnerCap = LEARNER_WIND_CAP[userLevel];
-    if (learnerCap && kmh >= (dir === "offshore" ? learnerCap.offshore : learnerCap.other)) return "no";
+    if (learnerCap && feltWindKmh(h) >= (dir === "offshore" ? learnerCap.offshore : learnerCap.other)) return "no";
     // Early_int has no inside-reform "swim it out" rescue when there's
     // literally no wave (face below their min = 1.5ft). They're past
     // the foamie-whitewash phase and ride a longboard / mid-length —

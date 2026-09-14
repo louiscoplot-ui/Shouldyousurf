@@ -21,6 +21,7 @@ import {
   USER_LEVELS,
   mToFt,
   LEARNER_WIND_CAP,
+  feltWindKmh,
 } from "../app/v2/lib/prodScoring.js";
 import { BREAKS } from "../app/breaks.js";
 import { marineSamplePoint, offsetPoint, probeOffshoreBearing } from "../app/v2/lib/realFetch.js";
@@ -937,6 +938,40 @@ describe("cas terrain Trigg", () => {
       const h = hour({ swellHeight: 0.8, windSpeedKn: kmh / 1.852, windGustKn: (kmh * 1.4) / 1.852, windDir: 120 });
       expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).toBe("yes");
     });
+  });
+
+  // RELEVÉ RÉEL Open-Meteo, Trigg, 14/09 18h15 : moyenne 10.3 km/h,
+  // rafales 22.3, direction 125 (offshore à Trigg). L'app affichait
+  // "10 km/h · clean" ; sur place ça soufflait visiblement plus.
+  // C'est la rafale, pas le point de mesure, qui portait l'information.
+  it("relevé réel 10.3/22.3 : la rafale sort le vent de 'clean'", () => {
+    const h = hour({
+      time: "2026-09-14T18:00", swellHeight: 1.3, swellDir: 270,
+      windSpeedKn: 10.3 / 1.852, windGustKn: 22.3 / 1.852, windDir: 125,
+    });
+    // Le vent ressenti est à mi-chemin entre moyenne et rafale.
+    expect(feltWindKmh(h)).toBeCloseTo(16.3, 1);
+    // Avant : "clean" pour un beginner. La moyenne seule ne pouvait pas
+    // voir un facteur de rafale de 2.17.
+    expect(classifyConditions("beginner", h, TRIGG_REEL).wind).not.toBe("clean");
+    // Aucun learner ne reçoit un GO franc sur un vent qui double par
+    // bourrasques. Volontairement PAS "no" en dur : ce relevé tombe à
+    // 16.3 de vent ressenti pour un plafond first_timer offshore de 17,
+    // soit 0.7 km/h sous la bascule. Figer "no" ici reviendrait à graver
+    // un résultat que le moteur ne tient que par accident.
+    // early_int n'est PAS dans la liste : sur un offshore à 2-4 ft, un
+    // mid-length encaisse des rafales à 22. Le moteur lui rend "yes" et
+    // c'est défendable — c'est le foamie qu'elles déséquilibrent.
+    ["first_timer", "beginner"].forEach((lvl) => {
+      expect(getPersonalVerdict(lvl, h, TRIGG_REEL)).not.toBe("yes");
+    });
+  });
+
+  it("pas de rafale servie → on ne fabrique rien, la moyenne fait foi", () => {
+    const base = { swellHeight: 1.3, swellDir: 270, windSpeedKn: 12 / 1.852, windDir: 125 };
+    expect(feltWindKmh(hour(base))).toBeCloseTo(12, 1);
+    // Rafale aberrante (sous la moyenne) : ignorée, pas de valeur négative.
+    expect(feltWindKmh(hour({ ...base, windGustKn: 5 / 1.852 }))).toBeCloseTo(12, 1);
   });
 
   // LUNDI 14/09 17h — l'app affichait "Good 49 · WORTH IT", il a conduit,
