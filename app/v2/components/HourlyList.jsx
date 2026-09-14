@@ -44,6 +44,19 @@ function fmtTimeShort(iso) {
 const fmt1 = (v) => typeof v === "number" ? v.toFixed(1) : "—";
 const fmt0 = (v) => typeof v === "number" ? Math.round(v) : "—";
 
+// Le vent honnête, c'est une FOURCHETTE, pas un chiffre. Un soir à 10 de
+// moyenne avec des bourrasques à 22, personne sur la plage ne reconnaît
+// "10 km/h" — et c'est l'app qui a tort, pas la personne. Dès que la rafale
+// décolle nettement, on affiche moyenne–rafale partout où le vent apparaît.
+// Même seuil que l'ancienne note "gusts" de StickyInfoBar.
+const GUST_SHOW_DELTA = 8;
+function windRange(h) {
+  const mean = Math.round(h.windKmh);
+  const gust = h.windGustKn != null ? Math.round(knToKmh(h.windGustKn)) : null;
+  const show = gust != null && gust >= mean + GUST_SHOW_DELTA;
+  return { mean, gust, show, label: show ? `${mean}\u2013${gust}` : `${mean}` };
+}
+
 export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, reasonText, isToday = true, isPastDay = false }) {
   const [viewMode, setViewMode] = useState("cards");
   // "past" dimming only makes sense relative to the day being shown:
@@ -252,9 +265,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         // ressent debout sur la plage — une moyenne à 10 avec des rafales à
         // 25 se vit comme "il y a 25", et l'app avait l'air de mentir. Même
         // seuil que StickyInfoBar (+8 km/h) pour ne pas bruiter la ligne.
-        const windKmhR = Math.round(h.windKmh);
-        const gustKmh  = h.windGustKn != null ? Math.round(knToKmh(h.windGustKn)) : null;
-        const showGust = gustKmh != null && gustKmh >= windKmhR + 8;
+        const wind = windRange(h);
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
         const dayKey   = h.time?.split("T")?.[0];
         const sun      = sunByDay ? sunByDay[dayKey] : null;
@@ -280,13 +291,17 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
-                <div className="hly-cp-cell-val">{windKmhR}<span className="hly-cp-cell-unit">km/h</span></div>
+                {/* Le vent n'est PAS un chiffre, c'est une fourchette. Afficher
+                    la seule moyenne, c'est annoncer 10 km/h un soir où ça
+                    tape à 22 en bourrasques — l'utilisateur sur la plage ne
+                    reconnaît pas ce qu'il ressent, et il a raison. Dès que
+                    la rafale décolle, c'est la FOURCHETTE qui est la valeur
+                    honnête, pas une note en petit à côté. */}
+                <div className="hly-cp-cell-val">
+                  {wind.label}<span className="hly-cp-cell-unit">km/h</span>
+                </div>
                 <div className="hly-cp-cell-sub">
                   {windDir} · {h.windType}
-                  {/* "G23" ne voulait rien dire pour personne. La rafale est
-                      l'info qui explique "ça souffle plus que le chiffre" :
-                      elle doit être écrite en toutes lettres, pas codée. */}
-                  {showGust && <span className="hly-cp-cell-gust"> · gusts {gustKmh}</span>}
                   {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
                 </div>
               </div>
@@ -355,7 +370,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                   <div className="hly-lstats">
                     <span className="hly-lstat"><WaveIcon/>{h.faceFtLow}–{h.faceFtHigh}ft · {fmt1(h.swellHeight)}m</span>
                     <span className="hly-lstat-sep">·</span>
-                    <span className="hly-lstat"><WindIcon/>{Math.round(h.windKmh)}km/h</span>
+                    <span className="hly-lstat"><WindIcon/>{windRange(h).label}km/h</span>
                   </div>
                 </div>
                 <div className={`hly-lexpand ${isOpen ? "open" : ""}`}>
@@ -389,7 +404,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             </div>
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Wind</div>
-                              <div className="hly-xval" style={{ color: v.color }}>{Math.round(h.windKmh)}<span className="hly-xunit">km/h</span></div>
+                              <div className="hly-xval" style={{ color: v.color }}>{windRange(h).label}<span className="hly-xunit">km/h</span></div>
                               <div className="hly-xsub">
                                 {windDir} · {h.windType}
                                 {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
