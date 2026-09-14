@@ -1,19 +1,20 @@
 // Échantillonnage du VENT au point MER.
 //
 // Bug terrain Trigg 14/09 : l'app annonçait 10 km/h SE, il y avait 20+ sur la
-// plage. Cause : le vent était lu aux coordonnées du spot, donc sur une
-// cellule atmosphérique à dominante TERRE (le modèle global snappe, le centre
-// de cellule tombe en banlieue de Perth). Le vent 10 m y est diagnostiqué avec
-// une rugosité de banlieue → sous-lecture systématique, amplifiée pour un vent
-// offshore qui accélère dès qu'il passe sur l'eau.
+// plage. Cause : le vent était lu aux coordonnées du spot. Or interroger les
+// coordonnées du spot ne rend PAS "le vent au spot" — l'API snappe sur une
+// cellule de 11 à 28 km dont le centre est dans les terres. Le vent 10 m y est
+// diagnostiqué avec une rugosité de banlieue, pas de mer.
 //
-// Ces tests verrouillent les deux moitiés du fix :
-//  1. la géométrie du point mer (windSamplePoint)
-//  2. le recollage best-effort de la réponse multi-points (mergeSeaWind) —
-//     c'est lui qui garantit qu'un échec ne rend JAMAIS le résultat pire
-//     qu'avant le fix.
+// Contrainte CONTRADICTOIRE à tenir, et c'est tout l'enjeu de ces tests :
+//  - trop près → on ne sort pas de la cellule terrestre, on ne corrige rien
+//  - trop loin → on sur-lit les vents offshore, qui accélèrent au large,
+//    donc on dégrade justement les bonnes conditions
+// D'où la règle : LE PLUS PROCHE qui sort vraiment de la cellule du spot,
+// mesuré sur le centre de cellule que l'API renvoie — jamais une distance
+// devinée à l'avance.
 import { describe, it, expect } from "vitest";
-import { windSamplePoint, mergeSeaWind, offsetPoint } from "../app/v2/lib/realFetch.js";
+import { windSamplePoint, resolveSeaWind, offshoreBearing, offsetPoint } from "../app/v2/lib/realFetch.js";
 
 const TRIGG = { id: "trigg", lat: -31.8826, lng: 115.7519, idealSwellDir: 240 };
 
@@ -25,46 +26,54 @@ const kmBetween = (a, b) => {
 
 describe("windSamplePoint — géométrie", () => {
   it("décale vers le large sur le cap de idealSwellDir", () => {
-    const wp = windSamplePoint(TRIGG);
-    expect(wp).not.toBeNull();
-    // Trigg est sur la côte OUEST, idealSwellDir 240 (SW) : le point part
-    // vers le sud-ouest, donc latitude plus au sud ET longitude plus à
-    // l'ouest. Si un jour ça part vers l'est, on interroge Perth centre.
+    const wp = windSamplePoint(TRIGG, null, 8);
+    // Trigg est sur la côte OUEST, idealSwellDir 240 (SW) : le point part au
+    // sud-ouest. Si un jour ça part vers l'est, on interroge Perth centre.
     expect(wp.lat).toBeLessThan(TRIGG.lat);
     expect(wp.lng).toBeLessThan(TRIGG.lng);
   });
 
-  it("décale de 12 km — assez pour sortir d'une cellule ~0.1-0.2°", () => {
-    const wp = windSamplePoint(TRIGG);
-    expect(kmBetween(TRIGG, wp)).toBeGreaterThan(11);
-    expect(kmBetween(TRIGG, wp)).toBeLessThan(13);
-  });
-
-  it("décale PLUS LOIN que le point marin — la grille atmo est plus grossière", () => {
-    const marine = offsetPoint(TRIGG.lat, TRIGG.lng, TRIGG.idealSwellDir, 5);
-    expect(kmBetween(TRIGG, windSamplePoint(TRIGG))).toBeGreaterThan(kmBetween(TRIGG, marine));
+  it("respecte la distance demandée", () => {
+    [4, 8, 14].forEach((km) => {
+      expect(kmBetween(TRIGG, windSamplePoint(TRIGG, null, km))).toBeCloseTo(km, 0);
+    });
   });
 
   it("un cap explicite (spot personnalisé sondé) l'emporte sur idealSwellDir", () => {
-    const wp = windSamplePoint({ ...TRIGG, idealSwellDir: 240 }, 90);
-    expect(wp.lng).toBeGreaterThan(TRIGG.lng); // cap 90 = est
+    expect(windSamplePoint(TRIGG, 90, 8).lng).toBeGreaterThan(TRIGG.lng); // cap 90 = est
   });
 
-  it("override windLat/windLng respecté tel quel", () => {
-    const wp = windSamplePoint({ ...TRIGG, windLat: -32, windLng: 115.5 });
-    expect(wp).toEqual({ lat: -32, lng: 115.5 });
+  it("override windLat/windLng respecté tel quel, quelle que soit la distance", () => {
+    const spot = { ...TRIGG, windLat: -32, windLng: 115.5 };
+    expect(windSamplePoint(spot, null, 4)).toEqual({ lat: -32, lng: 115.5 });
+    expect(windSamplePoint(spot, null, 14)).toEqual({ lat: -32, lng: 115.5 });
   });
 
   it("sans cap connu → null (= coordonnées du spot, comportement d'avant)", () => {
-    expect(windSamplePoint({ lat: -31.88, lng: 115.75 })).toBeNull();
-    expect(windSamplePoint(null)).toBeNull();
+    expect(windSamplePoint({ lat: -31.88, lng: 115.75 }, null, 8)).toBeNull();
+    expect(windSamplePoint(null, null, 8)).toBeNull();
+    expect(offshoreBearing({ lat: 1, lng: 2 })).toBeNull();
+    expect(offshoreBearing(TRIGG)).toBe(240);
   });
 });
 
-// ── mergeSeaWind ──────────────────────────────────────────────────────
-const mkLoc = (over, elevation = 0) => ({
-  latitude: -31.9,
-  longitude: 115.6,
+// ── resolveSeaWind ────────────────────────────────────────────────────
+// `latitude`/`longitude` d'une réponse Open-Meteo = CENTRE DE LA CELLULE
+// réellement utilisée, pas le point demandé. C'est ce qui permet de mesurer
+// si on a vraiment changé de cellule au lieu de le supposer.
+const CANDIDATES = [4, 8, 14];
+const BEARING = 240; // SW, le large à Trigg
+
+// Cellule du spot : centre poussé vers l'INTÉRIEUR (nord-est du spot).
+const SPOT_CELL = { latitude: -31.85, longitude: 115.79 };
+// Centres de cellule successifs vers le large, sur le cap 240.
+const seaCell = (km) => {
+  const p = offsetPoint(SPOT_CELL.latitude, SPOT_CELL.longitude, BEARING, km);
+  return { latitude: p.lat, longitude: p.lng };
+};
+
+const mkLoc = (cell, over = {}, elevation = 0) => ({
+  ...cell,
   elevation,
   timezone: "Australia/Perth",
   hourly: {
@@ -79,86 +88,147 @@ const mkLoc = (over, elevation = 0) => ({
   daily: { time: ["2026-09-14"], sunrise: ["2026-09-14T06:17"], sunset: ["2026-09-14T18:08"] },
 });
 
-// [0] = cellule du spot (terre, vent sous-lu), [1] = cellule mer.
-const SPOT_LOC = mkLoc({}, 24);
-const SEA_LOC = mkLoc(
-  {
-    wind_speed_10m: [10.1, 11.2],
-    wind_direction_10m: [128, 132],
-    wind_gusts_10m: [16, 18],
-    temperature_2m: [18, 18], // air du large : NE doit PAS remonter
-  },
-  0,
-);
+const SPOT_LOC = mkLoc(SPOT_CELL, {}, 24);
+const strongWind = (spd) => ({ wind_speed_10m: spd, wind_direction_10m: [128, 132], wind_gusts_10m: [16, 18], temperature_2m: [18, 18] });
 
-describe("mergeSeaWind — recollage", () => {
-  it("prend le vent sur la cellule mer", () => {
-    const m = mergeSeaWind([SPOT_LOC, SEA_LOC]);
-    expect(m.hourly.wind_speed_10m).toEqual([10.1, 11.2]);
-    expect(m.hourly.wind_direction_10m).toEqual([128, 132]);
-    expect(m.hourly.wind_gusts_10m).toEqual([16, 18]);
-    expect(m.windSampledOffshore).toBe(true);
+describe("resolveSeaWind — on prend le plus proche qui sort de la cellule", () => {
+  it("saute les candidats qui retombent dans la cellule du spot", () => {
+    // 4 km ne change pas de cellule (le centre renvoyé est celui du spot),
+    // 8 km oui. On doit retenir 8, pas 14 : le plus proche du break qui
+    // corrige quand même l'artefact.
+    const json = [
+      SPOT_LOC,
+      mkLoc(SPOT_CELL, strongWind([10.1, 11.2])),
+      mkLoc(seaCell(9), strongWind([11.0, 12.0])),
+      mkLoc(seaCell(20), strongWind([13.5, 14.5])),
+    ];
+    const { wind, pickedKm } = resolveSeaWind(json, CANDIDATES, BEARING);
+    expect(pickedKm).toBe(8);
+    expect(wind.hourly.wind_speed_10m).toEqual([11.0, 12.0]);
   });
 
-  it("garde air / pluie / lever-coucher sur la cellule du SPOT", () => {
-    const m = mergeSeaWind([SPOT_LOC, SEA_LOC]);
-    // La température affichée est celle de la plage où l'utilisateur est,
-    // pas celle 12 km au large.
-    expect(m.hourly.temperature_2m).toEqual([22, 21]);
-    expect(m.hourly.precipitation_probability).toEqual([0, 0]);
-    expect(m.daily).toEqual(SPOT_LOC.daily);
-    expect(m.timezone).toBe("Australia/Perth");
+  it("prend le PREMIER candidat dès qu'il sort déjà de la cellule", () => {
+    // Le 4 km suffit : on ne va pas plus loin, sinon on sur-lirait les
+    // vents offshore qui continuent d'accélérer au large.
+    const json = [
+      SPOT_LOC,
+      mkLoc(seaCell(9), strongWind([10.1, 11.2])),
+      mkLoc(seaCell(20), strongWind([13.5, 14.5])),
+      mkLoc(seaCell(30), strongWind([15.0, 16.0])),
+    ];
+    const { wind, pickedKm } = resolveSeaWind(json, CANDIDATES, BEARING);
+    expect(pickedKm).toBe(4);
+    expect(wind.hourly.wind_speed_10m).toEqual([10.1, 11.2]);
+  });
+
+  it("ignore une cellule décalée vers la TERRE (gain négatif)", () => {
+    const inlandCell = seaCell(-9); // cap opposé = vers l'intérieur
+    const json = [
+      SPOT_LOC,
+      mkLoc(inlandCell, strongWind([3, 3])),
+      mkLoc(seaCell(12), strongWind([11.0, 12.0])),
+    ];
+    const { wind, pickedKm } = resolveSeaWind(json, [4, 8], BEARING);
+    expect(pickedKm).toBe(8);
+    expect(wind.hourly.wind_speed_10m).toEqual([11.0, 12.0]);
+  });
+
+  it("aucun candidat ne sort de la cellule → on garde le spot", () => {
+    const json = [SPOT_LOC, mkLoc(SPOT_CELL, strongWind([10.1, 11.2]))];
+    const { wind, pickedKm } = resolveSeaWind(json, [4], BEARING);
+    expect(pickedKm).toBeNull();
+    expect(wind.hourly.wind_speed_10m).toEqual([5, 5.4]);
+    expect(wind.windSampledOffshore).toBeUndefined();
+  });
+
+  it("centre de cellule absent → on fait confiance à la géométrie", () => {
+    const noCell = mkLoc({}, strongWind([10.1, 11.2]));
+    delete noCell.latitude; delete noCell.longitude;
+    expect(resolveSeaWind([SPOT_LOC, noCell], [4], BEARING).pickedKm).toBe(4);
+  });
+
+  it("sans cap fourni, pas de test de gain — premier candidat exploitable", () => {
+    const json = [SPOT_LOC, mkLoc(SPOT_CELL, strongWind([10.1, 11.2]))];
+    expect(resolveSeaWind(json, [4], null).pickedKm).toBe(4);
+  });
+});
+
+describe("resolveSeaWind — ce qu'on prend et ce qu'on laisse", () => {
+  const json = [SPOT_LOC, mkLoc(seaCell(12), strongWind([10.1, 11.2]))];
+
+  it("vent, direction et rafales viennent de la cellule mer", () => {
+    const { wind } = resolveSeaWind(json, [8], BEARING);
+    expect(wind.hourly.wind_speed_10m).toEqual([10.1, 11.2]);
+    expect(wind.hourly.wind_direction_10m).toEqual([128, 132]);
+    expect(wind.hourly.wind_gusts_10m).toEqual([16, 18]);
+    expect(wind.windSampledOffshore).toBe(true);
+  });
+
+  it("air, pluie et lever/coucher restent sur la cellule du SPOT", () => {
+    // C'est la température de la plage où l'utilisateur est, pas celle du large.
+    const { wind } = resolveSeaWind(json, [8], BEARING);
+    expect(wind.hourly.temperature_2m).toEqual([22, 21]);
+    expect(wind.hourly.precipitation_probability).toEqual([0, 0]);
+    expect(wind.daily).toEqual(SPOT_LOC.daily);
+    expect(wind.timezone).toBe("Australia/Perth");
   });
 
   it("le vent corrigé est bien PLUS FORT que la cellule terre (le bug)", () => {
-    const m = mergeSeaWind([SPOT_LOC, SEA_LOC]);
-    m.hourly.wind_speed_10m.forEach((v, i) => {
+    const { wind } = resolveSeaWind(json, [8], BEARING);
+    wind.hourly.wind_speed_10m.forEach((v, i) => {
       expect(v).toBeGreaterThan(SPOT_LOC.hourly.wind_speed_10m[i]);
     });
   });
+});
 
-  // ── Garde-fous : jamais pire qu'avant le fix ────────────────────────
+describe("resolveSeaWind — garde-fous, jamais pire qu'avant le fix", () => {
   it("réponse mono-point (pas de cap connu) → renvoyée telle quelle", () => {
-    expect(mergeSeaWind(SPOT_LOC)).toBe(SPOT_LOC);
+    const r = resolveSeaWind(SPOT_LOC, [], BEARING);
+    expect(r.wind).toBe(SPOT_LOC);
+    expect(r.pickedKm).toBeNull();
   });
 
-  it("point mer retombé à TERRE (elevation > 2 m) → on garde le spot", () => {
-    // Baie fermée, île en face : la 2e cellule est terrestre elle aussi,
-    // aucun gain à en attendre.
-    const inland = mkLoc({ wind_speed_10m: [3, 3] }, 40);
-    expect(mergeSeaWind([SPOT_LOC, inland]).hourly.wind_speed_10m).toEqual([5, 5.4]);
+  it("candidat retombé à TERRE (elevation > 2 m) → ignoré", () => {
+    // Baie fermée, île en face : la cellule voisine est terrestre elle aussi.
+    const inland = mkLoc(seaCell(12), strongWind([3, 3]), 40);
+    expect(resolveSeaWind([SPOT_LOC, inland], [8], BEARING).wind.hourly.wind_speed_10m).toEqual([5, 5.4]);
   });
 
   it("elevation absente → on fait confiance à la géométrie", () => {
-    const noElev = mkLoc({ wind_speed_10m: [10.1, 11.2] });
+    const noElev = mkLoc(seaCell(12), strongWind([10.1, 11.2]));
     delete noElev.elevation;
-    expect(mergeSeaWind([SPOT_LOC, noElev]).windSampledOffshore).toBe(true);
+    expect(resolveSeaWind([SPOT_LOC, noElev], [8], BEARING).wind.windSampledOffshore).toBe(true);
   });
 
-  it("série mer absente / vide / désalignée → on garde le spot", () => {
+  it("série absente / vide / désalignée → candidat ignoré", () => {
     const cases = [
       undefined,
       {},
-      mkLoc({ wind_speed_10m: null }),
-      mkLoc({ wind_speed_10m: [null, null] }),
-      mkLoc({ wind_speed_10m: [10.1] }), // longueur différente
+      mkLoc(seaCell(12), { wind_speed_10m: null }),
+      mkLoc(seaCell(12), { wind_speed_10m: [null, null] }),
+      mkLoc(seaCell(12), { wind_speed_10m: [10.1] }), // longueur différente
     ];
     cases.forEach((sea) => {
-      const m = mergeSeaWind([SPOT_LOC, sea]);
-      expect(m.hourly.wind_speed_10m).toEqual([5, 5.4]);
-      expect(m.windSampledOffshore).toBeUndefined();
+      const { wind } = resolveSeaWind([SPOT_LOC, sea], [8], BEARING);
+      expect(wind.hourly.wind_speed_10m).toEqual([5, 5.4]);
+      expect(wind.windSampledOffshore).toBeUndefined();
     });
   });
 
-  it("rafale absente au large → on retombe sur celle du spot, pas sur null", () => {
-    const sea = mkLoc({ wind_speed_10m: [10.1, 11.2], wind_gusts_10m: undefined }, 0);
-    delete sea.hourly.wind_gusts_10m;
-    expect(mergeSeaWind([SPOT_LOC, sea]).hourly.wind_gusts_10m).toEqual([9, 10]);
+  it("un candidat cassé n'empêche pas le suivant de gagner", () => {
+    const json = [SPOT_LOC, {}, mkLoc(seaCell(12), strongWind([10.1, 11.2]))];
+    expect(resolveSeaWind(json, [4, 8], BEARING).pickedKm).toBe(8);
   });
 
-  it("réponse vide / cassée → null, jamais un throw", () => {
-    expect(mergeSeaWind([])).toBeNull();
-    expect(mergeSeaWind([{}])).toEqual({});
-    expect(mergeSeaWind(null)).toBeNull();
+  it("rafale absente au large → on retombe sur celle du spot, pas sur null", () => {
+    const sea = mkLoc(seaCell(12), strongWind([10.1, 11.2]));
+    delete sea.hourly.wind_gusts_10m;
+    expect(resolveSeaWind([SPOT_LOC, sea], [8], BEARING).wind.hourly.wind_gusts_10m).toEqual([9, 10]);
+  });
+
+  it("réponse vide / cassée → pas de throw", () => {
+    expect(resolveSeaWind([], [], BEARING).wind).toBeNull();
+    expect(resolveSeaWind([{}], [], BEARING).wind).toEqual({});
+    expect(resolveSeaWind(null, [], BEARING).wind).toBeNull();
   });
 });
