@@ -580,6 +580,39 @@ export const USER_LEVEL_ZONES = {
   expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
 };
 
+// ── Plafond de vent des LEARNERS, par niveau ──────────────────────────
+// Au-dessus de ce vent, un learner n'a pas de session : c'est du clapot,
+// de la dérive et de la rame. Sert de SOURCE UNIQUE à deux endroits qui
+// doivent rester d'accord — le label `wind` de classifyConditions (qui
+// pilote les tips) et le plafond de la branche inside-reform du verdict.
+// Les dupliquer, c'était laisser l'écran dire "bumpy" pendant que le
+// verdict disait SKIP.
+//
+// `other` = cross-shore ET onshore. `offshore` = +5 km/h (cf. le
+// commentaire de la marge dans classifyConditions).
+//
+// L'échelle DOIT rester monotone : first_timer <= beginner <= early_int.
+// C'est pour ça que first_timer descend à 15 quand beginner passe à 18 —
+// un premier jour ne peut pas être plus tolérant qu'un débutant.
+// early_int garde son 25 des deux côtés : on ne RELÂCHE rien dans un fix
+// de sécurité, on ne fait que resserrer là où le terrain l'a demandé.
+// intermediate et au-dessus ne sont pas dans la table : eux gardent la
+// logique générale + galeKills.
+// Repères de lecture de surface, valables pour tout le monde :
+//   < 8 km/h    glassy
+//   8 à 15      léger, la face reste propre
+//   15 à 20     texturé, ça se voit sur la vague
+//   20 et plus  haché
+// Un learner rame lentement et se lève instablement : ce qui est "texturé"
+// pour un intermediate est déjà du travail pour lui. D'où un plafond
+// beginner à 15 et pas 20 — validé sur une journée type Perth, où ça revient
+// à fermer la fenêtre vers 9h quand le Doctor monte, ce qui EST la réalité.
+export const LEARNER_WIND_CAP = {
+  first_timer: { other: 12, offshore: 17 },
+  beginner:    { other: 15, offshore: 20 },
+  early_int:   { other: 20, offshore: 25 },
+};
+
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la
   // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
@@ -609,25 +642,43 @@ export function classifyConditions(userLevel, h, spot) {
   else if (faceFt <= z.upperMax) size = "upper";
   else size = "too_big";
 
-  // Wind thresholds aligned with scoreSurf's onshore classification
-  // (20 km/h = n_on_blown) so the label never contradicts the score number.
-  // Only first_timer + beginner get the tighter 18 km/h threshold — they
-  // haven't built the paddling / duck-diving chops yet. Early_int uses the
-  // same 20 km/h as intermediate; they're between beginner and intermediate
-  // in skill and the verdict ladder must stay monotonic.
   const isEarlyLearner = userLevel === "first_timer" || userLevel === "beginner";
-  const blownNonOffshore = isEarlyLearner ? 18 : 20;
-  const galeOffshore     = isEarlyLearner ? 45 : 55;
+
+  // ── Vent : les LEARNERS ont leur propre table (LEARNER_WIND_CAP) ──────
+  // Avant, le seuil "blown" d'un learner ne serrait QUE l'onshore (18 km/h).
+  // Le cross-shore partageait le 30 km/h de tout le monde et l'offshore
+  // "clean" courait jusqu'à 25 quel que soit le niveau. Résultat mesuré sur
+  // le cas terrain Trigg 14/09 (beginner, 2.8 ft, SE cross) : l'app disait
+  // "Good 47 · WORTH IT" jusqu'à 24 km/h inclus, et ne basculait en SKIP
+  // qu'à 25. Louis a conduit pour ça, avec un vent bien au-dessus de 18.
+  // Un beach break de travers à 20 km/h, pour quelqu'un qui rame lentement
+  // et se lève instablement, c'est du clapot et de la dérive latérale, pas
+  // une session. Le but de l'app est d'éviter le trajet, pas de le valider.
+  const cap = LEARNER_WIND_CAP[userLevel];
 
   let wind;
-  if ((isOffshore && kmh < 25) || kmh < 8) wind = "clean";
-  else if (
-    (isOnshore && kmh >= blownNonOffshore) ||   // onshore dans la face = blown tôt
-    (isCross && kmh >= 30) ||                     // cross-shore tient jusqu'à 30
-    (!isOffshore && kmh >= 40) ||                 // filet non-offshore (déjà couvert ci-dessus)
-    (isOffshore && kmh >= galeOffshore)           // offshore gale (45 learner / 55 sinon)
-  ) wind = "blown";
-  else wind = "bumpy";
+  if (cap) {
+    // Marge offshore : un vent de terre lisse la face au lieu de la hacher,
+    // mais il creuse le take-off, freine la planche au moment de se lever
+    // et décolle le nez d'un foamie léger. Moins pire qu'un onshore, pas
+    // un cadeau — d'où +5 km/h, pas +10.
+    const blown = isOffshore ? cap.offshore : cap.other;
+    // La zone "bumpy" fait toujours les 6 derniers km/h avant le blown :
+    // un learner ne passe jamais de "clean" à "blown" sans palier lisible.
+    if (kmh >= blown) wind = "blown";
+    else if (kmh < 8 || (isOffshore && kmh < blown - 6)) wind = "clean";
+    else wind = "bumpy";
+  } else {
+    // intermediate et au-dessus : inchangé. Onshore dans la face = blown
+    // tôt (20) ; cross-shore tient jusqu'à 30 ; offshore jusqu'au gale 55.
+    if ((isOffshore && kmh < 25) || kmh < 8) wind = "clean";
+    else if (
+      (isOnshore && kmh >= 20) ||
+      (isCross && kmh >= 30) ||
+      (isOffshore && kmh >= 55)
+    ) wind = "blown";
+    else wind = "bumpy";
+  }
 
   const reefTooMuch = (spot.heavy || spot.type === "reef") && isEarlyLearner;
 
@@ -950,12 +1001,14 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // "inside rescue" that doesn't exist. (For learners "blown" =
     // ≥18 km/h non-offshore — tighter than the 25 km/h cap below.)
     if (wind === "blown") return "no";
-    // Learner-specific inside-reform cap: 25 km/h any direction. The
-    // foamie/mid-length group can't handle more than that — 25+ onshore
-    // is shorebreak chop, 25+ cross is side-chop, 25+ offshore picks them
-    // off their boards. The universal cap above already handles the
-    // harder gale range; this is the tighter learner-only threshold.
-    if (kmh >= 25) return "no";
+    // Plafond vent du learner — MÊME table que le label `wind` ci-dessus
+    // (LEARNER_WIND_CAP), pas un 25 km/h en dur recopié ici. C'était le
+    // bug du 14/09 : un beginner en cross-shore restait "WORTH IT"
+    // jusqu'à 24 km/h parce que ce 25 flat ignorait et le niveau et la
+    // direction. `wind === "blown"` juste au-dessus couvre déjà le cas ;
+    // cette ligne reste le filet si la table et le label divergent.
+    const learnerCap = LEARNER_WIND_CAP[userLevel];
+    if (learnerCap && kmh >= (dir === "offshore" ? learnerCap.offshore : learnerCap.other)) return "no";
     // Early_int has no inside-reform "swim it out" rescue when there's
     // literally no wave (face below their min = 1.5ft). They're past
     // the foamie-whitewash phase and ride a longboard / mid-length —
