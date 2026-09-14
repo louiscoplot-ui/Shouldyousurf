@@ -1961,6 +1961,15 @@ button, input, select { font-family: inherit; color: inherit; }
   font-size: 10px; font-weight: 600;
   opacity: 0.65; margin-left: 2px;
 }
+/* Rafale : collée à la valeur du vent, plus petite, même couleur de verdict
+   que la cellule. Elle ne doit pas concurrencer la moyenne visuellement —
+   c'est une info "attention, ça pulse", pas la valeur principale. */
+.hly-cp-cell-gust {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10px; font-weight: 600;
+  opacity: 0.8; margin-left: 5px;
+  color: var(--hly-cp-color, var(--accent));
+}
 .hly-cp-cell-sub {
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 9.5px; font-weight: 500;

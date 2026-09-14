@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { coherentVerdict } from "../lib/verdict";
-import { degToCompass, getWindTrend } from "../lib/prodScoring";
+import { degToCompass, getWindTrend, knToKmh } from "../lib/prodScoring";
 import { fmtHour } from "../lib/hooks";
 
 const WaveIcon = () => (
@@ -246,6 +246,15 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
         const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
         const windTrend = getWindTrend(h, hours);
+        // La rafale était fetchée depuis toujours mais n'existait QUE dans
+        // StickyInfoBar, que le CSS cache dans les deux modes de vue : en
+        // pratique l'utilisateur ne l'a jamais vue. Or c'est elle qu'on
+        // ressent debout sur la plage — une moyenne à 10 avec des rafales à
+        // 25 se vit comme "il y a 25", et l'app avait l'air de mentir. Même
+        // seuil que StickyInfoBar (+8 km/h) pour ne pas bruiter la ligne.
+        const windKmhR = Math.round(h.windKmh);
+        const gustKmh  = h.windGustKn != null ? Math.round(knToKmh(h.windGustKn)) : null;
+        const showGust = gustKmh != null && gustKmh >= windKmhR + 8;
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
         const dayKey   = h.time?.split("T")?.[0];
         const sun      = sunByDay ? sunByDay[dayKey] : null;
@@ -271,7 +280,10 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
-                <div className="hly-cp-cell-val">{Math.round(h.windKmh)}<span className="hly-cp-cell-unit">km/h</span></div>
+                <div className="hly-cp-cell-val">
+                  {windKmhR}<span className="hly-cp-cell-unit">km/h</span>
+                  {showGust && <span className="hly-cp-cell-gust">G{gustKmh}</span>}
+                </div>
                 <div className="hly-cp-cell-sub">
                   {windDir} · {h.windType}
                   {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
