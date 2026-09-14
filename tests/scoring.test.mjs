@@ -20,6 +20,7 @@ import {
   adaptForecastToLevel,
   USER_LEVELS,
   mToFt,
+  LEARNER_WIND_CAP,
 } from "../app/v2/lib/prodScoring.js";
 import { BREAKS } from "../app/breaks.js";
 import { marineSamplePoint, offsetPoint, probeOffshoreBearing } from "../app/v2/lib/realFetch.js";
@@ -488,20 +489,53 @@ describe("vent — monotonie et continuité du score affiché", () => {
   });
 
   it("le seuil offshore 'blown' par niveau est réellement atteignable", () => {
-    // `kmh >= 40` en OU non gardé préemptait `isOffshore && kmh >= galeOffshore`
-    // (45 learner / 55 sinon) : la branche était morte, tout offshore passait
-    // blown à 40 quel que soit le niveau. Offshore = windDir aligné sur
-    // spot.offshoreWindDir (delta 0).
+    // `kmh >= 40` en OU non gardé préemptait la branche offshore : elle était
+    // morte, tout offshore passait blown à 40 quel que soit le niveau.
+    // Offshore = windDir aligné sur spot.offshoreWindDir (delta 0).
     const off = (kmh, lvl) => classifyConditions(lvl, mk({ swellHeight: 1.5, windSpeedKn: kmh / 1.852, windDir: 90 }), spot).wind;
-    expect(off(42, "beginner")).toBe("bumpy");   // < 45 → pas encore blown
-    expect(off(46, "beginner")).toBe("blown");   // ≥ 45
     expect(off(42, "intermediate")).toBe("bumpy");
     expect(off(50, "intermediate")).toBe("bumpy"); // < 55
     expect(off(56, "intermediate")).toBe("blown"); // ≥ 55
-    // Les seuils non-offshore restent inchangés.
+    // Les seuils non-offshore d'intermediate+ restent inchangés.
     const nonOff = (kmh, dir) => classifyConditions("intermediate", mk({ swellHeight: 1.5, windSpeedKn: kmh / 1.852, windDir: dir }), spot).wind;
     expect(nonOff(31, 190)).toBe("blown"); // cross ≥ 30
     expect(nonOff(21, 270)).toBe("blown"); // onshore ≥ 20
+  });
+
+  // Les LEARNERS ne suivent plus ces seuils : ils ont LEARNER_WIND_CAP.
+  // Bug terrain 14/09 — un beginner en cross-shore restait "WORTH IT"
+  // jusqu'à 24 km/h parce que le cross partageait le 30 de tout le monde.
+  it("les learners ont leur propre plafond de vent, par niveau ET par direction", () => {
+    const w = (kmh, lvl, dir) => classifyConditions(lvl, mk({ swellHeight: 1.5, windSpeedKn: kmh / 1.852, windDir: dir }), spot).wind;
+    const CROSS = 190, OFFSHORE = 90;
+    Object.entries(LEARNER_WIND_CAP).forEach(([lvl, cap]) => {
+      expect(w(cap.other - 1, lvl, CROSS)).not.toBe("blown");
+      expect(w(cap.other, lvl, CROSS)).toBe("blown");
+      expect(w(cap.offshore - 1, lvl, OFFSHORE)).not.toBe("blown");
+      expect(w(cap.offshore, lvl, OFFSHORE)).toBe("blown");
+      // Un offshore est toujours au moins aussi toléré qu'un cross.
+      expect(cap.offshore).toBeGreaterThanOrEqual(cap.other);
+    });
+  });
+
+  it("l'échelle des plafonds de vent reste monotone entre niveaux", () => {
+    // Un first_timer ne peut JAMAIS être plus tolérant qu'un beginner, ni un
+    // beginner qu'un early_int — sinon la LevelMatrix afficherait un GO au
+    // niveau du dessous d'un SKIP.
+    const order = ["first_timer", "beginner", "early_int"];
+    order.slice(1).forEach((lvl, i) => {
+      const prev = LEARNER_WIND_CAP[order[i]];
+      expect(LEARNER_WIND_CAP[lvl].other).toBeGreaterThanOrEqual(prev.other);
+      expect(LEARNER_WIND_CAP[lvl].offshore).toBeGreaterThanOrEqual(prev.offshore);
+    });
+  });
+
+  it("le verdict d'un learner bascule en SKIP à son plafond, pas 25 km/h en dur", () => {
+    Object.entries(LEARNER_WIND_CAP).forEach(([lvl, cap]) => {
+      const at = (kmh) => getPersonalVerdict(lvl, mk({ swellHeight: 1.0, windSpeedKn: kmh / 1.852, windDir: 190 }), spot);
+      expect(at(cap.other)).toBe("no");
+      expect(at(cap.other + 5)).toBe("no");
+    });
   });
 });
 
