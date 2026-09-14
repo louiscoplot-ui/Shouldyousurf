@@ -1965,9 +1965,7 @@ button, input, select { font-family: inherit; color: inherit; }
    que la cellule. Elle ne doit pas concurrencer la moyenne visuellement —
    c'est une info "attention, ça pulse", pas la valeur principale. */
 .hly-cp-cell-gust {
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 10px; font-weight: 600;
-  opacity: 0.8; margin-left: 5px;
+  font-weight: 700;
   color: var(--hly-cp-color, var(--accent));
 }
 .hly-cp-cell-sub {

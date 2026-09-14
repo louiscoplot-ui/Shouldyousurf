@@ -92,19 +92,41 @@ const SPOT_LOC = mkLoc(SPOT_CELL, {}, 24);
 const strongWind = (spd) => ({ wind_speed_10m: spd, wind_direction_10m: [128, 132], wind_gusts_10m: [16, 18], temperature_2m: [18, 18] });
 
 describe("resolveSeaWind — on prend le plus proche qui sort de la cellule", () => {
-  it("saute les candidats qui retombent dans la cellule du spot", () => {
-    // 4 km ne change pas de cellule (le centre renvoyé est celui du spot),
-    // 8 km oui. On doit retenir 8, pas 14 : le plus proche du break qui
-    // corrige quand même l'artefact.
+  it("saute les candidats qui SERVENT la cellule du spot (séries identiques)", () => {
+    // Le seul signe fiable qu'on a changé de cellule, c'est que la DONNÉE
+    // change. Les coordonnées de la réponse ne sont pas une source sûre :
+    // si l'API renvoie le point demandé au lieu du centre de cellule, un
+    // test géométrique dit "on a bougé" alors qu'on lit le même vent — le
+    // bug terrain où l'écran restait scotché à 10 km/h.
+    // Ici le candidat à 4 km rend EXACTEMENT la série du spot → même
+    // cellule → on va chercher plus loin. 8 km diffère → on le retient,
+    // et pas 14 : le plus proche du break qui corrige vraiment.
+    const sameAsSpot = { wind_speed_10m: [5, 5.4], wind_direction_10m: [130, 135] };
     const json = [
       SPOT_LOC,
-      mkLoc(SPOT_CELL, strongWind([10.1, 11.2])),
+      mkLoc(seaCell(3), sameAsSpot),
       mkLoc(seaCell(9), strongWind([11.0, 12.0])),
       mkLoc(seaCell(20), strongWind([13.5, 14.5])),
     ];
     const { wind, pickedKm } = resolveSeaWind(json, CANDIDATES, BEARING);
     expect(pickedKm).toBe(8);
     expect(wind.hourly.wind_speed_10m).toEqual([11.0, 12.0]);
+  });
+
+  it("une série identique aux coordonnées DIFFÉRENTES reste rejetée", () => {
+    // Cas exact du bug : l'API a servi la cellule de la plage pour un point
+    // pourtant décalé. Coordonnées franchement au large, donnée inchangée.
+    const json = [SPOT_LOC, mkLoc(seaCell(30), { wind_speed_10m: [5, 5.4], wind_direction_10m: [130, 135] })];
+    const { wind, pickedKm } = resolveSeaWind(json, [14], BEARING);
+    expect(pickedKm).toBeNull();
+    expect(wind.windSampledOffshore).toBeUndefined();
+  });
+
+  it("une direction qui change suffit, même à vitesse égale", () => {
+    // Le vent de mer peut avoir la même force et un cap différent : c'est
+    // bien une autre cellule, il ne faut pas la jeter.
+    const json = [SPOT_LOC, mkLoc(seaCell(9), { wind_speed_10m: [5, 5.4], wind_direction_10m: [200, 205] })];
+    expect(resolveSeaWind(json, [8], BEARING).pickedKm).toBe(8);
   });
 
   it("prend le PREMIER candidat dès qu'il sort déjà de la cellule", () => {
@@ -134,20 +156,21 @@ describe("resolveSeaWind — on prend le plus proche qui sort de la cellule", ()
   });
 
   it("aucun candidat ne sort de la cellule → on garde le spot", () => {
-    const json = [SPOT_LOC, mkLoc(SPOT_CELL, strongWind([10.1, 11.2]))];
-    const { wind, pickedKm } = resolveSeaWind(json, [4], BEARING);
+    const same = { wind_speed_10m: [5, 5.4], wind_direction_10m: [130, 135] };
+    const json = [SPOT_LOC, mkLoc(seaCell(6), same), mkLoc(seaCell(12), same)];
+    const { wind, pickedKm } = resolveSeaWind(json, [4, 8], BEARING);
     expect(pickedKm).toBeNull();
     expect(wind.hourly.wind_speed_10m).toEqual([5, 5.4]);
     expect(wind.windSampledOffshore).toBeUndefined();
   });
 
-  it("centre de cellule absent → on fait confiance à la géométrie", () => {
+  it("centre de cellule absent → la comparaison des séries tranche seule", () => {
     const noCell = mkLoc({}, strongWind([10.1, 11.2]));
     delete noCell.latitude; delete noCell.longitude;
     expect(resolveSeaWind([SPOT_LOC, noCell], [4], BEARING).pickedKm).toBe(4);
   });
 
-  it("sans cap fourni, pas de test de gain — premier candidat exploitable", () => {
+  it("sans cap fourni, la comparaison des séries suffit", () => {
     const json = [SPOT_LOC, mkLoc(SPOT_CELL, strongWind([10.1, 11.2]))];
     expect(resolveSeaWind(json, [4], null).pickedKm).toBe(4);
   });
