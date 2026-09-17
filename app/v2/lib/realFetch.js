@@ -232,9 +232,14 @@ async function fetchResilient(url, signal, tries = 2) {
 // vraiment au large de celui du spot. Ça s'adapte tout seul à la
 // résolution du modèle (0.1° comme 0.25°) au lieu de la supposer, et ça
 // reste au plus près du break.
-// ⚠️ Ce qui n'est TOUJOURS pas calibré, c'est le vent lui-même contre un
-// anémomètre. Vérité terrain Perth : stations BoM Ocean Reef / Swanbourne.
-// Même règle que swellAttenuation — ne pas bouger au doigt mouillé.
+// ⚠️ Le vent n'est PAS recalé sur une station d'observation, et ce n'est pas
+// un manque : c'est un choix structurel. L'app vise 111 spots dans 23 pays
+// plus la recherche libre mondiale — une station couvre UN point et n'existe
+// pas hors des réseaux nationaux. Tout ce qui décide doit donc être soit PAR
+// SPOT depuis ses coordonnées (idealSwellDir / offshoreWindDir / idealTide,
+// renseignés 111/111 ; inférés pour un spot libre), soit PHYSIQUE et
+// universel (facteur de rafale plausible, repères de surface). Une
+// observation sert à VALIDER un seuil physique, jamais de source de prod.
 // Override possible par spot via `windLat` / `windLng`.
 // ⚠️ MESURÉ, PAS SUPPOSÉ — Trigg, 14/09 18h15, réponse Open-Meteo brute
 // pour les 4 points que ce code interrogeait (plage, +4, +8, +14 km) :

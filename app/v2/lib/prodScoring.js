@@ -639,6 +639,15 @@ export const USER_LEVEL_ZONES = {
 // facteurs de rafale PLUS élevés qu'en bord de mer. Ces bornes sont donc
 // une majoration prudente pour un spot côtier — l'erreur va dans le sens
 // sûr. Une station littorale les resserrerait, elle ne les élargirait pas.
+//
+// ⚠️ Ces observations ont servi à VALIDER un seuil, elles ne sont PAS une
+// source de production et le moteur n'en dépend pas. Le facteur de rafale
+// est une grandeur PHYSIQUE (rapport rafale/moyenne dans une couche limite)
+// : ses bornes valent à Trigg comme à Hossegor ou Pipeline. C'est
+// précisément ce qui rend ce filtre transposable aux 111 spots des 23 pays
+// et à n'importe quelle plage cherchée librement. Brancher une station
+// d'observation ne marcherait pas : elle couvre UN point et n'existe pas
+// hors des réseaux nationaux.
 const GUST_CONFIDENCE_NODES = [[1.8, 1], [2.6, 0]];
 
 // Rafale EFFECTIVE : la valeur servie, ramenée vers la moyenne à hauteur de
