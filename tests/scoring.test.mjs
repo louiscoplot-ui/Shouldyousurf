@@ -983,6 +983,27 @@ describe("cas terrain Trigg", () => {
     expect(classifyConditions("beginner", h, TRIGG_REEL).wind).not.toBe("blown");
   });
 
+  // PREUVE 17/09 : deux sources indépendantes, même heure, même endroit.
+  //   Apple Météo : 11 km/h ONO, rafales 36 ("entre 5 et 20, rafales à 40")
+  //   Open-Meteo  : 12 km/h,     rafales 40
+  // Elles sont d'accord : notre source n'est PAS fausse. Et quelqu'un
+  // surfait dans du calme au même moment, ce qui confirme la moyenne.
+  // Un vent moyen de 11 km/h onshore, ça se surfe — le moteur ne doit pas
+  // l'enterrer à cause d'une rafale qui décrit quelques bourrasques isolées.
+  it("relevé Apple/Open-Meteo 11 km/h + rafales 36 : la session reste ouverte", () => {
+    const h = hour({
+      time: "2026-09-17T16:00", swellHeight: 1.0, swellDir: 250,
+      windSpeedKn: 11 / 1.852, windGustKn: 36 / 1.852, windDir: 292, // ONO
+    });
+    expect(usableGustKmh(h)).toBeNull();          // facteur 3.27, écarté
+    expect(classifyConditions("beginner", h, TRIGG_REEL).wind).not.toBe("blown");
+    expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).not.toBe("no");
+    // Et la rafale ne doit pas non plus grignoter le score en douce.
+    const sansRafale = { ...h, windGustKn: undefined };
+    expect(scoreForLevel(h, TRIGG_REEL, "beginner").score)
+      .toBe(scoreForLevel(sansRafale, TRIGG_REEL, "beginner").score);
+  });
+
   it("une rafale plausible (facteur 1.5) reste prise en compte", () => {
     const h = hour({ swellHeight: 1.0, swellDir: 250, windSpeedKn: 12 / 1.852, windGustKn: 18 / 1.852, windDir: 190 });
     expect(usableGustKmh(h)).toBeCloseTo(18, 0);

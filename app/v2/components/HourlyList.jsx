@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { coherentVerdict } from "../lib/verdict";
-import { degToCompass, getWindTrend, usableGustKmh } from "../lib/prodScoring";
+import { degToCompass, getWindTrend } from "../lib/prodScoring";
 import { fmtHour } from "../lib/hooks";
 
 const WaveIcon = () => (
@@ -44,21 +44,28 @@ function fmtTimeShort(iso) {
 const fmt1 = (v) => typeof v === "number" ? v.toFixed(1) : "—";
 const fmt0 = (v) => typeof v === "number" ? Math.round(v) : "—";
 
-// Le vent affiché : la MOYENNE, plus la rafale seulement quand elle est
-// crédible. La fourchette moyenne–rafale brute a été essayée et retirée :
-// le modèle a servi "12–40 km/h" (facteur 3.3) pendant que quelqu'un
-// surfait dans du calme. Annoncer 40 quand il n'y a pas de vent détruit la
-// confiance aussi sûrement qu'annoncer 10 quand ça souffle.
-// usableGustKmh filtre les rafales aberrantes (> 2× la moyenne) ; ce qui
-// passe ce filtre mérite d'être montré, parce que c'est là qu'on ressent
-// vraiment plus que le chiffre.
-const GUST_SHOW_DELTA = 8;
-function windRange(h) {
-  const mean = Math.round(h.windKmh);
-  const gustRaw = usableGustKmh(h);
-  const gust = gustRaw != null ? Math.round(gustRaw) : null;
-  const show = gust != null && gust >= mean + GUST_SHOW_DELTA;
-  return { mean, gust, show, label: show ? `${mean}\u2013${gust}` : `${mean}` };
+// ── LE VENT AFFICHÉ = LE VENT MOYEN. UN SEUL CHIFFRE. ────────────────
+// ⚠️ Ne pas remettre de fourchette moyenne–rafale ici.
+//
+// Preuve terrain 17/09, deux sources INDÉPENDANTES à la même heure au même
+// endroit :
+//   Apple Météo : 11 km/h ONO, rafales 36  ("entre 5 et 20, rafales jusqu'à 40")
+//   Open-Meteo  : 12 km/h,     rafales 40
+// Les deux sont d'accord. Notre source n'est donc PAS fausse — c'était la
+// conclusion tentante et elle était mauvaise. Et pendant ce temps-là
+// quelqu'un surfait dans du calme, ce qui confirme la MOYENNE : 11 km/h,
+// c'est léger, et ça se surfe.
+//
+// La rafale est réelle mais elle ne décrit pas la session : un facteur 3.3
+// veut dire quelques bourrasques isolées dans une heure de calme. L'afficher
+// à côté de la moyenne (que ce soit "10–40" ou "10 · gusts 40") pousse à lire
+// le gros chiffre et à renoncer à une bonne session. C'est le retour direct
+// du terrain : "ça fausse tout, on a besoin juste du vent global".
+//
+// La rafale garde son rôle là où il est légitime : une pénalité DOUCE de
+// score, et seulement quand son facteur est crédible (cf. usableGustKmh).
+function windLabel(h) {
+  return `${Math.round(h.windKmh)}`;
 }
 
 export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, reasonText, isToday = true, isPastDay = false }) {
@@ -263,13 +270,6 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
         const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
         const windTrend = getWindTrend(h, hours);
-        // La rafale était fetchée depuis toujours mais n'existait QUE dans
-        // StickyInfoBar, que le CSS cache dans les deux modes de vue : en
-        // pratique l'utilisateur ne l'a jamais vue. Or c'est elle qu'on
-        // ressent debout sur la plage — une moyenne à 10 avec des rafales à
-        // 25 se vit comme "il y a 25", et l'app avait l'air de mentir. Même
-        // seuil que StickyInfoBar (+8 km/h) pour ne pas bruiter la ligne.
-        const wind = windRange(h);
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
         const dayKey   = h.time?.split("T")?.[0];
         const sun      = sunByDay ? sunByDay[dayKey] : null;
@@ -295,15 +295,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
-                {/* Le vent n'est PAS un chiffre, c'est une fourchette. Afficher
-                    la seule moyenne, c'est annoncer 10 km/h un soir où ça
-                    tape à 22 en bourrasques — l'utilisateur sur la plage ne
-                    reconnaît pas ce qu'il ressent, et il a raison. Dès que
-                    la rafale décolle, c'est la FOURCHETTE qui est la valeur
-                    honnête, pas une note en petit à côté. */}
-                <div className="hly-cp-cell-val">
-                  {wind.label}<span className="hly-cp-cell-unit">km/h</span>
-                </div>
+                <div className="hly-cp-cell-val">{windLabel(h)}<span className="hly-cp-cell-unit">km/h</span></div>
                 <div className="hly-cp-cell-sub">
                   {windDir} · {h.windType}
                   {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
@@ -374,7 +366,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                   <div className="hly-lstats">
                     <span className="hly-lstat"><WaveIcon/>{h.faceFtLow}–{h.faceFtHigh}ft · {fmt1(h.swellHeight)}m</span>
                     <span className="hly-lstat-sep">·</span>
-                    <span className="hly-lstat"><WindIcon/>{windRange(h).label}km/h</span>
+                    <span className="hly-lstat"><WindIcon/>{windLabel(h)}km/h</span>
                   </div>
                 </div>
                 <div className={`hly-lexpand ${isOpen ? "open" : ""}`}>
@@ -408,7 +400,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             </div>
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Wind</div>
-                              <div className="hly-xval" style={{ color: v.color }}>{windRange(h).label}<span className="hly-xunit">km/h</span></div>
+                              <div className="hly-xval" style={{ color: v.color }}>{windLabel(h)}<span className="hly-xunit">km/h</span></div>
                               <div className="hly-xsub">
                                 {windDir} · {h.windType}
                                 {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
