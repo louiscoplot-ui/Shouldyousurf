@@ -1106,3 +1106,37 @@ describe("cas terrain Trigg", () => {
     expect(scoreForLevel(h, TRIGG_REEL, "beginner").score).toBeLessThanOrEqual(29);
   });
 });
+
+// ── COHERENCE AFFICHAGE : la ligne SWELL doit decrire la vague NOTEE ──
+// `h.swellHeight` est la partition PRIMAIRE d'Open-Meteo. La face et le
+// score viennent de la partition DOMINANTE. Les jours de windswell
+// dominante les deux divergent, et l'ecran les affichait cote a cote.
+describe("ligne SWELL affichee = partition dominante", () => {
+  const TRIGG = { id: "trigg", type: "beach", idealSwellDir: 240, offshoreWindDir: 90,
+    idealTide: "mid-high", lat: -31.8826, lng: 115.7519, swellAttenuation: 0.60 };
+  // Journee windswell dominante — le cas Trigg 30/07 : houle primaire faible
+  // et hors-axe, windsea qui porte la vraie vague surfable.
+  const h = { swellHeight: 0.35, swellPeriod: 5, swellDir: 60,
+    swell2Height: 0, swell2Period: 0, swell2Dir: 0,
+    windWaveHeight: 1.30, windWavePeriod: 7, windWaveDir: 250,
+    windSpeedKn: 14 / 1.852, windDir: 250, currentVel: 0, tideM: 1.0 };
+
+  it("la dominante DIVERGE de la primaire les jours de windswell", () => {
+    const dom = pickDominantSwell(h, TRIGG);
+    expect(dom.isWind).toBe(true);
+    expect(dom.swellHeight).toBeCloseTo(1.30, 2);
+    // C'est l'ecart que l'ecran montrait : 1.30 m note, 0.35 m affiche.
+    expect(Math.abs(dom.swellHeight - h.swellHeight)).toBeGreaterThan(0.9);
+  });
+
+  it("la face suit la dominante, donc la ligne SWELL doit la suivre aussi", () => {
+    const faceFt = faceFtOf(h, TRIGG);
+    const dom = pickDominantSwell(h, TRIGG);
+    // La face ne peut pas etre expliquee par la primaire : 0.35 m attenue a
+    // 0.60 ne donne pas cette hauteur. Afficher la primaire a cote de la
+    // face, c'est mettre deux vagues differentes sur la meme ligne.
+    const faceSiPrimaire = faceFtOf({ ...h, windWaveHeight: 0 }, TRIGG);
+    expect(faceFt).toBeGreaterThan(faceSiPrimaire * 1.5);
+    expect(dom.swellHeight).toBeGreaterThan(h.swellHeight);
+  });
+});
