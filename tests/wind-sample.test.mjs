@@ -331,3 +331,89 @@ describe("pickProbedBearing", () => {
     expect(pickProbedBearing([s(10, 1.0), s(200, 3.0)], 10)).toBeNull();
   });
 });
+
+// ── SONDES RÉELLES du 17/09 ───────────────────────────────────────────
+// Réponses Open-Meteo réelles, collées par Louis (le proxy de session bloque
+// l'API). Ce ne sont pas des valeurs plausibles inventées : ce sont LES
+// données. Elles tranchent trois choses qu'on ne faisait que supposer.
+describe("cas terrain : sondes reelles du 17/09", () => {
+  const moy = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  // Trigg : 3 cellules distinctes sur 8 caps. Les 4 caps vers Perth sont a
+  // TERRE (elevation 22/12/14/18 m) et rendent pourtant 24 valeurs de houle.
+  const TRIGG_TERRE = moy([0.52,0.52,0.52,0.52,0.52,0.52,0.52,0.52,0.54,0.54,0.58,0.62,0.66,0.66,0.66,0.66,0.66,0.68,0.68,0.68,0.66,0.66,0.66,0.64]);
+  const TRIGG_SUD   = moy([0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.58,0.56,0.56,0.56,0.54]);
+  const TRIGG_LARGE = moy([0.62,0.64,0.64,0.66,0.66,0.68,0.68,0.68,0.68,0.68,0.72,0.76,0.80,0.80,0.82,0.82,0.82,0.82,0.82,0.82,0.80,0.80,0.78,0.76]);
+  const triggSamples = [
+    { bearing:   0, mean: TRIGG_TERRE, elevation: 22 },
+    { bearing:  45, mean: TRIGG_TERRE, elevation: 12 },
+    { bearing:  90, mean: TRIGG_TERRE, elevation: 14 },
+    { bearing: 135, mean: TRIGG_TERRE, elevation: 18 },
+    { bearing: 180, mean: TRIGG_SUD,   elevation: 0 },
+    { bearing: 225, mean: TRIGG_LARGE, elevation: 0 },
+    { bearing: 270, mean: TRIGG_LARGE, elevation: 0 },
+    { bearing: 315, mean: TRIGG_LARGE, elevation: 0 },
+  ];
+
+  it("une cellule TERRESTRE rend une serie complete et plausible", () => {
+    // LA mesure qui invalide l'ancien garde-fou "serie courte = terre" :
+    // 24 valeurs, entre 0.52 et 0.68 m, a 22 m d'altitude dans Perth.
+    expect(TRIGG_TERRE).toBeGreaterThan(0.5);
+    // Et elle est PLUS BASSE que le large : c'est pour ca que le tri par
+    // houle marchait quand meme a Trigg. Par chance, pas par construction.
+    expect(TRIGG_TERRE).toBeLessThan(TRIGG_LARGE);
+  });
+
+  it("Trigg est deja bien echantillonne : la sonde ne change RIEN", () => {
+    // idealSwellDir 240 -> cap 225, qui tombe deja dans la cellule du large.
+    // Le fix Perth du 01/08 faisait donc deja ce qu'il fallait. Le test de
+    // non-regression : etendre la sonde aux spots cures ne doit pas le casser.
+    expect(pickProbedBearing(triggSamples, 240)).toBeNull();
+  });
+
+  it("l'elevation ecarte la terre meme quand elle porte PLUS de houle", () => {
+    // Cas que le tri par houle seule ne peut pas traiter : on force la
+    // cellule terrestre au-dessus du large. Seule l'elevation la disqualifie.
+    const piege = triggSamples.map((s) =>
+      s.elevation > 0 ? { ...s, mean: TRIGG_LARGE * 1.5 } : s);
+    const got = pickProbedBearing(piege, 240);
+    expect(got).toBeNull();          // 225 (mer) reste la reference retenue
+    expect(got).not.toBe(90);        // jamais un cap a terre
+  });
+
+  it("Ichinomiya : +4.6 % reel, la sonde corrige 135 -> 180", () => {
+    const A = moy([0.82,0.86,0.92,0.96,0.94,0.92,0.90,0.90,0.92,0.92,0.96,1.02,1.06,1.08,1.10,1.12,1.12,1.10,1.10,1.08,1.06,1.04,0.98,0.94]);
+    const B = moy([0.86,0.92,0.96,1.02,0.98,0.94,0.90,0.90,0.90,0.90,0.98,1.04,1.12,1.14,1.14,1.16,1.18,1.18,1.20,1.18,1.14,1.12,1.06,1.00]);
+    const samples = [
+      { bearing:   0, mean: A, elevation: 0 },  { bearing:  45, mean: A, elevation: 0 },
+      { bearing:  90, mean: A, elevation: 0 },  { bearing: 135, mean: A, elevation: 0 },
+      { bearing: 180, mean: B, elevation: 0 },  { bearing: 225, mean: A, elevation: 17 },
+      { bearing: 270, mean: A, elevation: 43 }, { bearing: 315, mean: A, elevation: 3 },
+    ];
+    expect(pickProbedBearing(samples, 140)).toBe(180);
+    expect(B / A).toBeCloseTo(1.046, 3);
+  });
+
+  it("Cape Hatteras : +11.3 % reel, la sonde corrige 135 -> 90", () => {
+    const S1 = moy([0.56,0.56,0.54,0.54,0.52,0.50,0.48,0.46,0.44,0.42,0.42,0.42,0.42,0.40,0.40,0.38,0.38,0.38,0.38,0.38,0.36,0.36,0.36,0.36]);
+    const S2 = moy([0.84,0.82,0.82,0.80,0.78,0.74,0.72,0.70,0.66,0.64,0.62,0.60,0.58,0.56,0.54,0.52,0.50,0.50,0.48,0.48,0.48,0.48,0.48,0.48]);
+    const S3 = moy([0.76,0.74,0.74,0.72,0.70,0.66,0.64,0.60,0.58,0.54,0.52,0.50,0.48,0.48,0.48,0.48,0.48,0.46,0.46,0.46,0.46,0.46,0.46,0.46]);
+    const S4 = moy([0.66,0.66,0.64,0.64,0.60,0.58,0.54,0.52,0.48,0.46,0.44,0.44,0.42,0.42,0.44,0.44,0.44,0.44,0.44,0.44,0.42,0.42,0.42,0.42]);
+    const S5 = moy([0.46,0.46,0.46,0.46,0.44,0.40,0.38,0.38,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.36,0.34]);
+    const samples = [
+      { bearing:   0, mean: S1, elevation: 0 }, { bearing:  45, mean: S1, elevation: 0 },
+      { bearing:  90, mean: S2, elevation: 0 }, { bearing: 135, mean: S3, elevation: 0 },
+      { bearing: 180, mean: S3, elevation: 0 }, { bearing: 225, mean: S4, elevation: 0 },
+      { bearing: 270, mean: S4, elevation: 1 }, { bearing: 315, mean: S5, elevation: 0 },
+    ];
+    expect(pickProbedBearing(samples, 135)).toBe(90);
+    expect(S2 / S3).toBeCloseTo(1.113, 3);
+  });
+
+  it("les gains REELS passent sous le seuil de 1.15 qu'on avait failli poser", () => {
+    // Preuve chiffree que le seuil "de prudence" aurait desactive la feature
+    // sur les deux spots obliques qu'elle devait justement reparer.
+    const gains = [1.046, 1.113];
+    gains.forEach((g) => expect(g).toBeLessThan(1.15));
+    gains.forEach((g) => expect(g).toBeGreaterThan(1.02));
+  });
+});
