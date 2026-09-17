@@ -1004,6 +1004,29 @@ describe("cas terrain Trigg", () => {
       .toBe(scoreForLevel(sansRafale, TRIGG_REEL, "beginner").score);
   });
 
+  // CALIBRATION MESUREE — 179 observations BoM reelles (15-17/09/2026).
+  // Ces bornes ne sont plus un choix de confort : elles viennent des
+  // donnees. Si quelqu'un veut les bouger, il lui faut d'autres mesures.
+  it("les bornes de credibilite encadrent les facteurs REELLEMENT observes", () => {
+    const at = (mean, factor) => usableGustKmh({
+      windSpeedKn: mean / 1.852, windGustKn: (mean * factor) / 1.852,
+    });
+    const mean = 20;
+    // Mediane observee 1.54 et 90e percentile 1.76 : pleine confiance,
+    // la rafale est rendue telle quelle.
+    expect(at(mean, 1.54)).toBeCloseTo(mean * 1.54, 1);
+    expect(at(mean, 1.76)).toBeCloseTo(mean * 1.76, 1);
+    // 99e percentile 2.00 : zone grise, le poids a commence a fondre.
+    const grey = at(mean, 2.0);
+    expect(grey).toBeGreaterThan(mean);
+    expect(grey).toBeLessThan(mean * 2.0);
+    // Maximum observe 2.71 : au-dela du domaine physique, ecarte.
+    expect(at(mean, 2.71)).toBeNull();
+    // Ce que le modele a servi le 17/09 : hors-domaine, tres au-dessus du
+    // maximum jamais mesure.
+    expect(at(12, 3.33)).toBeNull();
+  });
+
   it("une rafale plausible (facteur 1.5) reste prise en compte", () => {
     const h = hour({ swellHeight: 1.0, swellDir: 250, windSpeedKn: 12 / 1.852, windGustKn: 18 / 1.852, windDir: 190 });
     expect(usableGustKmh(h)).toBeCloseTo(18, 0);
