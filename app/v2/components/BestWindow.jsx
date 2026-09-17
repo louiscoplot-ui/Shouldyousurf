@@ -4,7 +4,11 @@
 
 import { fmtHour } from "../lib/hooks";
 
-export default function BestWindow({ day }) {
+export default function BestWindow({ day, t }) {
+  const L = (key, en) => {
+    const v = typeof t === "function" ? t(key) : null;
+    return v && v !== key ? v : en;
+  };
   const best = day.bestHour;
   if (!best) return null;
   // Même règle que HourlyList : on décrit la partition DOMINANTE, celle qui
@@ -17,9 +21,9 @@ export default function BestWindow({ day }) {
   const wind = best.windKmh != null ? Math.round(best.windKmh) : "—";
   return (
     <div className="best">
-      <div className="best-lbl">Best window</div>
+      <div className="best-lbl">{L("best_window", "Best window")}</div>
       <div className="best-val">
-        Around {fmtHour(best.hour)} · <span className="score">{best.score} score</span>
+        {L("best_around", "Around")} {fmtHour(best.hour)} · <span className="score">{best.score} {L("best_score", "score")}</span>
       </div>
       <div className="best-sub">
         {swell}m @ {period}s · {wind}km/h {best.windDir || ""}

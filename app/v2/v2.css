@@ -1714,11 +1714,15 @@ button, input, select { font-family: inherit; color: inherit; }
   font-size: 11px; opacity: 0.5; font-weight: 400;
 }
 
-/* ── List mode — collapse the sticky info / drv / best sections so
-   the list gets the whole viewport. Same principle as v1. ── */
+/* ── List mode — collapse the sticky info / driving chips so the list
+   gets the whole viewport. Same principle as v1.
+   ⚠️ `.best` N'EST PLUS REPLIÉ ICI. Il l'était par DOMMAGE COLLATÉRAL :
+   `.C` et `.drv` ont été repliés volontairement parce que leur contenu a
+   déménagé dans `.hly-cpanel`. `.best` a été balayé avec eux alors qu'il
+   n'a AUCUN remplaçant nulle part — l'app ne disait donc plus à quelle
+   heure y aller, ce qui est la question qu'elle est censée trancher. ── */
 .wrap:has(.hly.hly--list-mode) .C,
-.wrap:has(.hly.hly--list-mode) .drv,
-.wrap:has(.hly.hly--list-mode) .best {
+.wrap:has(.hly.hly--list-mode) .drv {
   max-height: 0 !important;
   overflow: hidden !important;
   margin: 0 !important; padding: 0 !important;
@@ -1849,12 +1853,12 @@ button, input, select { font-family: inherit; color: inherit; }
 .hly-card { padding: 7px 4px 6px !important; }
 .hly-card-score { font-size: 20px !important; line-height: 20px !important; }
 
-/* ── Cards-mode: collapse the sticky info + driving chips + best-window.
-      In cards mode the details live in the dedicated .hly-cpanel below.
-      In list mode the existing .wrap:has(.hly--list-mode) rule handles it. */
+/* ── Cards-mode: collapse the sticky info + driving chips.
+      En cards mode leur contenu vit dans .hly-cpanel juste en dessous.
+      ⚠️ PAS `.best` : le panneau ne porte aucune info "meilleur créneau",
+      donc le replier supprimait la feature au lieu de la déplacer. */
 .wrap.hly-cardmode-active .C,
-.wrap.hly-cardmode-active .drv,
-.wrap.hly-cardmode-active .best {
+.wrap.hly-cardmode-active .drv {
   max-height: 0 !important; overflow: hidden !important;
   opacity: 0 !important; margin: 0 !important; padding: 0 !important;
   border: none !important; pointer-events: none !important;

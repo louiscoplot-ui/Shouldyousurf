@@ -921,7 +921,7 @@ function Loaded({
 
         <DrivingChips hour={hour} spot={effectiveSpot} userLevel={effectiveLevel}/>
 
-        <BestWindow day={day}/>
+        <BestWindow day={day} t={t}/>
 
         {/* No key={effectiveLevel} — remounting on level change wiped the
             user's cards/list choice and scroll position; props updates
@@ -935,6 +935,7 @@ function Loaded({
           reasonText={personalReason}
           isToday={!!day.isToday}
           isPastDay={!!day.isPast}
+          t={t}
         />
 
         <TideCurve hours={day.hours} selectedIdx={Math.min(selectedIdx, day.hours.length - 1)} onSelect={setSelectedIdx}/>
