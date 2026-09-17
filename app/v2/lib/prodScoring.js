@@ -402,15 +402,18 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // centres — un delta de rafale de 14.9 vs 15.1 km/h ne saute plus.
   let gustMult = 1.0;
   if (Number.isFinite(h.windGustKn)) {
-    // Le delta seul est trompeur : +12 km/h sur une moyenne de 40 c'est du
-    // bruit, sur une moyenne de 10 c'est un vent qui double par bourrasques.
-    // On note donc le RATIO, qui est ce que la surface encaisse. Mesure
-    // Trigg 14/09 : 10.3 / 22.3 = 2.17, l'ancienne table donnait 0.986.
-    const gustKmh = knToKmh(h.windGustKn);
-    const ratio = kmh > 1 ? gustKmh / kmh : 1;
-    const byRatio = lerpTable(ratio, [[1.3, 1.0], [1.8, 0.92], [2.4, 0.82]]);
-    const byDelta = lerpTable(gustKmh - kmh, [[10, 1.0], [20, 0.93], [30, 0.85]]);
-    gustMult = Math.min(byRatio, byDelta);
+    // Uniquement sur une rafale CRÉDIBLE (cf. usableGustKmh) : une valeur
+    // aberrante ne doit pas non plus écraser le score en douce.
+    const gustKmh = usableGustKmh(h);
+    if (gustKmh != null) {
+      // Le delta seul est trompeur : +12 km/h sur une moyenne de 40 c'est du
+      // bruit, sur une moyenne de 10 c'est un vent qui monte franchement. On
+      // note donc aussi le RATIO, qui est ce que la surface encaisse.
+      const ratio = kmh > 1 ? gustKmh / kmh : 1;
+      const byRatio = lerpTable(ratio, [[1.3, 1.0], [1.6, 0.94], [2.0, 0.88]]);
+      const byDelta = lerpTable(gustKmh - kmh, [[10, 1.0], [20, 0.93], [30, 0.85]]);
+      gustMult = Math.min(byRatio, byDelta);
+    }
   }
 
   // ── Score d'une partition : hauteur EFFECTIVE (× atténuation spot,
@@ -587,36 +590,51 @@ export const USER_LEVEL_ZONES = {
   expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
 };
 
-// ── Vent RESSENTI : la moyenne ne dit pas ce qu'on subit ──────────────
-// Mesure réelle Trigg, 14/09 18h15, relevé Open-Meteo brut :
-//   moyenne 10.3 km/h · rafales 22.3 km/h → facteur de rafale 2.17
-// L'app affichait "10 km/h". Louis, sur place : "ça doit être bien pire".
-// Il a raison, et ce n'est pas un défaut de la donnée : un humain debout
-// sur une plage, et la SURFACE DE L'EAU, encaissent les rafales, pas la
-// moyenne sur 10 minutes. Un facteur 2 comme ici, ce sont des bourrasques
-// qui hachent la face entre deux accalmies.
+// ── Rafale : utilisable seulement si elle est PLAUSIBLE ──────────────
+// Deux témoignages terrain, qui pointent en sens OPPOSÉ, et c'est ça qui
+// tranche :
+//   14/09 Trigg  · moyenne 10.3, rafale 22.3 (facteur 2.17) · "ça souffle
+//                  plus que ce qui est affiché"
+//   17/09        · moyenne 12,   rafale 40   (facteur 3.33) · quelqu'un DANS
+//                  L'EAU : "pas beaucoup voire pas de vent"
 //
-// Le moteur ne regardait QUE la moyenne pour classer clean/bumpy/blown et
-// pour le plafond du verdict. La rafale n'entrait que par `gustMult`, si
-// mou qu'un écart de 12 km/h coûtait 1.4 % du score. Autrement dit : le
-// signal qui explique le ressenti du terrain était dans la réponse API
-// depuis toujours, et on le jetait.
+// Le second est le meilleur signal qu'on ait jamais eu : une personne en
+// train de surfer, pendant la période. Il dit que `wind_gusts_10m` n'est PAS
+// un prédicteur fiable du vent subi. Le facteur de rafale réel vaut 1.2-1.4
+// en mer, 1.3-1.6 au bord, ~1.8 en air instable. Au-delà de 2, ce n'est plus
+// du vent : c'est la paramétrisation du modèle qui part en vrille.
 //
-// ⚠️ GUST_WEIGHT n'est PAS calibré — 0.5 est le point neutre, à mi-chemin
-// entre moyenne et rafale, choisi pour ne pas inventer un coefficient
-// précis sans mesure. Même règle que swellAttenuation : pour le bouger il
-// faut des relevés (stations BoM Swanbourne / Ocean Reef), pas une
-// impression.
-const GUST_WEIGHT = 0.5;
+// ⚠️ LEÇON, à ne pas défaire : une donnée dont le facteur atteint 3.3 ne
+// peut pas décider d'un GO/SKIP. La version précédente la mettait au cœur du
+// verdict (vent ressenti = moyenne + écart × 0.5) : sur ce cas, 12 et 40
+// donnaient 26 km/h ressentis, donc "blown", donc SKIP — sur une session que
+// quelqu'un était en train de faire tranquillement. Faire RATER une bonne
+// session est une faute aussi grave que faire conduire pour rien.
+//
+// La rafale reste utile quand elle est crédible : elle ne sert alors qu'à
+// pénaliser DOUCEMENT le score (gustMult), jamais à basculer un verdict.
+// La crédibilité ne tombe pas d'un coup : c'est une RAMPE. Un couperet net
+// à 2.0 a été essayé et rejeté par les tests de continuité — il faisait
+// sauter le score de 10 points quand le facteur franchissait le seuil, soit
+// exactement le palier dur que ce moteur bannit partout ailleurs. En plus
+// c'est plus juste : un facteur 1.9 n'est pas "sûr" et 2.1 "faux", la
+// confiance s'érode.
+//   <= 1.8  crédible, la rafale compte pleinement
+//   1.8-2.6 zone grise, son poids fond linéairement
+//   >= 2.6  aberrant, on lit la moyenne et rien d'autre
+const GUST_CONFIDENCE_NODES = [[1.8, 1], [2.6, 0]];
 
-export function feltWindKmh(h) {
+// Rafale EFFECTIVE : la valeur servie, ramenée vers la moyenne à hauteur de
+// ce qu'on peut en croire. null = rien d'exploitable (absente, sous la
+// moyenne, ou trop aberrante pour peser).
+export function usableGustKmh(h) {
   const mean = knToKmh(Number.isFinite(h?.windSpeedKn) ? h.windSpeedKn : 0);
-  if (!Number.isFinite(h?.windGustKn)) return mean;
+  if (!Number.isFinite(h?.windGustKn)) return null;
   const gust = knToKmh(h.windGustKn);
-  // Rafale absente, aberrante ou inférieure à la moyenne → on ne fabrique
-  // rien, on garde la moyenne.
-  if (!(gust > mean)) return mean;
-  return mean + (gust - mean) * GUST_WEIGHT;
+  if (!(gust > mean)) return null;
+  const conf = mean > 1 ? lerpTable(gust / mean, GUST_CONFIDENCE_NODES) : 1;
+  const eff = mean + (gust - mean) * conf;
+  return eff > mean + 0.05 ? eff : null;
 }
 
 // ── Plafond de vent des LEARNERS, par niveau ──────────────────────────
@@ -697,10 +715,9 @@ export function classifyConditions(userLevel, h, spot) {
 
   let wind;
   if (cap) {
-    // Les learners sont jugés sur le vent RESSENTI (moyenne + rafale), pas
-    // sur la moyenne seule : c'est la rafale qui les déséquilibre au
-    // take-off et qui hache la face entre deux séries.
-    const felt = feltWindKmh(h);
+    // On décide sur la MOYENNE. La rafale a été essayée comme entrée du
+    // verdict et retirée : cf. MAX_PLAUSIBLE_GUST_FACTOR — elle est trop
+    // souvent aberrante pour arbitrer un GO/SKIP.
     // Marge offshore : un vent de terre lisse la face au lieu de la hacher,
     // mais il creuse le take-off, freine la planche au moment de se lever
     // et décolle le nez d'un foamie léger. Moins pire qu'un onshore, pas
@@ -708,8 +725,8 @@ export function classifyConditions(userLevel, h, spot) {
     const blown = isOffshore ? cap.offshore : cap.other;
     // La zone "bumpy" fait toujours les 6 derniers km/h avant le blown :
     // un learner ne passe jamais de "clean" à "blown" sans palier lisible.
-    if (felt >= blown) wind = "blown";
-    else if (felt < 8 || (isOffshore && felt < blown - 6)) wind = "clean";
+    if (kmh >= blown) wind = "blown";
+    else if (kmh < 8 || (isOffshore && kmh < blown - 6)) wind = "clean";
     else wind = "bumpy";
   } else {
     // intermediate et au-dessus : inchangé. Onshore dans la face = blown
@@ -1051,7 +1068,7 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // direction. `wind === "blown"` juste au-dessus couvre déjà le cas ;
     // cette ligne reste le filet si la table et le label divergent.
     const learnerCap = LEARNER_WIND_CAP[userLevel];
-    if (learnerCap && feltWindKmh(h) >= (dir === "offshore" ? learnerCap.offshore : learnerCap.other)) return "no";
+    if (learnerCap && kmh >= (dir === "offshore" ? learnerCap.offshore : learnerCap.other)) return "no";
     // Early_int has no inside-reform "swim it out" rescue when there's
     // literally no wave (face below their min = 1.5ft). They're past
     // the foamie-whitewash phase and ride a longboard / mid-length —

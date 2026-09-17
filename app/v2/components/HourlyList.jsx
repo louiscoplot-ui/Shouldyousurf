@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { coherentVerdict } from "../lib/verdict";
-import { degToCompass, getWindTrend, knToKmh } from "../lib/prodScoring";
+import { degToCompass, getWindTrend, usableGustKmh } from "../lib/prodScoring";
 import { fmtHour } from "../lib/hooks";
 
 const WaveIcon = () => (
@@ -44,15 +44,19 @@ function fmtTimeShort(iso) {
 const fmt1 = (v) => typeof v === "number" ? v.toFixed(1) : "—";
 const fmt0 = (v) => typeof v === "number" ? Math.round(v) : "—";
 
-// Le vent honnête, c'est une FOURCHETTE, pas un chiffre. Un soir à 10 de
-// moyenne avec des bourrasques à 22, personne sur la plage ne reconnaît
-// "10 km/h" — et c'est l'app qui a tort, pas la personne. Dès que la rafale
-// décolle nettement, on affiche moyenne–rafale partout où le vent apparaît.
-// Même seuil que l'ancienne note "gusts" de StickyInfoBar.
+// Le vent affiché : la MOYENNE, plus la rafale seulement quand elle est
+// crédible. La fourchette moyenne–rafale brute a été essayée et retirée :
+// le modèle a servi "12–40 km/h" (facteur 3.3) pendant que quelqu'un
+// surfait dans du calme. Annoncer 40 quand il n'y a pas de vent détruit la
+// confiance aussi sûrement qu'annoncer 10 quand ça souffle.
+// usableGustKmh filtre les rafales aberrantes (> 2× la moyenne) ; ce qui
+// passe ce filtre mérite d'être montré, parce que c'est là qu'on ressent
+// vraiment plus que le chiffre.
 const GUST_SHOW_DELTA = 8;
 function windRange(h) {
   const mean = Math.round(h.windKmh);
-  const gust = h.windGustKn != null ? Math.round(knToKmh(h.windGustKn)) : null;
+  const gustRaw = usableGustKmh(h);
+  const gust = gustRaw != null ? Math.round(gustRaw) : null;
   const show = gust != null && gust >= mean + GUST_SHOW_DELTA;
   return { mean, gust, show, label: show ? `${mean}\u2013${gust}` : `${mean}` };
 }
