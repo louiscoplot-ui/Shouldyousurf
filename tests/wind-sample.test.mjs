@@ -417,3 +417,51 @@ describe("cas terrain : sondes reelles du 17/09", () => {
     gains.forEach((g) => expect(g).toBeGreaterThan(1.02));
   });
 });
+
+// ── PROFIL DE DECROISSANCE VERS LE LARGE — sonde reelle 17/09 ─────────
+// Deuxieme sonde reelle, le long du cap du large, a 5/10/15/20/30/45 km.
+// Elle a TUE une idee qu'on s'appretait a construire : deriver
+// swellAttenuation du rapport entre la houle au large et la houle a 5 km.
+describe("cas terrain : profil de decroissance du 17/09", () => {
+  const moy = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  // Trigg, cap 270. Hs moyennes mesurees a chaque distance.
+  const TRIGG = { 5: 0.740, 10: 0.924, 15: 0.924, 20: 1.147, 30: 1.355, 45: 1.560 };
+  const HATTERAS = { 5: 0.618, 10: 0.618, 15: 0.703, 20: 0.756, 30: 0.808, 45: 0.861 };
+
+  it("le modele applique DEJA sa propre bathymetrie entre le large et 5 km", () => {
+    // Trigg perd 53 % entre 45 km et 5 km. Ce n'est pas nous qui l'attenuons :
+    // c'est Open-Meteo, avec sa bathymetrie globale, spot par spot.
+    expect(TRIGG[5] / TRIGG[45]).toBeCloseTo(0.474, 2);
+    // La decroissance est monotone et lisse, pas un artefact de bord.
+    const d = [5, 10, 15, 20, 30, 45];
+    d.forEach((k, i) => { if (i) expect(TRIGG[k]).toBeGreaterThanOrEqual(TRIGG[d[i - 1]]); });
+  });
+
+  it("l'exposition discrimine un spot abrite d'un spot expose, SANS donnee locale", () => {
+    const expoTrigg = TRIGG[5] / TRIGG[45];       // derriere Rottnest + Five Fathom Bank
+    const expoHatteras = HATTERAS[5] / HATTERAS[45]; // avance dans l'Atlantique
+    expect(expoHatteras).toBeGreaterThan(expoTrigg + 0.2);
+    expect(expoTrigg).toBeLessThan(0.55);
+    expect(expoHatteras).toBeGreaterThan(0.65);
+  });
+
+  it("⚠️ ce ratio ne doit JAMAIS servir de multiplicateur : il compte double", () => {
+    // L'idee tentante : swellAttenuation = Hs(5km) / Hs(large). Mais cette
+    // attenuation est DEJA dans la valeur a 5 km qu'on lit. La reappliquer
+    // compterait le plateau continental deux fois.
+    const lu = TRIGG[5];                       // ce que l'app lit reellement
+    const ratio = TRIGG[5] / TRIGG[45];
+    const doubleCompte = lu * ratio;
+    expect(doubleCompte).toBeLessThan(lu * 0.5); // 0.74 -> 0.35, absurde
+    // Le reglage actuel reste bien au-dessus de ce piege.
+    expect(lu * 0.60).toBeGreaterThan(doubleCompte);
+  });
+
+  it("la houle monte encore a 45 km : l'eau profonde est plus loin que la sonde", () => {
+    // Aucun plateau atteint. Donc on ne peut pas lire un H0 d'eau profonde
+    // a 45 km, et une formule de deferlement depuis le large reste
+    // inapplicable telle quelle.
+    expect(TRIGG[45]).toBeGreaterThan(TRIGG[30]);
+    expect(HATTERAS[45]).toBeGreaterThan(HATTERAS[30]);
+  });
+});
