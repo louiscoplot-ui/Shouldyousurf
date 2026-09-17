@@ -241,16 +241,46 @@ export default function RootLayout({ children }) {
             The <video> is HTML-native (not React) so it starts loading
             with the HTML rather than after hydration. */}
         <div id="__preload">
+          {/* ⚠️ PAS de `src` ici, et `preload="none"` : surfer.mp4 pèse 5.3 MB,
+              soit 80 % de /public, et il se téléchargeait à CHAQUE chargement
+              en `preload="auto"` — en concurrence directe avec le fetch des
+              prévisions. Sur la 4G à la plage, on faisait patienter
+              l'utilisateur pour ~1 s de vidéo décorative. Le `src` est posé
+              par le script ci-dessous, seulement si la connexion le permet.
+              Le splash tient sans : voile + titre + points + texte. */}
           <video
             className="pl-video"
-            src="/assets/surfer.mp4"
+            data-src="/assets/surfer.mp4"
             autoPlay
             muted
             loop
             playsInline
-            preload="auto"
+            preload="none"
             aria-hidden="true"
           />
+          <script dangerouslySetInnerHTML={{ __html: `
+            (function(){
+              try {
+                var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                // Economie de donnees demandee, ou reseau lent : on saute les
+                // 5.3 MB. La priorite absolue est la prevision, pas le decor.
+                if (c) {
+                  var et = String(c.effectiveType || "");
+                  if (c.saveData === true) return;
+                  if (et === "slow-2g" || et === "2g" || et === "3g") return;
+                }
+                // Safari/iOS n'expose pas navigator.connection : on charge,
+                // c'est-a-dire exactement le comportement d'avant.
+                var v = document.querySelector(".pl-video");
+                if (!v) return;
+                var src = v.getAttribute("data-src");
+                if (!src) return;
+                v.src = src;
+                var pr = v.play && v.play();
+                if (pr && pr.catch) pr.catch(function(){});
+              } catch (e) {}
+            })();
+          `}} />
           <div className="pl-veil" aria-hidden="true"/>
           <div className="pl-brand">Should You Surf?</div>
           <div className="pl-dots"><span/><span/><span/></div>

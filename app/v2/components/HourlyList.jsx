@@ -87,7 +87,15 @@ function windLabel(h) {
   return `${Math.round(h.windKmh)}`;
 }
 
-export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, reasonText, isToday = true, isPastDay = false }) {
+export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, sunByDay, reasonText, isToday = true, isPastDay = false, t }) {
+  // Les libellés de CET écran étaient en dur en anglais : c'est l'écran que
+  // tout le monde regarde, et 10 des 12 langues le lisaient en anglais.
+  // Repli explicite sur l'anglais si `t` n'est pas passé → comportement
+  // d'avant, jamais de clé brute affichée.
+  const L = (key, en) => {
+    const v = typeof t === "function" ? t(key) : null;
+    return v && v !== key ? v : en;
+  };
   const [viewMode, setViewMode] = useState("cards");
   // "past" dimming only makes sense relative to the day being shown:
   // on future days nothing is past; on past days everything is.
@@ -181,7 +189,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
     <div className={`hly ${viewMode === "list" ? "hly--list-mode" : ""}`}>
       <div className="hly-h">
         <div className="hly-h-left">
-          <span className="t">Hourly</span>
+          <span className="t">{L("lbl_hourly", "Hourly")}</span>
         </div>
         {/* Pill toggle: CARDS ↔ LIST */}
         <div className="hly-pill">
@@ -192,7 +200,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
           <button
             className={`hly-pill-opt ${viewMode === "cards" ? "on" : ""}`}
             onClick={() => { setViewMode("cards"); setOpenIdx(null); }}
-          >Cards</button>
+          >{L("lbl_cards", "Cards")}</button>
           <button
             className={`hly-pill-opt ${viewMode === "list" ? "on" : ""}`}
             onClick={() => {
@@ -206,7 +214,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               setOpenIdx(idx);
               onSelect(idx);
             }}
-          >List</button>
+          >{L("lbl_list", "List")}</button>
         </div>
       </div>
 
@@ -309,12 +317,12 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
             <div className="hly-cp-grid">
               {/* Row 1 */}
               <div className="hly-cp-cell">
-                <div className="hly-cp-cell-lbl">Swell</div>
+                <div className="hly-cp-cell-lbl">{L("lbl_swell", "Swell")}</div>
                 <div className="hly-cp-cell-val">{fmt1(dsw.height)}<span className="hly-cp-cell-unit">m</span></div>
                 <div className="hly-cp-cell-sub">{swellDir} · {fmt0(dsw.period)}s</div>
               </div>
               <div className="hly-cp-cell">
-                <div className="hly-cp-cell-lbl">Wind</div>
+                <div className="hly-cp-cell-lbl">{L("lbl_wind", "Wind")}</div>
                 <div className="hly-cp-cell-val">{windLabel(h)}<span className="hly-cp-cell-unit">km/h</span></div>
                 <div className="hly-cp-cell-sub">
                   {windDir} · {h.windType}
@@ -322,30 +330,30 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                 </div>
               </div>
               <div className={`hly-cp-cell ${h.tideM == null ? "hly-cp-cell--no-data" : ""}`}>
-                <div className="hly-cp-cell-lbl">Tide</div>
+                <div className="hly-cp-cell-lbl">{L("lbl_tide", "Tide")}</div>
                 <div className="hly-cp-cell-val">{h.tideM != null ? <>{h.tideM.toFixed(1)}<span className="hly-cp-cell-unit">m</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
                 <div className="hly-cp-cell-sub">&nbsp;</div>
               </div>
               {/* Row 2 */}
               <div className={`hly-cp-cell ${h.airTemp == null ? "hly-cp-cell--no-data" : ""}`}>
-                <div className="hly-cp-cell-lbl">Air</div>
+                <div className="hly-cp-cell-lbl">{L("lbl_air", "Air")}</div>
                 <div className="hly-cp-cell-val">{h.airTemp != null ? <>{Math.round(h.airTemp)}<span className="hly-cp-cell-unit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
                 <div className="hly-cp-cell-sub">{h.rainProb != null ? `${Math.round(h.rainProb)}% rain` : " "}</div>
               </div>
               <div className={`hly-cp-cell ${h.seaTemp == null ? "hly-cp-cell--no-data" : ""}`}>
-                <div className="hly-cp-cell-lbl">Water</div>
+                <div className="hly-cp-cell-lbl">{L("lbl_water", "Water")}</div>
                 <div className="hly-cp-cell-val">{h.seaTemp != null ? <>{Math.round(h.seaTemp)}<span className="hly-cp-cell-unit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
                 <div className="hly-cp-cell-sub">&nbsp;</div>
               </div>
               <div className={`hly-cp-cell hly-cp-cell--current ${curKmh == null || curKmh < 0.18 ? "hly-cp-cell--no-data" : ""}`}>
-                <div className="hly-cp-cell-lbl">Current</div>
+                <div className="hly-cp-cell-lbl">{L("lbl_current", "Current")}</div>
                 <div className="hly-cp-cell-val">{curKmh != null && curKmh >= 0.18 ? <>{curKmh.toFixed(1)}<span className="hly-cp-cell-unit">km/h</span></> : <span style={{ opacity: 0.35 }}>—</span>}</div>
                 <div className="hly-cp-cell-sub">{(curKmh != null && curKmh >= 0.18 && h.currentDir != null) ? (typeof h.currentDir === "string" ? h.currentDir : degToCompass(h.currentDir)) : " "}</div>
               </div>
               {/* Row 3 — Daylight full-width */}
               {(rise || set) && (
                 <div className="hly-cp-cell hly-cp-cell--daylight">
-                  <div className="hly-cp-cell-lbl">Daylight</div>
+                  <div className="hly-cp-cell-lbl">{L("lbl_daylight", "Daylight")}</div>
                   <div className="hly-cp-cell-val">
                     <span>↑{rise}</span>
                     <span className="hly-cp-day-sep"> · </span>
@@ -415,12 +423,12 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                           <div className="hly-xgrid">
                             {/* Row 1 — Swell · Wind · Tide */}
                             <div className="hly-xcell">
-                              <div className="hly-xsub-top">Swell</div>
+                              <div className="hly-xsub-top">{L("lbl_swell", "Swell")}</div>
                               <div className="hly-xval" style={{ color: v.color }}>{fmt1(dsw.height)}<span className="hly-xunit">m</span></div>
                               <div className="hly-xsub">{swellDir} · {fmt0(dsw.period)}s</div>
                             </div>
                             <div className="hly-xcell">
-                              <div className="hly-xsub-top">Wind</div>
+                              <div className="hly-xsub-top">{L("lbl_wind", "Wind")}</div>
                               <div className="hly-xval" style={{ color: v.color }}>{windLabel(h)}<span className="hly-xunit">km/h</span></div>
                               <div className="hly-xsub">
                                 {windDir} · {h.windType}
@@ -428,7 +436,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                               </div>
                             </div>
                             <div className={`hly-xcell ${h.tideM == null ? "hly-xcell--no-data" : ""}`}>
-                              <div className="hly-xsub-top">Tide</div>
+                              <div className="hly-xsub-top">{L("lbl_tide", "Tide")}</div>
                               <div className="hly-xval" style={{ color: v.color }}>
                                 {h.tideM != null ? <>{h.tideM.toFixed(1)}<span className="hly-xunit">m</span></> : <span style={{ opacity: 0.35 }}>—</span>}
                               </div>
@@ -436,21 +444,21 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             </div>
                             {/* Row 2 — Air · Water · Current (with "—" fallback) */}
                             <div className={`hly-xcell ${h.airTemp == null ? "hly-xcell--no-data" : ""}`}>
-                              <div className="hly-xsub-top">Air</div>
+                              <div className="hly-xsub-top">{L("lbl_air", "Air")}</div>
                               <div className="hly-xval" style={{ color: v.color }}>
                                 {h.airTemp != null ? <>{Math.round(h.airTemp)}<span className="hly-xunit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}
                               </div>
                               <div className="hly-xsub">&nbsp;</div>
                             </div>
                             <div className={`hly-xcell ${h.seaTemp == null ? "hly-xcell--no-data" : ""}`}>
-                              <div className="hly-xsub-top">Water</div>
+                              <div className="hly-xsub-top">{L("lbl_water", "Water")}</div>
                               <div className="hly-xval" style={{ color: v.color }}>
                                 {h.seaTemp != null ? <>{Math.round(h.seaTemp)}<span className="hly-xunit">°C</span></> : <span style={{ opacity: 0.35 }}>—</span>}
                               </div>
                               <div className="hly-xsub">&nbsp;</div>
                             </div>
                             <div className={`hly-xcell hly-xcell--current ${curKmh == null || curKmh < 0.18 ? "hly-xcell--no-data" : ""}`}>
-                              <div className="hly-xsub-top">Current</div>
+                              <div className="hly-xsub-top">{L("lbl_current", "Current")}</div>
                               <div className="hly-xval" style={{ color: v.color }}>
                                 {curKmh != null && curKmh >= 0.18 ? <>{curKmh.toFixed(1)}<span className="hly-xunit">km/h</span></> : <span style={{ opacity: 0.35 }}>—</span>}
                               </div>
@@ -459,7 +467,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             {/* Row 3 — Daylight full-width */}
                             {(rise || set) && (
                               <div className="hly-xcell hly-xcell--daylight">
-                                <div className="hly-xsub-top">Daylight</div>
+                                <div className="hly-xsub-top">{L("lbl_daylight", "Daylight")}</div>
                                 <div className="hly-xval hly-xdaylight">
                                   <span>↑{rise}</span>
                                   <span className="hly-xdaylight-sep">·</span>
