@@ -691,10 +691,38 @@ export function usableGustKmh(h) {
 // beginner à 15 et pas 20 — validé sur une journée type Perth, où ça revient
 // à fermer la fenêtre vers 9h quand le Doctor monte, ce qui EST la réalité.
 export const LEARNER_WIND_CAP = {
-  first_timer: { other: 12, offshore: 17 },
-  beginner:    { other: 15, offshore: 20 },
-  early_int:   { other: 20, offshore: 25 },
+  first_timer: { other: 16, offshore: 21 },
+  beginner:    { other: 20, offshore: 25 },
+  early_int:   { other: 24, offshore: 29 },
 };
+
+// ⚠️ POURQUOI 20 ET PAS 15 — deux journées réelles l'encadrent, et une
+// seule valeur satisfait les deux :
+//   17/09 · une beginner : 0.7 m/11 s, vent 13 km/h NW onshore, face 1.4 ft
+//           "petites vagues, pas de vent, super session"
+//   14/09 · Louis        : SE cross ~20 km/h, trajet pour rien
+//
+// Le piège était indirect. `flipProximity` (cf. scoreForLevel) fait GLISSER
+// le score vers la bande suivante AVANT la bascule du verdict, pour éviter
+// une falaise. Conséquence : baisser le plafond ne déplace pas seulement le
+// point de SKIP, ça écrase tout le score ~4 km/h en amont. Avec un plafond
+// à 15, la session ci-dessus rendait 35 (Fair, barres orangées) au lieu de
+// 46 (Good, vert) — l'app décourageait une session que la personne a
+// trouvée excellente.
+//   plafond 15 : 12km→43  13km→35  14km→27  15km→23
+//   plafond 20 : 12km→47  13km→46  14km→46  15km→46
+//
+// ⚠️ DONC : tout changement de plafond doit être vérifié sur le SCORE
+// affiché, pas seulement sur le verdict. Le verdict basculait correctement
+// dans les deux cas ; c'est le nombre et la couleur qui mentaient.
+//
+// Faire rater une bonne session est une faute aussi grave que faire
+// conduire pour rien — et un score orangé sur une bonne journée produit
+// exactement ça : personne ne se déplace en voyant du rouge.
+//
+// first_timer 16 et early_int 24 ne sont PAS prouvés par le terrain : ils
+// sont décalés depuis beginner pour garder l'ordre monotone
+// (first_timer <= beginner <= early_int), qui est un invariant testé.
 
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la

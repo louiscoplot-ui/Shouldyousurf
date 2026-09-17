@@ -1038,11 +1038,55 @@ describe("cas terrain Trigg", () => {
     expect(usableGustKmh(hour({ ...base, windGustKn: 5 / 1.852 }))).toBeNull();
   });
 
+  // JEUDI 17/09 — une beginner, session reellement faite et jugee "super".
+  // 0.7 m / 11 s, vent 13 km/h NW onshore, face 1.4 ft. Ses mots : "petites
+  // vagues, pas de vent, super session".
+  //
+  // C'est le cas qui a revele le piege du lisseur : le VERDICT etait deja
+  // bon (WORTH IT), mais le SCORE affiche tombait a 35 Fair avec des barres
+  // orangees, parce que flipProximity anticipe la bascule ~4 km/h a l'avance
+  // et que le plafond etait descendu a 15. Personne ne se deplace en voyant
+  // ca. Un verdict juste ne suffit pas si le nombre a cote decourage.
+  it("session beginner du 17/09 (13 km/h) : verdict ouvert ET score engageant", () => {
+    const h = hour({
+      time: "2026-09-17T16:00", swellHeight: 0.7, swellPeriod: 11, swellDir: 247,
+      windWaveHeight: 0.25, windWaveDir: 315, tideM: 0.1, currentVel: 0.5 / 3.6,
+      windSpeedKn: 13 / 1.852, windGustKn: (13 * 1.6) / 1.852, windDir: 315, // NW onshore
+    });
+    const ft = faceFtOf(h, TRIGG_REEL);
+    expect(ft).toBeGreaterThan(1);
+    expect(ft).toBeLessThan(2);
+    expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).not.toBe("no");
+    // LE point du test : le score ne doit pas etre ecrase par l'anticipation
+    // du lisseur. 40 = plancher de "Fair haut / Good" — en dessous, l'ecran
+    // vire a l'orange et la session est enterree visuellement.
+    expect(scoreForLevel(h, TRIGG_REEL, "beginner").score).toBeGreaterThanOrEqual(40);
+  });
+
+  it("un vent modere ne doit pas ecraser le score en amont du plafond", () => {
+    // Generalisation du cas ci-dessus : entre 6 et 14 km/h, le score d'une
+    // beginner sur une vague dans sa zone doit rester stable. S'il s'effondre
+    // avant le plafond, c'est que le plafond est trop bas.
+    const at = (kmh) => scoreForLevel(hour({
+      swellHeight: 0.7, swellPeriod: 11, swellDir: 247,
+      windWaveHeight: 0.25, windWaveDir: 315, tideM: 0.1, currentVel: 0.5 / 3.6,
+      windSpeedKn: kmh / 1.852, windGustKn: (kmh * 1.6) / 1.852, windDir: 315,
+    }), TRIGG_REEL, "beginner").score;
+    expect(at(6) - at(14)).toBeLessThanOrEqual(10);
+  });
+
   // LUNDI 14/09 17h  // LUNDI 14/09 17h — l'app affichait "Good 49 · WORTH IT", il a conduit,
   // c'était très venteux et pas surfable. Valeurs exactes de son écran.
   // Le vent affiché (10 km/h) était lui-même sous-lu : le vrai était 20+.
-  it("lundi 14/09 venteux, 2-4 ft : SKIP pour un beginner dès 15 km/h", () => {
-    [15, 18, 20, 25].forEach((kmh) => {
+  // ⚠️ Ce test exigeait SKIP "dès 15 km/h". 15 n'était PAS la donnée : c'était
+  // le plafond posé le 16/09, recopié ici. La donnée rapportée du terrain
+  // était "au moins 20, si ce n'est plus". Le test sur-spécifiait donc un
+  // réglage au lieu d'un fait, et il a bloqué une correction légitime le
+  // 17/09. Il vérifie désormais ce qui a VRAIMENT été observé : 20 et au-delà.
+  // Ne jamais encoder un seuil interne dans un cas terrain — seulement la
+  // mesure ou le témoignage.
+  it("lundi 14/09 venteux, 2-4 ft : SKIP pour un beginner à partir de 20 km/h", () => {
+    [20, 22, 25, 30].forEach((kmh) => {
       const h = hour({
         time: "2026-09-14T17:00", swellHeight: 1.3, swellDir: 270,
         windWaveHeight: 0.4, windWaveDir: 200, tideM: 0.1, currentVel: 0.6 / 3.6,

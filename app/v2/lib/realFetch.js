@@ -450,7 +450,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 2;
+const CACHE_V = 3; // 3 : plafonds de vent learner remontes (17/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
