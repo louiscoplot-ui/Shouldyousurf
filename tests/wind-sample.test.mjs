@@ -14,7 +14,8 @@
 // mesuré sur le centre de cellule que l'API renvoie — jamais une distance
 // devinée à l'avance.
 import { describe, it, expect } from "vitest";
-import { windSamplePoint, resolveSeaWind, offshoreBearing, offsetPoint } from "../app/v2/lib/realFetch.js";
+import { windSamplePoint, resolveSeaWind, offshoreBearing, offsetPoint, pickProbedBearing } from "../app/v2/lib/realFetch.js";
+import { angDelta } from "../app/v2/lib/prodScoring.js";
 
 const TRIGG = { id: "trigg", lat: -31.8826, lng: 115.7519, idealSwellDir: 240 };
 
@@ -253,5 +254,80 @@ describe("resolveSeaWind — garde-fous, jamais pire qu'avant le fix", () => {
     expect(resolveSeaWind([], [], BEARING).wind).toBeNull();
     expect(resolveSeaWind([{}], [], BEARING).wind).toEqual({});
     expect(resolveSeaWind(null, [], BEARING).wind).toBeNull();
+  });
+});
+
+// ── Sonde du cap du large : sélection contrainte ──────────────────────
+// La sonde tourne maintenant AUSSI pour les 111 spots curés. Elle ne doit
+// jamais remplacer le savoir humain (idealSwellDir), seulement l'affiner :
+// ±90° maximum, et uniquement si elle gagne nettement. Toute la logique de
+// décision est pure et testée ici — le réseau n'intervient pas.
+describe("pickProbedBearing", () => {
+  const s = (bearing, mean) => ({ bearing, mean });
+
+  it("spot libre (pas d'idealSwellDir) : prend simplement le plus au large", () => {
+    const samples = [s(0, null), s(45, 0.2), s(90, 1.9), s(135, 1.2), s(180, null)];
+    expect(pickProbedBearing(samples, null)).toBe(90);
+    expect(pickProbedBearing(samples, undefined)).toBe(90);
+    expect(pickProbedBearing(samples, NaN)).toBe(90);
+  });
+
+  it("spot curé : ne s'éloigne JAMAIS de plus de 90 deg du cap humain", () => {
+    // Le plus gros est plein est (90) mais le spot regarde l'ouest (270).
+    // C'est le cas du spot au bout d'une pointe : l'autre côté est l'océan,
+    // mais pas le sien. On doit rester dans l'hemisphere de idealSwellDir.
+    const samples = [s(90, 3.0), s(225, 1.0), s(270, 1.1), s(315, 1.0)];
+    const got = pickProbedBearing(samples, 270);
+    expect(got).not.toBe(90);
+    expect(Math.abs(angDelta(got ?? 270, 270))).toBeLessThanOrEqual(90);
+  });
+
+  it("spot curé deja bien oriente : ne change rien (null)", () => {
+    // Le cap humain porte deja la plus grosse houle : aucune raison de bouger.
+    const samples = [s(225, 1.0), s(270, 1.6), s(315, 1.1)];
+    expect(pickProbedBearing(samples, 270)).toBeNull();
+  });
+
+  it("deux caps dans la MEME cellule → on ne bascule pas pour rien", () => {
+    // Meme cellule de grille = meme serie = meme moyenne. Changer de cap ne
+    // gagnerait rien et ferait bouger tous les scores. C'est le seul role de
+    // l'epsilon de gain.
+    expect(pickProbedBearing([s(270, 1.6), s(315, 1.6)], 270)).toBeNull();
+    expect(pickProbedBearing([s(270, 1.6), s(315, 1.605)], 270)).toBeNull();
+  });
+
+  it("un gain reel, meme modeste, est pris : le seuil ne doit pas desactiver la feature", () => {
+    // Piege reel : un seuil pose "par prudence" a +15 % annulait la
+    // correction sur la majorite des 111 spots — il desactivait la feature
+    // en silence au lieu de la securiser. Le garde-fou, c'est le +-90 deg.
+    expect(pickProbedBearing([s(270, 1.57), s(315, 1.80)], 270)).toBe(315);
+  });
+
+  it("spot curé oblique : gain franc → on corrige le cap", () => {
+    // Cas mesure a Trigg : cellule cotiere 1.32 -> cellule 100 % eau 1.64,
+    // soit +24 %. C'est exactement ce que la sonde doit rattraper.
+    const samples = [s(225, 1.32), s(270, 1.64), s(315, 1.30)];
+    expect(pickProbedBearing(samples, 240)).toBe(270);
+  });
+
+  it("cellules a terre (mean null) ignorees, jamais choisies", () => {
+    const samples = [s(0, null), s(45, null), s(270, 1.5), s(315, null)];
+    expect(pickProbedBearing(samples, null)).toBe(270);
+    // Que des cellules a terre → on ne sait rien → null, comportement d'avant.
+    expect(pickProbedBearing([s(0, null), s(90, null)], null)).toBeNull();
+    expect(pickProbedBearing([], 270)).toBeNull();
+    expect(pickProbedBearing(null, 270)).toBeNull();
+  });
+
+  it("une houle nulle ou negative n'est pas un candidat", () => {
+    expect(pickProbedBearing([s(90, 0), s(270, -1)], null)).toBeNull();
+  });
+
+  it("le passage 360/0 est gere comme un angle, pas comme un nombre", () => {
+    // idealSwellDir 350, candidat a 20 : ecart reel 30 deg, donc admissible.
+    const samples = [s(350, 1.0), s(20, 1.5)];
+    expect(pickProbedBearing(samples, 350)).toBe(20);
+    // idealSwellDir 10, candidat a 200 : ecart 170 deg, hors contrainte.
+    expect(pickProbedBearing([s(10, 1.0), s(200, 3.0)], 10)).toBeNull();
   });
 });

@@ -120,14 +120,84 @@ export function marineSamplePoint(spot, bearing) {
 // par coordonnées (la position de la mer ne bouge pas), donc une seule sonde
 // par spot et par appareil.
 const PROBE_BEARINGS = [0, 45, 90, 135, 180, 225, 270, 315];
-const PROBE_KEY = "surf-marine-bearing-";
+// v2 : la sonde sert maintenant AUSSI aux spots curés, avec contrainte.
+// L'ancienne clé portait des caps choisis sans contrainte — on repart propre.
+const PROBE_KEY = "surf-marine-bearing-v2-";
+
+// Un spot curé porte un `idealSwellDir` posé à la main : la houle vient de
+// là, donc c'est la mer. On ne le REMPLACE pas par une mesure machine, on
+// s'en sert de garde-fou — la sonde ne peut choisir qu'un cap à ±90° de lui.
+// Sans ça, un spot au bout d'une pointe ou au fond d'une baie pourrait se
+// faire sonder de l'autre côté du cap : plein océan, mais pas SON océan.
+const PROBE_MAX_DEVIATION_DEG = 90;
+
+// Épsilon anti-bascule-pour-rien. Deux caps voisins tombent souvent dans LA
+// MÊME cellule de grille : l'API rend alors exactement la même série, donc la
+// même moyenne, et changer de cap ne gagnerait rien tout en faisant bouger
+// tous les scores. Ce seuil sert UNIQUEMENT à écarter ce cas.
+// ⚠️ Ce n'est PAS une affirmation sur l'ampleur d'un vrai gain : on ne l'a
+// mesurée qu'une fois (Trigg 01/08, cellule côtière 1.32 m → cellule 100 %
+// eau 1.64 m, +24 %) et une mesure ne fait pas une constante. Une version
+// précédente mettait 1.15 « par prudence » : sur les 111 spots ça annulait
+// la correction dans la majorité des cas, donc ça désactivait la feature en
+// silence au lieu de la sécuriser. Le garde-fou qui protège vraiment, c'est
+// la contrainte ±90° au-dessus, pas ce chiffre.
+const PROBE_MIN_GAIN = 1.02;
+
+// Sélection PURE (aucun réseau) : parmi les caps sondés, lequel garder.
+//   samples    : [{ bearing, mean }] — mean = houle moyenne, null si la
+//                cellule est à terre (masquée / série vide)
+//   refBearing : idealSwellDir du spot curé, ou null/NaN pour un spot libre
+// Retourne un cap, ou null = « ne change rien, garde le comportement d'avant ».
+export function pickProbedBearing(samples, refBearing) {
+  const valid = (samples || []).filter(
+    (s) => Number.isFinite(s?.bearing) && Number.isFinite(s?.mean) && s.mean > 0,
+  );
+  if (!valid.length) return null;
+
+  // Spot libre : aucun savoir humain à protéger, on prend le plus au large.
+  if (!Number.isFinite(refBearing)) {
+    return valid.reduce((a, b) => (b.mean > a.mean ? b : a)).bearing;
+  }
+
+  // Spot curé : on ne s'éloigne jamais de plus de 90° du cap humain.
+  const near = valid.filter(
+    (s) => Math.abs(angDelta(s.bearing, refBearing)) <= PROBE_MAX_DEVIATION_DEG,
+  );
+  if (!near.length) return null;
+
+  const best = near.reduce((a, b) => (b.mean > a.mean ? b : a));
+  // Référence = le cap sondé le plus proche de idealSwellDir, c'est-à-dire
+  // très exactement le point que l'app interroge AUJOURD'HUI. On ne bascule
+  // que si un autre cap admissible porte franchement plus de houle.
+  const ref = near.reduce((a, b) =>
+    Math.abs(angDelta(b.bearing, refBearing)) < Math.abs(angDelta(a.bearing, refBearing)) ? b : a,
+  );
+  if (best.bearing === ref.bearing) return null;
+  return best.mean >= ref.mean * PROBE_MIN_GAIN ? best.bearing : null;
+}
+
+// Lecture SYNCHRONE du cap déjà sondé pour ce spot. Retourne le cap, `null`
+// si la sonde a conclu « rien à changer », ou `undefined` si ce spot n'a
+// jamais été sondé sur cet appareil. Les trois cas sont distincts : c'est ce
+// qui permet de ne lancer la sonde qu'une fois.
+export function readProbedBearing(spot) {
+  if (!Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) return undefined;
+  try {
+    const raw = localStorage.getItem(`${PROBE_KEY}${spot.lat.toFixed(3)},${spot.lng.toFixed(3)}`);
+    if (!raw) return undefined;
+    const cached = JSON.parse(raw);
+    if (!cached || !("bearing" in cached)) return undefined;
+    return Number.isFinite(cached.bearing) ? cached.bearing : null;
+  } catch { return undefined; }
+}
 
 export async function probeOffshoreBearing(spot, marineModels, signal) {
   if (!Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) return null;
   const key = `${PROBE_KEY}${spot.lat.toFixed(3)},${spot.lng.toFixed(3)}`;
   try {
     const cached = JSON.parse(localStorage.getItem(key) || "null");
-    if (Number.isFinite(cached?.bearing)) return cached.bearing;
+    if (cached && "bearing" in cached) return Number.isFinite(cached.bearing) ? cached.bearing : null;
   } catch {}
 
   const pts = PROBE_BEARINGS.map((b) => offsetPoint(spot.lat, spot.lng, b, MARINE_OFFSET_KM));
@@ -144,19 +214,19 @@ export async function probeOffshoreBearing(spot, marineModels, signal) {
 
   // Multi-points → tableau ; point unique → objet. On normalise.
   const locs = Array.isArray(json) ? json : [json];
-  let best = null;
-  locs.forEach((loc, i) => {
-    const series = loc?.hourly?.swell_wave_height;
-    if (!Array.isArray(series)) return;
+  const samples = PROBE_BEARINGS.map((bearing, i) => {
+    const series = locs[i]?.hourly?.swell_wave_height;
+    if (!Array.isArray(series)) return { bearing, mean: null };
     const vals = series.filter((v) => Number.isFinite(v));
-    if (vals.length < 6) return; // cellule à terre : masquée ou quasi vide
-    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-    if (!best || mean > best.mean) best = { mean, bearing: PROBE_BEARINGS[i] };
+    if (vals.length < 6) return { bearing, mean: null }; // cellule à terre
+    return { bearing, mean: vals.reduce((a, b) => a + b, 0) / vals.length };
   });
-  if (!best) return null;
 
-  try { localStorage.setItem(key, JSON.stringify({ bearing: best.bearing, at: Date.now() })); } catch {}
-  return best.bearing;
+  const picked = pickProbedBearing(samples, spot?.idealSwellDir);
+  // On mémorise MÊME un null : « sondé, rien à changer ici ». Sans ça un spot
+  // déjà bien orienté se refaisait sonder à chaque chargement.
+  try { localStorage.setItem(key, JSON.stringify({ bearing: picked, at: Date.now() })); } catch {}
+  return picked;
 }
 
 // ── Endpoint Open-Meteo : gratuit (non-commercial) vs commercial ───────
@@ -448,7 +518,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 3; // 3 : plafonds de vent learner remontes (17/09)
+const CACHE_V = 4; // 4 : sonde du cap du large etendue aux spots cures (17/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
@@ -520,9 +590,41 @@ export async function fetchRealForecast(spot, signal) {
   // Spot personnalisé (pas d'idealSwellDir curé) : on sonde d'abord où est la
   // mer, une seule fois par appareil et par position. Échec → null → on
   // retombe sur les coordonnées du spot, exactement comme avant.
-  const probedBearing = Number.isFinite(spot.idealSwellDir)
-    ? null
-    : await probeOffshoreBearing(spot, marineModels, signal);
+  // La sonde tourne pour TOUS les spots, curés compris. Pour un spot curé
+  // elle est contrainte à ±90° de idealSwellDir et ne mord que si elle gagne
+  // vraiment (cf. pickProbedBearing) : le décalage de 5 km partait jusqu'ici
+  // dans la direction de idealSwellDir, ce qui est le large sur une côte
+  // franche mais un cap oblique ailleurs. Écart médian mesuré sur les 111
+  // spots entre idealSwellDir et le large présumé : 30°, 90e pct 75°. À 75°
+  // un décalage de 5 km ne gagne que 1.3 km vers le large — sur une grille
+  // de 9 km, on reste dans la cellule côtière et le fix ne mord pas.
+  //
+  // ⚠️ LATENCE : la sonde est un aller-retour de PLUS, et son résultat décide
+  // des coordonnées de la requête principale — donc elle la bloque. Un spot
+  // curé a un repli parfaitement valable (idealSwellDir, le comportement
+  // d'aujourd'hui) : on ne fait PAS attendre l'écran pour lui. La sonde part
+  // en parallèle, son résultat est mis en cache, et elle mord dès le
+  // chargement suivant. Premier lancement = exactement l'app d'avant, à la
+  // milliseconde près. Un spot LIBRE, lui, n'a aucun repli — sans la sonde il
+  // lit la cellule terrestre — donc lui seul attend.
+  const cured = Number.isFinite(spot.idealSwellDir);
+  let probedBearing = null;
+  if (cured) {
+    // Feu et oubli : jamais attendu, jamais propagé en erreur (la sonde est
+    // déjà best-effort de bout en bout et avale ses propres échecs).
+    probedBearing = readProbedBearing(spot);
+    if (probedBearing === undefined) {
+      probedBearing = null;
+      // Sans localStorage (rendu serveur, navigation privée verrouillée) le
+      // résultat ne survivrait à rien : on brûlerait une requête par
+      // chargement sans jamais en profiter. On s'abstient.
+      if (typeof localStorage !== "undefined") {
+        probeOffshoreBearing(spot, marineModels, signal).catch(() => {});
+      }
+    }
+  } else {
+    probedBearing = await probeOffshoreBearing(spot, marineModels, signal);
+  }
   const mp = marineSamplePoint(spot, probedBearing);
   // Coordonnées de la requête VENT, dans le MÊME appel : [0] toujours le
   // spot (air, pluie, lever/coucher), puis les candidats au large du plus
