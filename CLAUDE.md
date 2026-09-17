@@ -90,7 +90,7 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
 
 - `MainScreen.jsx` (~850 lignes) — orchestrateur principal
   - `personalReason` useMemo : `pv` ← `getPersonalVerdict`, passé à `getPersonalAdviceKey`
-  - `danger` useMemo : bandeau `.danger-banner` inline (learner + verdict no + hazard physique) — il n'y a PAS de composant DangerBanner.jsx séparé
+  - `danger` useMemo : bandeau `.danger-banner` inline (learner + verdict no + hazard **PHYSIQUE**) — il n'y a PAS de composant DangerBanner.jsx séparé. ⚠️ Le vent SEUL ne déclenche pas le bandeau : `wind === "blown"` ne compte que si la taille n'est ni `too_small` ni `small`. Terrain 17/09 : bandeau rouge "Dangerous conditions" sur **0-2 ft**, des vagues minuscules. Du vent qui hache un pied de vague n'est pas dangereux, c'est mauvais — et le verdict SKIP le dit déjà. Crier au danger sur une journée inoffensive use l'alerte : le jour où elle sort sur un vrai rip, elle ne sera plus lue.
   - `currentHour` calculé dans le **fuseau du spot** (Intl + effectiveSpot.timezone), pas le device
   - **Lancement cache-first (SWR)** : seed avec le dernier payload LIVE (localStorage `surf-forecast-cache-<spotId>`, 24h max, re-étiqueté par date via `rehydrateCachedPayload`) → vraies données en ~1s, remplacées en silence par le fetch frais. Sans cache : seed mock en dataSource "loading" (bannière neutre, pas rouge) et le splash reste jusqu'au settle du premier fetch. Bannière ROUGE = uniquement échec sans cache ; échec avec cache = bannière douce `cached_banner`.
   - `window.__appReady = true` : au seed CACHE (vraies données à l'écran) OU au settle du premier fetch — jamais sur le mock nu. Kill-switch layout.js 20s > timeout fetch 15s ; plafond du poller splash 16s.
@@ -195,6 +195,7 @@ surtout mieux qu'un aller-retour de plus imposé à Louis.
 
 ### Process strict
 1. Édite le code
+1bis. ⚠️ **Scoring ou verdict touché → BUMPER `CACHE_V` dans realFetch.js.** Le payload en cache porte les `hour.score` / `faceFt` / `dom` DÉJÀ CALCULÉS. Sans bump, l'app resserre pendant 24 h des verdicts que le code ne produit plus. Cas terrain 17/09 : écran "SKIP · 22 Poor · DANGEROUS" + fourchette de vent, alors que le moteur déployé rendait "OK · 44 Fair" sans fourchette sur les mêmes données — les fixes étaient en prod, le cache les masquait. Verrouillé par `tests/cache.test.mjs`.
 2. `npm test` (obligatoire si scoring touché), `npm run lint:undef` puis `npm run build` pour vérifier
 
 ⚠️ `npm run build` NE DÉTECTE PAS une variable supprimée mais encore utilisée dans le JSX.
