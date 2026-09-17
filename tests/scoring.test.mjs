@@ -21,7 +21,7 @@ import {
   USER_LEVELS,
   mToFt,
   LEARNER_WIND_CAP,
-  feltWindKmh,
+  usableGustKmh,
 } from "../app/v2/lib/prodScoring.js";
 import { BREAKS } from "../app/breaks.js";
 import { marineSamplePoint, offsetPoint, probeOffshoreBearing } from "../app/v2/lib/realFetch.js";
@@ -96,9 +96,31 @@ describe("swellAttenuation", () => {
 
 describe("scoreV2 surface factors", () => {
   it("penalizes heavy gusts over the same mean wind", () => {
+    // Le mock tourne à 5 kn de moyenne. Une rafale PLAUSIBLE à ce régime,
+    // c'est 8-9 kn (facteur 1.6-1.8), pas 30.
     const calm = scoreV2(mk({}), spot, "intermediate").score;
-    const gusty = scoreV2(mk({ windGustKn: 30 }), spot, "intermediate").score;
+    const gusty = scoreV2(mk({ windGustKn: 9 }), spot, "intermediate").score;
     expect(gusty).toBeLessThan(calm);
+  });
+
+  it("une rafale aberrante ne pénalise PAS le score", () => {
+    // 5 kn de moyenne annoncés avec 30 kn de rafale = facteur 6. Ce n'est
+    // pas du vent, c'est la paramétrisation du modèle qui déraille. Cas
+    // terrain 17/09 : l'app affichait 12-40 km/h pendant que quelqu'un
+    // surfait dans du calme. Laisser ça manger le score, c'est enterrer
+    // des sessions qui n'ont rien demandé.
+    const calm = scoreV2(mk({}), spot, "intermediate").score;
+    expect(scoreV2(mk({ windGustKn: 30 }), spot, "intermediate").score).toBe(calm);
+  });
+
+  it("la crédibilité de la rafale s'érode en RAMPE, sans falaise", () => {
+    // Un couperet net ferait sauter le score au franchissement du seuil.
+    let prev = null;
+    for (let g = 5; g <= 40; g += 0.1) {
+      const sc = scoreV2(mk({ windGustKn: g }), spot, "intermediate").score;
+      if (prev != null) expect(Math.abs(sc - prev)).toBeLessThanOrEqual(3);
+      prev = sc;
+    }
   });
   it("penalizes short-period windswell chop", () => {
     const clean = scoreV2(mk({ swellPeriod: 9 }), spot, "intermediate").score;
@@ -940,41 +962,39 @@ describe("cas terrain Trigg", () => {
     });
   });
 
-  // RELEVÉ RÉEL Open-Meteo, Trigg, 14/09 18h15 : moyenne 10.3 km/h,
-  // rafales 22.3, direction 125 (offshore à Trigg). L'app affichait
-  // "10 km/h · clean" ; sur place ça soufflait visiblement plus.
-  // C'est la rafale, pas le point de mesure, qui portait l'information.
-  it("relevé réel 10.3/22.3 : la rafale sort le vent de 'clean'", () => {
+  // DEUX RELEVÉS QUI SE CONTREDISENT — c'est ça qui a tranché.
+  //   14/09 18h15 · moyenne 10.3, rafale 22.3 (facteur 2.17) · "ça souffle
+  //                 plus que ce qui est affiché"
+  //   17/09       · moyenne 12,   rafale 40   (facteur 3.33) · quelqu'un
+  //                 DANS L'EAU en train de surfer : "pas de vent"
+  // La rafale d'Open-Meteo n'est donc pas un prédicteur fiable du vent subi.
+  // Elle ne décide plus rien ; elle n'est retenue que si elle est plausible.
+  it("une rafale aberrante (facteur 3.3) est ignorée, pas propagée", () => {
     const h = hour({
-      time: "2026-09-14T18:00", swellHeight: 1.3, swellDir: 270,
-      windSpeedKn: 10.3 / 1.852, windGustKn: 22.3 / 1.852, windDir: 125,
+      time: "2026-09-17T12:00", swellHeight: 1.0, swellDir: 250,
+      windSpeedKn: 12 / 1.852, windGustKn: 40 / 1.852, windDir: 190,
     });
-    // Le vent ressenti est à mi-chemin entre moyenne et rafale.
-    expect(feltWindKmh(h)).toBeCloseTo(16.3, 1);
-    // Avant : "clean" pour un beginner. La moyenne seule ne pouvait pas
-    // voir un facteur de rafale de 2.17.
-    expect(classifyConditions("beginner", h, TRIGG_REEL).wind).not.toBe("clean");
-    // Aucun learner ne reçoit un GO franc sur un vent qui double par
-    // bourrasques. Volontairement PAS "no" en dur : ce relevé tombe à
-    // 16.3 de vent ressenti pour un plafond first_timer offshore de 17,
-    // soit 0.7 km/h sous la bascule. Figer "no" ici reviendrait à graver
-    // un résultat que le moteur ne tient que par accident.
-    // early_int n'est PAS dans la liste : sur un offshore à 2-4 ft, un
-    // mid-length encaisse des rafales à 22. Le moteur lui rend "yes" et
-    // c'est défendable — c'est le foamie qu'elles déséquilibrent.
-    ["first_timer", "beginner"].forEach((lvl) => {
-      expect(getPersonalVerdict(lvl, h, TRIGG_REEL)).not.toBe("yes");
-    });
+    expect(usableGustKmh(h)).toBeNull();
+    // LE test de non-régression : quelqu'un surfait tranquillement pendant
+    // que l'app annonçait 12-40. Une rafale du modèle ne doit JAMAIS, à elle
+    // seule, transformer une session calme en SKIP. Faire rater une bonne
+    // session est aussi grave que faire conduire pour rien.
+    expect(getPersonalVerdict("beginner", h, TRIGG_REEL)).not.toBe("no");
+    expect(classifyConditions("beginner", h, TRIGG_REEL).wind).not.toBe("blown");
   });
 
-  it("pas de rafale servie → on ne fabrique rien, la moyenne fait foi", () => {
+  it("une rafale plausible (facteur 1.5) reste prise en compte", () => {
+    const h = hour({ swellHeight: 1.0, swellDir: 250, windSpeedKn: 12 / 1.852, windGustKn: 18 / 1.852, windDir: 190 });
+    expect(usableGustKmh(h)).toBeCloseTo(18, 0);
+  });
+
+  it("rafale absente ou sous la moyenne → null, on ne fabrique rien", () => {
     const base = { swellHeight: 1.3, swellDir: 270, windSpeedKn: 12 / 1.852, windDir: 125 };
-    expect(feltWindKmh(hour(base))).toBeCloseTo(12, 1);
-    // Rafale aberrante (sous la moyenne) : ignorée, pas de valeur négative.
-    expect(feltWindKmh(hour({ ...base, windGustKn: 5 / 1.852 }))).toBeCloseTo(12, 1);
+    expect(usableGustKmh(hour(base))).toBeNull();
+    expect(usableGustKmh(hour({ ...base, windGustKn: 5 / 1.852 }))).toBeNull();
   });
 
-  // LUNDI 14/09 17h — l'app affichait "Good 49 · WORTH IT", il a conduit,
+  // LUNDI 14/09 17h  // LUNDI 14/09 17h — l'app affichait "Good 49 · WORTH IT", il a conduit,
   // c'était très venteux et pas surfable. Valeurs exactes de son écran.
   // Le vent affiché (10 km/h) était lui-même sous-lu : le vrai était 20+.
   it("lundi 14/09 venteux, 2-4 ft : SKIP pour un beginner dès 15 km/h", () => {
