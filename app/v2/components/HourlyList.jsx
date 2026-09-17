@@ -270,13 +270,6 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
         const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
         const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
         const windTrend = getWindTrend(h, hours);
-        // La rafale était fetchée depuis toujours mais n'existait QUE dans
-        // StickyInfoBar, que le CSS cache dans les deux modes de vue : en
-        // pratique l'utilisateur ne l'a jamais vue. Or c'est elle qu'on
-        // ressent debout sur la plage — une moyenne à 10 avec des rafales à
-        // 25 se vit comme "il y a 25", et l'app avait l'air de mentir. Même
-        // seuil que StickyInfoBar (+8 km/h) pour ne pas bruiter la ligne.
-
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
         const dayKey   = h.time?.split("T")?.[0];
         const sun      = sunByDay ? sunByDay[dayKey] : null;
@@ -302,15 +295,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
-                {/* Le vent n'est PAS un chiffre, c'est une fourchette. Afficher
-                    la seule moyenne, c'est annoncer 10 km/h un soir où ça
-                    tape à 22 en bourrasques — l'utilisateur sur la plage ne
-                    reconnaît pas ce qu'il ressent, et il a raison. Dès que
-                    la rafale décolle, c'est la FOURCHETTE qui est la valeur
-                    honnête, pas une note en petit à côté. */}
-                <div className="hly-cp-cell-val">
-                  {windLabel(h)}<span className="hly-cp-cell-unit">km/h</span>
-                </div>
+                <div className="hly-cp-cell-val">{windLabel(h)}<span className="hly-cp-cell-unit">km/h</span></div>
                 <div className="hly-cp-cell-sub">
                   {windDir} · {h.windType}
                   {windTrend && <span className="hly-cp-wind-trend"> · →{windTrend.turnsTo} {windTrend.inHours}h</span>}
