@@ -7,8 +7,13 @@ import { fmtHour } from "../lib/hooks";
 export default function BestWindow({ day }) {
   const best = day.bestHour;
   if (!best) return null;
-  const swell = typeof best.swellHeight === "number" ? best.swellHeight.toFixed(1) : "—";
-  const period = best.swellPeriod != null ? Math.round(best.swellPeriod) : "—";
+  // Même règle que HourlyList : on décrit la partition DOMINANTE, celle qui
+  // porte le score affiché juste à côté, pas la primaire d'Open-Meteo.
+  const dom = best.dom || best;
+  const domH = typeof dom.swellHeight === "number" ? dom.swellHeight : best.swellHeight;
+  const domP = dom.swellPeriod != null ? dom.swellPeriod : best.swellPeriod;
+  const swell = typeof domH === "number" ? domH.toFixed(1) : "—";
+  const period = domP != null ? Math.round(domP) : "—";
   const wind = best.windKmh != null ? Math.round(best.windKmh) : "—";
   return (
     <div className="best">

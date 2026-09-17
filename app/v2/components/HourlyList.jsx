@@ -10,6 +10,25 @@ import { coherentVerdict } from "../lib/verdict";
 import { degToCompass, getWindTrend } from "../lib/prodScoring";
 import { fmtHour } from "../lib/hooks";
 
+// ── La ligne SWELL doit décrire la vague qui est NOTÉE ────────────────
+// `h.swellHeight` est la partition PRIMAIRE d'Open-Meteo. Mais la face
+// (`faceFtLow/High`) et le score viennent de la partition DOMINANTE, celle
+// qui porte le plus d'énergie surfable — windswell compris depuis le fix
+// Trigg 30/07. Les deux coexistaient sur la MÊME ligne : un jour de
+// windswell dominante, l'écran affichait « 1-3 ft » à côté de
+// « 0.3 m · 5 s ». Deux vagues différentes, collées l'une à l'autre.
+// `dom` est calculé une fois par heure dans realFetch (shapeHour) ; on le
+// lit ici, avec repli sur la primaire si un payload ancien ne le porte pas.
+function domOf(h) {
+  const d = h?.dom;
+  return {
+    height: Number.isFinite(d?.swellHeight) ? d.swellHeight : h?.swellHeight,
+    period: Number.isFinite(d?.swellPeriod) ? d.swellPeriod : h?.swellPeriod,
+    dir: d?.swellDir != null ? d.swellDir : h?.swellDir,
+  };
+}
+
+
 const WaveIcon = () => (
   <svg width="11" height="8" viewBox="0 0 22 14" fill="none" aria-hidden="true">
     <path d="M1 9C3.5 9 3.5 5 6 5C8.5 5 8.5 9 11 9C13.5 9 13.5 5 16 5C18.5 5 18.5 9 21 9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
@@ -267,7 +286,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
       {viewMode === "cards" && hours[selectedIdx] && (() => {
         const h = hours[selectedIdx];
         const v = verdicts[selectedIdx];
-        const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
+        const dsw = domOf(h);
+        const swellDir = typeof dsw.dir === "string" ? dsw.dir : degToCompass(dsw.dir);
         const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
         const windTrend = getWindTrend(h, hours);
         const curKmh   = h.currentVel != null ? h.currentVel * 3.6 : null;
@@ -284,14 +304,14 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
             )}
             <div className="hly-cp-face">
               <span className="hly-cp-face-val">{h.faceFtLow}–{h.faceFtHigh}<span className="hly-cp-face-unit"> ft</span></span>
-              <span className="hly-cp-face-conv">{fmt1(h.swellHeight)} m · {fmt0(h.swellPeriod)}s</span>
+              <span className="hly-cp-face-conv">{fmt1(dsw.height)} m · {fmt0(dsw.period)}s</span>
             </div>
             <div className="hly-cp-grid">
               {/* Row 1 */}
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Swell</div>
-                <div className="hly-cp-cell-val">{fmt1(h.swellHeight)}<span className="hly-cp-cell-unit">m</span></div>
-                <div className="hly-cp-cell-sub">{swellDir} · {fmt0(h.swellPeriod)}s</div>
+                <div className="hly-cp-cell-val">{fmt1(dsw.height)}<span className="hly-cp-cell-unit">m</span></div>
+                <div className="hly-cp-cell-sub">{swellDir} · {fmt0(dsw.period)}s</div>
               </div>
               <div className="hly-cp-cell">
                 <div className="hly-cp-cell-lbl">Wind</div>
@@ -346,7 +366,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
             const selected = selectedIdx === i;
             const isOpen = openIdx === i;
             const rowOpacity = Math.min(0.9, Math.max(0.15, h.score / 110));
-            const swellDir = typeof h.swellDir === "string" ? h.swellDir : degToCompass(h.swellDir);
+            const dsw = domOf(h);
+            const swellDir = typeof dsw.dir === "string" ? dsw.dir : degToCompass(dsw.dir);
             const windDir  = typeof h.windDir  === "string" ? h.windDir  : degToCompass(h.windDir);
             return (
               <div key={i} className={`hly-lwrap ${isOpen ? "open" : ""}`}>
@@ -364,7 +385,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                     <span className="hly-lverd"  style={{ color: v.color }}>{v.label.toUpperCase()}</span>
                   </div>
                   <div className="hly-lstats">
-                    <span className="hly-lstat"><WaveIcon/>{h.faceFtLow}–{h.faceFtHigh}ft · {fmt1(h.swellHeight)}m</span>
+                    <span className="hly-lstat"><WaveIcon/>{h.faceFtLow}–{h.faceFtHigh}ft · {fmt1(dsw.height)}m</span>
                     <span className="hly-lstat-sep">·</span>
                     <span className="hly-lstat"><WindIcon/>{windLabel(h)}km/h</span>
                   </div>
@@ -381,7 +402,7 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                         <span className="hly-xface-val" style={{ color: v.color }}>
                           {h.faceFtLow}–{h.faceFtHigh}<span style={{ fontSize: 18, fontWeight: 500, marginLeft: 4, opacity: 0.7 }}>ft</span>
                         </span>
-                        <span className="hly-xface-sub">{fmt1(h.swellHeight)} m · {fmt0(h.swellPeriod)}s</span>
+                        <span className="hly-xface-sub">{fmt1(dsw.height)} m · {fmt0(dsw.period)}s</span>
                       </div>
                       {(() => {
                         const dayKey = h.time?.split("T")?.[0];
@@ -395,8 +416,8 @@ export default function HourlyList({ hours, selectedIdx, onSelect, currentHour, 
                             {/* Row 1 — Swell · Wind · Tide */}
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Swell</div>
-                              <div className="hly-xval" style={{ color: v.color }}>{fmt1(h.swellHeight)}<span className="hly-xunit">m</span></div>
-                              <div className="hly-xsub">{swellDir} · {fmt0(h.swellPeriod)}s</div>
+                              <div className="hly-xval" style={{ color: v.color }}>{fmt1(dsw.height)}<span className="hly-xunit">m</span></div>
+                              <div className="hly-xsub">{swellDir} · {fmt0(dsw.period)}s</div>
                             </div>
                             <div className="hly-xcell">
                               <div className="hly-xsub-top">Wind</div>
