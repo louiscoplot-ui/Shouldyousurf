@@ -135,25 +135,44 @@ const PROBE_MAX_DEVIATION_DEG = 90;
 // MÊME cellule de grille : l'API rend alors exactement la même série, donc la
 // même moyenne, et changer de cap ne gagnerait rien tout en faisant bouger
 // tous les scores. Ce seuil sert UNIQUEMENT à écarter ce cas.
-// ⚠️ Ce n'est PAS une affirmation sur l'ampleur d'un vrai gain : on ne l'a
-// mesurée qu'une fois (Trigg 01/08, cellule côtière 1.32 m → cellule 100 %
-// eau 1.64 m, +24 %) et une mesure ne fait pas une constante. Une version
-// précédente mettait 1.15 « par prudence » : sur les 111 spots ça annulait
-// la correction dans la majorité des cas, donc ça désactivait la feature en
-// silence au lieu de la sécuriser. Le garde-fou qui protège vraiment, c'est
-// la contrainte ±90° au-dessus, pas ce chiffre.
+// ✅ MESURÉ sur sonde réelle (17/09, réponses Open-Meteo collées par Louis) :
+// les gains d'un changement de cap valent **+4.6 % à Ichinomiya** et
+// **+11.3 % à Cape Hatteras**. Une version précédente posait 1.15 « par
+// prudence » : les DEUX seraient tombés dessous, donc le seuil aurait annulé
+// la correction sur les deux spots obliques qu'on voulait justement réparer.
+// Un seuil de confort qui désactive la feature en silence n'est pas une
+// précaution. Le garde-fou qui protège vraiment, c'est la contrainte ±90°.
 const PROBE_MIN_GAIN = 1.02;
 
 // Sélection PURE (aucun réseau) : parmi les caps sondés, lequel garder.
-//   samples    : [{ bearing, mean }] — mean = houle moyenne, null si la
-//                cellule est à terre (masquée / série vide)
+//   samples    : [{ bearing, mean, elevation }] — mean = houle moyenne,
+//                elevation = altitude du point demandé (0 = sur l'eau)
 //   refBearing : idealSwellDir du spot curé, ou null/NaN pour un spot libre
 // Retourne un cap, ou null = « ne change rien, garde le comportement d'avant ».
 export function pickProbedBearing(samples, refBearing) {
-  const valid = (samples || []).filter(
+  const finite = (samples || []).filter(
     (s) => Number.isFinite(s?.bearing) && Number.isFinite(s?.mean) && s.mean > 0,
   );
-  if (!valid.length) return null;
+  if (!finite.length) return null;
+
+  // ── Écarter les caps qui tombent À TERRE ────────────────────────────
+  // ⚠️ On a longtemps cru que l'API masquait les cellules terrestres. C'EST
+  // FAUX, mesuré le 17/09 : les 4 caps de Trigg qui pointent vers Perth
+  // (elevation 22, 12, 14 et 18 m) rendent une série de 24 valeurs de houle
+  // parfaitement plausibles (0.52-0.68 m). L'ancien garde-fou `série trop
+  // courte = terre` ne se déclenchait donc JAMAIS. Ça marchait quand même à
+  // Trigg parce que la cellule terrestre rend par chance MOINS de houle
+  // (0.60 vs 0.74) — de la chance, pas de la logique.
+  // Le vrai signal était sous nos yeux : la réponse porte `elevation`, et
+  // c'est l'altitude du point DEMANDÉ, pas de la cellule servie. Preuve à
+  // Ichinomiya : les caps 225/270/315 rendent elevation 17, 43 et 3 m tout
+  // en étant servis par la MÊME cellule que les caps marins. Sur l'eau,
+  // elevation vaut 0. C'est un discriminant terre/mer exact, gratuit et
+  // mondial.
+  const atSea = finite.filter((s) => !(Number.isFinite(s.elevation) && s.elevation > 0));
+  // Tous les caps à terre (spot très encaissé, altitude non servie) : on ne
+  // jette pas tout, on retombe sur le classement par houle seule.
+  const valid = atSea.length ? atSea : finite;
 
   // Spot libre : aucun savoir humain à protéger, on prend le plus au large.
   if (!Number.isFinite(refBearing)) {
@@ -215,11 +234,17 @@ export async function probeOffshoreBearing(spot, marineModels, signal) {
   // Multi-points → tableau ; point unique → objet. On normalise.
   const locs = Array.isArray(json) ? json : [json];
   const samples = PROBE_BEARINGS.map((bearing, i) => {
-    const series = locs[i]?.hourly?.swell_wave_height;
-    if (!Array.isArray(series)) return { bearing, mean: null };
+    const loc = locs[i];
+    // `elevation` = altitude du point DEMANDÉ (0 sur l'eau) : c'est le
+    // discriminant terre/mer, cf. pickProbedBearing.
+    const elevation = Number.isFinite(loc?.elevation) ? loc.elevation : null;
+    const series = loc?.hourly?.swell_wave_height;
+    if (!Array.isArray(series)) return { bearing, mean: null, elevation };
     const vals = series.filter((v) => Number.isFinite(v));
-    if (vals.length < 6) return { bearing, mean: null }; // cellule à terre
-    return { bearing, mean: vals.reduce((a, b) => a + b, 0) / vals.length };
+    // Série vide = point hors domaine du modèle. Une cellule terrestre, elle,
+    // rend une série COMPLÈTE (mesuré) : c'est `elevation` qui l'élimine.
+    if (!vals.length) return { bearing, mean: null, elevation };
+    return { bearing, mean: vals.reduce((a, b) => a + b, 0) / vals.length, elevation };
   });
 
   const picked = pickProbedBearing(samples, spot?.idealSwellDir);
@@ -518,7 +543,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 4; // 4 : sonde du cap du large etendue aux spots cures (17/09)
+const CACHE_V = 5; // 5 : filtre terre/mer par elevation sur la sonde (17/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
