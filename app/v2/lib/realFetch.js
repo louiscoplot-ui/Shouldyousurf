@@ -440,9 +440,21 @@ function formatDayLabel(isoDate, todayStr) {
 const CACHE_PREFIX = "surf-forecast-cache-";
 const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 
+// ⚠️ À BUMPER DÈS QU'ON TOUCHE AU SCORING OU AU VERDICT.
+// Le payload mis en cache ne contient pas que des données brutes : il porte
+// les `hour.score`, `hour.faceFt` et `hour.dom` DÉJÀ CALCULÉS par le moteur
+// de l'époque. Ce numéro était figé à 1 depuis toujours, donc après un
+// changement de moteur l'app resservait pendant 24 h des scores calculés par
+// l'ancienne version — sans que rien ne l'invalide.
+// Cas terrain 17/09 : l'écran affichait "SKIP · 22 Poor · DANGEROUS" et une
+// fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
+// Fair" sans fourchette sur exactement les mêmes données. Les deux
+// corrections de la veille étaient en prod ; c'est le cache qui les masquait.
+const CACHE_V = 2;
+
 export function writeCachedPayload(spotId, payload) {
   try {
-    localStorage.setItem(CACHE_PREFIX + spotId, JSON.stringify({ v: 1, cachedAt: Date.now(), payload }));
+    localStorage.setItem(CACHE_PREFIX + spotId, JSON.stringify({ v: CACHE_V, cachedAt: Date.now(), payload }));
   } catch {} // quota plein / privé — le cache est un bonus, jamais bloquant
 }
 
@@ -451,7 +463,7 @@ export function readCachedPayload(spotId) {
     const raw = localStorage.getItem(CACHE_PREFIX + spotId);
     if (!raw) return null;
     const { v, cachedAt, payload } = JSON.parse(raw);
-    if (v !== 1 || !payload?.days?.length || !Number.isFinite(cachedAt)) return null;
+    if (v !== CACHE_V || !payload?.days?.length || !Number.isFinite(cachedAt)) return null;
     if (Date.now() - cachedAt > CACHE_MAX_AGE_MS) return null;
     return rehydrateCachedPayload(payload, cachedAt);
   } catch { return null; }

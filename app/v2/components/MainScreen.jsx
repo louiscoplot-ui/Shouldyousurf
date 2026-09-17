@@ -604,7 +604,18 @@ function Loaded({
     const hourDeg = { ...hour, swellDir: hour.swellDirDeg ?? hour.swellDir, windDir: hour.windDirDeg ?? hour.windDir };
     if (getPersonalVerdict(effectiveLevel, hourDeg, effectiveSpot) !== "no") return false;
     const cls = classifyConditions(effectiveLevel, hourDeg, effectiveSpot);
-    return cls.currentHazard !== "none" || cls.size === "too_big" || cls.wind === "blown" || cls.reefTooMuch;
+    // "Dangerous" est réservé au danger PHYSIQUE : un rip qui emporte, une
+    // vague au-dessus de la tête, un reef. Le vent seul n'en fait pas partie.
+    // Terrain 17/09 : bandeau rouge "Dangerous conditions" sur 0-2 ft — des
+    // vagues minuscules. Du vent qui hache une vague d'un pied, ce n'est pas
+    // dangereux, c'est juste mauvais, et le verdict SKIP le dit déjà. Crier
+    // au danger sur une journée inoffensive use l'alerte : le jour où elle
+    // sort sur un vrai rip, elle ne sera plus lue.
+    const bigEnoughToHurt = cls.size !== "too_small" && cls.size !== "small";
+    return cls.currentHazard !== "none"
+        || cls.size === "too_big"
+        || cls.reefTooMuch
+        || (cls.wind === "blown" && bigEnoughToHurt);
   }, [effectiveLevel, hour, effectiveSpot]);
 
   // Build the sticky-bar reason as a React node so we can highlight the

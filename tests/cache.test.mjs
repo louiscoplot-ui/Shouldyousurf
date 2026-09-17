@@ -16,6 +16,11 @@ const mkDay = (dateStr, extra = {}) => ({
   hours: [{ hour: 8, score: 50, time: `${dateStr}T08:00` }],
   ...extra,
 });
+// ⚠️ Le cache porte des scores DEJA CALCULES. Un payload ecrit par une
+// version anterieure du moteur doit etre rejete, sinon l'app resserre
+// pendant 24h des verdicts que le code actuel ne produit plus.
+// Terrain 17/09 : ecran "SKIP 22 Poor DANGEROUS" alors que le moteur
+// deploye rendait "OK 44 Fair" sur les memes donnees.
 const mkPayload = (days) => ({ days, sunByDay: {}, effectiveSpot: { id: "trigg", timezone: TZ } });
 
 // Stub localStorage (vitest tourne en node)
@@ -27,6 +32,25 @@ beforeEach(() => {
     setItem: (k, v) => store.set(k, v),
     removeItem: (k) => store.delete(k),
   };
+});
+
+describe("cache — invalidation quand le moteur change", () => {
+  it("un payload ecrit par une version anterieure est rejete", () => {
+    const day = mkDay(todayStr, { isToday: true });
+    // Ce qu'ecrivait l'ancienne version : v figee a 1.
+    store.set("surf-forecast-cache-trigg", JSON.stringify({
+      v: 1, cachedAt: Date.now(), payload: mkPayload([day]),
+    }));
+    expect(readCachedPayload("trigg")).toBeNull();
+  });
+
+  it("ce que le code ECRIT aujourd hui est relu par le code d aujourd hui", () => {
+    // Garde-fou du garde-fou : si write et read divergeaient sur la version,
+    // le cache serait mort en permanence et chaque ouverture repartirait du
+    // splash. On verifie le tour complet plutot que la constante.
+    writeCachedPayload("trigg", mkPayload([mkDay(todayStr, { isToday: true })]));
+    expect(readCachedPayload("trigg")).not.toBeNull();
+  });
 });
 
 describe("rehydrateCachedPayload", () => {
