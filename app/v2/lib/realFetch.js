@@ -8,10 +8,8 @@
 
 import {
   scoreV2,
-  estimateFaceHeight,
   pickDominantSwell,
   faceMOf,
-  spotAttenuation,
   windClass,
   angDelta,
   currentVelToMs,
