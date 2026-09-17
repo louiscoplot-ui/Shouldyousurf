@@ -622,6 +622,23 @@ export const USER_LEVEL_ZONES = {
 //   <= 1.8  crédible, la rafale compte pleinement
 //   1.8-2.6 zone grise, son poids fond linéairement
 //   >= 2.6  aberrant, on lit la moyenne et rien d'autre
+//
+// ✅ CALIBRÉ SUR DES MESURES, pas déduit. 179 observations BoM réelles
+// (station 94615, 15-17/09/2026, relevés toutes les 30 min) :
+//   médiane        1.54
+//   90e percentile 1.76   <- d'où le nœud "crédible" à 1.8
+//   99e percentile 2.00
+//   MAXIMUM        2.71   <- d'où le nœud "aberrant" à 2.6
+//   89 % des relevés tombent dans la zone pleine confiance (1.3-1.8)
+//   1 % seulement dépasse 2.6
+// Le modèle Open-Meteo, lui, a servi 3.33 le 17/09 — AU-DESSUS du maximum
+// jamais observé sur ces 179 mesures. Le filtre n'est donc pas un réglage
+// de confort, il écarte une valeur physiquement hors-domaine.
+//
+// ⚠️ La station est dans les collines (Perth Hills) : forte rugosité, donc
+// facteurs de rafale PLUS élevés qu'en bord de mer. Ces bornes sont donc
+// une majoration prudente pour un spot côtier — l'erreur va dans le sens
+// sûr. Une station littorale les resserrerait, elle ne les élargirait pas.
 const GUST_CONFIDENCE_NODES = [[1.8, 1], [2.6, 0]];
 
 // Rafale EFFECTIVE : la valeur servie, ramenée vers la moyenne à hauteur de

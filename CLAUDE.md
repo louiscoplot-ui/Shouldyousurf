@@ -59,6 +59,7 @@ Si tu ajoutes un nouveau bloc theme, mets-le aux DEUX endroits.
   - **Point d'échantillonnage marin** (`marineSamplePoint`, realFetch) : la grille des modèles de vagues fait ~1/12° (≈9 km). Un spot sur le trait de côte tombe dans une cellule à dominante TERRESTRE = artefact de bord. Mesuré à Trigg le 01/08, même heure : cellule côtière 1.32 m / première cellule 100% eau 1.64 m (+24%) / au large du Five Fathom Bank 2.02 m (+53%). Le modèle atténuait DÉJÀ ×0.65 avant notre `swellAttenuation` 0.60 → 0.39 réel, on jetait 61% de la houle. Les requêtes MARINES partent maintenant d'un point décalé de 5 km vers le large, direction donnée par `idealSwellDir` (généralise à toute côte, sans table codée en dur). Override possible via `marineLat`/`marineLng` sur le spot.
   - **Rafale (`usableGustKmh`) : elle ne DÉCIDE rien** ⚠️ ne pas remettre la rafale dans le verdict. Deux témoignages terrain en sens OPPOSÉ ont tranché. **14/09 Trigg** : moyenne 10.3, rafale 22.3 (facteur 2.17), "ça souffle plus que l'affichage". **17/09** : moyenne 12, rafale 40 (facteur **3.33**), quelqu'un **DANS L'EAU en train de surfer** dit "pas de vent". Le second est le meilleur signal qu'on ait jamais eu, et il prouve que `wind_gusts_10m` n'est PAS un prédicteur fiable du vent subi. Une version intermédiaire mettait la rafale au cœur du verdict (`feltWindKmh` = moyenne + écart × 0.5) : sur 12/40 ça donnait 26 km/h ressentis → "blown" → **SKIP sur une session que quelqu'un faisait tranquillement**. ⚠️ **Faire rater une bonne session est une faute aussi grave que faire conduire pour rien** — les deux erreurs comptent, l'app n'a le droit ni à l'une ni à l'autre. `classifyConditions` et le plafond du verdict décident donc sur la **MOYENNE**. La rafale ne sert plus qu'à pénaliser doucement le score (`gustMult`).
     Facteurs de rafale réels : 1.2-1.4 en mer, 1.3-1.6 au bord, ~1.8 en air instable, 2+ = grain (pas une journée de surf). D'où `GUST_CONFIDENCE_NODES` : crédible ≤ 1.8, poids qui fond linéairement jusqu'à 2.6, ignorée au-delà. ⚠️ **C'est une RAMPE, pas un seuil** — un couperet net à 2.0 a été écrit puis rejeté par le test de continuité (saut de 10 points au franchissement). Même règle que partout dans ce moteur : aucun palier dur.
+  - ✅ **Rafale : CALIBRÉE sur 179 observations BoM réelles** (station 94615, 15-17/09/2026) — médiane **1.54**, 90e pct **1.76**, 99e pct **2.00**, **max 2.71**. 89 % des relevés sont sous 1.8. `GUST_CONFIDENCE_NODES = [[1.8, 1], [2.6, 0]]` tombe donc pile sur le 90e percentile et sur le maximum observé : ce ne sont plus des valeurs de confort, elles viennent des données. Pour les bouger il faut d'AUTRES mesures. Le modèle Open-Meteo a servi **3.33** le 17/09, au-dessus du maximum jamais mesuré → le filtre écarte une valeur hors-domaine physique, il ne "corrige" pas au jugé. ⚠️ Station de COLLINES (rugosité forte) donc facteurs majorés par rapport au littoral : ces bornes sont prudentes pour un spot côtier, une station littorale les resserrerait.
   - ⚠️ **NOTRE SOURCE DE VENT N'EST PAS FAUSSE** — preuve 17/09, deux sources indépendantes, même heure, même endroit : **Apple Météo 11 km/h ONO rafales 36** ("entre 5 et 20, rafales jusqu'à 40") / **Open-Meteo 12 km/h rafales 40**. Elles sont d'accord. La conclusion tentante ("le modèle sous-estime, il faut changer d'API / brancher une station") était FAUSSE, et elle a coûté plusieurs itérations. Tous les écarts remontés du terrain venaient du TRAITEMENT de la rafale, pas de la donnée. Avant de soupçonner la source, comparer à une source indépendante.
   - **Décalage du point de VENT : DÉSACTIVÉ** (`WIND_OFFSET_ENABLED = false` dans realFetch). ⚠️ Ne pas le rallumer sans refaire la mesure. Relevé réel du 14/09 pour les 4 points interrogés (plage, +4, +8, +14 km au large) : **les quatre renvoient le même centre de cellule** (-31.880493 / 115.77618) et exactement le même vent. Le centre est à 2.3 km du spot vers l'intérieur, et le point à 14 km au large est encore à 16.1 km de ce centre SANS changer de cellule — la grille servie est trop grossière pour qu'un décalage de quelques km serve à quoi que ce soit. On doublait les requêtes pour lire deux fois la même valeur. Le raisonnement physique (rugosité banlieue vs mer) reste juste, c'est la RÉSOLUTION qui le rend inopérant : la machinerie (`windSamplePoint` / `resolveSeaWind`, testée et best-effort) reste en place derrière le drapeau et se rallume en une ligne si on passe un jour à un modèle assez fin. L'écart ressenti venait de la rafale, pas du point de mesure.
   - **Spots PERSONNALISÉS** (recherche libre / carte / GPS) : ils n'ont pas d'`idealSwellDir` au moment du fetch (`inferSpotProfile` ne tourne qu'APRÈS), ils gardaient donc le bug de la cellule terrestre. `probeOffshoreBearing` sonde une couronne de 8 caps à 5 km en UNE requête (l'API accepte `latitude=a,b,c`) et retient le cap dont la houle moyenne est la plus forte = le large ; les cellules à terre sont masquées/quasi vides et éliminées. Le cap est réinjecté dans le MÊME `marineSamplePoint` que les spots curés. Résultat mis en cache par coordonnées (`surf-marine-bearing-<lat>,<lng>`) → une sonde par spot et par appareil. Best-effort strict : échec réseau, HTTP non-ok ou sonde non concluante → `null` → coords du spot, comportement d'avant. Sert aussi de repli à `inferSpotProfile` quand il ne trouve pas assez d'heures exploitables.
@@ -154,6 +155,31 @@ Tip selector : `currentHazard !== "none"` pour learner en SKIP → `tip_<level>_
 ---
 
 ## RÈGLES DE TRAVAIL
+
+### ⚠️ VÉRIFIER AVANT D'AFFIRMER — règle n°1
+
+Quatre régressions poussées en PROD sur ce chantier vent, toutes la même faute :
+**une hypothèse présentée comme un fait, jamais vérifiée.**
+
+| affirmé | réalité |
+|---|---|
+| "l'API renvoie le centre de cellule, décaler le point va marcher" | les 4 points rendaient la MÊME cellule — fix inutile, quota doublé |
+| "comparer les coordonnées prouve qu'on a changé de cellule" | critère faux, le fix ne mordait pas |
+| "la rafale explique le ressenti, mettons-la dans le verdict" | faisait rendre SKIP sur une session en cours |
+| "la station BoM la plus proche de Trigg est le WMO 94615" | c'est Gooseberry Hill, dans les collines, 35 km à l'est |
+
+Avant d'écrire un chiffre, un identifiant, un nom de station, un endpoint ou
+un comportement d'API dans du code OU dans une réponse :
+1. **Est-ce que je l'ai vérifié, ou est-ce que je le déduis ?**
+2. Si déduit : le DIRE explicitement ("je suppose que…, je ne peux pas le
+   vérifier depuis cette session"), et ne PAS le pousser en prod comme un fait.
+3. Le proxy de session bloque Open-Meteo et le BoM : **toute affirmation sur
+   ces APIs est une hypothèse** tant que Louis n'a pas collé une réponse réelle.
+4. Un identifiant précis (WMO, code station, route d'API) ne s'invente jamais.
+   Sans source, donner la page qui les liste et dire qu'on ne peut pas vérifier.
+
+Une vérification de 30 secondes vaut mieux qu'une journée de déduction, et
+surtout mieux qu'un aller-retour de plus imposé à Louis.
 
 ### Process strict
 1. Édite le code
