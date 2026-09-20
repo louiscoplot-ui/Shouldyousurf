@@ -19,8 +19,11 @@ Lis ce fichier en entier avant chaque session. Il contient tout le contexte du p
 - Next.js 14.2.35 + React 18.3.1 (App Router)
 - Tests : vitest (`npm test`) — `tests/scoring.test.mjs` verrouille les invariants du moteur. OBLIGATOIRE avant push si tu touches au scoring.
 - APIs : Open-Meteo Marine + Forecast (GFS/ICON) — gratuit, no key. ⚠️ tier gratuit = non-commercial, migration plan Standard 29$/mois à prévoir.
-- Analytics : PostHog US Cloud + Session Replay (`NEXT_PUBLIC_POSTHOG_KEY`) + GA (gtag dans layout.js)
-- Microsoft Clarity : `NEXT_PUBLIC_CLARITY_ID` non set → script no-op
+- Analytics : PostHog US Cloud + Session Replay (`NEXT_PUBLIC_POSTHOG_KEY`) + GA4 (gtag dans layout.js)
+  - **Où regarder les chiffres** : GA4 ID **`G-77RCEQZ2YS`**, en dur dans `layout.js` donc toujours actif → [analytics.google.com](https://analytics.google.com) (utilisateurs, pays). PostHog → **us.posthog.com** (events custom + Session Replay), actif seulement si `NEXT_PUBLIC_POSTHOG_KEY` est posée côté Vercel.
+  - ✅ **Exclusion du trafic INTERNE** (`ss-no-analytics`) : **rien n'excluait Louis de ses propres stats** — chacune de ses visites comptait comme un utilisateur dans GA ET dans PostHog, et à faible trafic ses propres ouvertures dominent les chiffres. Ouvrir le site avec **`?noanalytics=1`** pose un drapeau localStorage permanent sur CET appareil ; **`?noanalytics=0`** l'enlève. Le drapeau pose `window["ga-disable-G-77RCEQZ2YS"]` (mécanisme d'opt-out officiel de Google) **AVANT** le chargement de `gtag.js`, saute le `gtag('config')`, et appelle `posthog.opt_out_capturing()`. ⚠️ Par appareil ET par navigateur : à refaire sur le téléphone, le laptop, etc.
+  - ⚠️ **Vercel Web Analytics : PAS activé** (vérifié via le MCP Vercel le 17/09 : `404 Web Analytics not found`). C'est le SEUL des trois que Claude peut lire directement depuis une session. Pour l'activer : toggle dans le dashboard Vercel + `npm i @vercel/analytics` et `<Analytics />` dans `layout.js`. Ni PostHog ni GA4 n'ont de MCP disponible ici.
+- Microsoft Clarity : `NEXT_PUBLIC_CLARITY_ID` non set → script no-op, zéro donnée
 - Hosting : Vercel auto-deploy depuis `main`
 
 ---
