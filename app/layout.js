@@ -1,3 +1,5 @@
+import VercelAnalytics from "./VercelAnalytics";
+
 export const metadata = {
   metadataBase: new URL("https://shouldyousurf.com"),
   title: "Should You Surf?",
@@ -316,6 +318,7 @@ export default function RootLayout({ children }) {
           <p className="pl-text">Reading the ocean…</p>
         </div>
         {children}
+        <VercelAnalytics />
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             var hidden = false;
