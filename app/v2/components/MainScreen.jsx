@@ -29,7 +29,7 @@ import OnboardingModal from "./OnboardingModal";
 import PwaInstallPrompt from "./PwaInstallPrompt";
 import LoadingScreen from "./LoadingScreen";
 import { useSwapKey, fmtHour } from "../lib/hooks";
-import { track } from "../../lib/analytics";
+import { track, identifyDevice } from "../../lib/analytics";
 import { startVersionCheck } from "../../lib/versionCheck";
 import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
@@ -92,6 +92,16 @@ export default function MainScreen({ theme, setTheme }) {
   // restoration (they re-run the [spot] effect but are not user picks).
   const spotEffectRanRef = useRef(false);
   const restoredSpotRef = useRef(false);
+
+  // ── Un appareil = une personne, pour toujours ──────────────────────
+  // ⚠️ PostHog tourne en `person_profiles: 'identified_only'` et
+  // `identify()` n'était appelé NULLE PART : aucun profil de personne
+  // n'était créé, donc le compteur "combien de gens distincts" était vide
+  // alors que les events partaient bien. Un identifiant aléatoire gardé en
+  // localStorage suffit : un appareil qui revient compte pour UNE personne,
+  // quel que soit le nombre d'ouvertures. `identifyDevice` honore
+  // `?noanalytics=1` comme les trois autres outils.
+  useEffect(() => { identifyDevice(); }, []);
 
   // PWA install event — fires when user accepts the install prompt
   useEffect(() => {
