@@ -162,12 +162,35 @@ export default function RootLayout({ children }) {
           .load-dot:nth-child(2) { animation-delay: 0.15s; background: #1558b5; }
           .load-dot:nth-child(3) { animation-delay: 0.3s; }
         ` }} />
+        {/* ── Exclusion du trafic INTERNE ────────────────────────────
+            Rien n'excluait Louis de ses propres stats : chacune de ses
+            visites comptait comme un utilisateur dans GA ET dans PostHog.
+            À faible trafic, ses propres ouvertures dominent les chiffres et
+            rendent les données inutilisables pour décider quoi que ce soit.
+            Visiter le site une fois avec `?noanalytics=1` pose un drapeau
+            LOCAL et permanent sur CET appareil ; `?noanalytics=0` l'enlève.
+            `ga-disable-<ID>` est le mécanisme d'opt-out officiel de Google,
+            et il doit être posé AVANT le chargement de gtag.js. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            try {
+              var K = "ss-no-analytics";
+              var q = new URLSearchParams(location.search).get("noanalytics");
+              if (q === "1") localStorage.setItem(K, "1");
+              else if (q === "0") localStorage.removeItem(K);
+              if (localStorage.getItem(K) === "1") {
+                window.__ssNoAnalytics = true;
+                window["ga-disable-G-77RCEQZ2YS"] = true;
+              }
+            } catch (e) {}
+          })();
+        `}} />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-77RCEQZ2YS"></script>
         <script dangerouslySetInnerHTML={{ __html: `
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'G-77RCEQZ2YS');
+          if (!window.__ssNoAnalytics) gtag('config', 'G-77RCEQZ2YS');
           // Recovery kill-switch. If the app hasn't signalled ready within
           // 20s (window.__appReady = true, set from MainScreen either when
           // real CACHED data is on screen, or when the first fetch settles
@@ -220,6 +243,12 @@ export default function RootLayout({ children }) {
               capture_pageview: true,
               autocapture: true
             });
+            // Même interrupteur que GA. opt_out_capturing() est persisté par
+            // PostHog lui-même, donc le choix survit au rechargement.
+            try {
+              if (window.__ssNoAnalytics && posthog.opt_out_capturing) posthog.opt_out_capturing();
+              else if (posthog.opt_in_capturing && posthog.has_opted_out_capturing && posthog.has_opted_out_capturing()) posthog.opt_in_capturing();
+            } catch (e) {}
           `}} />
         )}
         {/* Microsoft Clarity — heatmaps + session recordings, free &
