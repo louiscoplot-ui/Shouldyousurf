@@ -1,5 +1,7 @@
 # Buoy validation plan
 
+**Scope decided 26/09/2026: Australian breaks only, AODN as the single buoy source. The NOAA NDBC mapping for US breaks is deferred.** Scheduling is covered in `WORKFLOW-PLAN.md`.
+
 **Status: plan only.** Nothing below runs on a schedule yet, and nothing touches the app. The inventory and mapping scripts (`npm run buoys`, `npm run map`) are read-only research tools. The daily logger in section 3 waits for your OK.
 
 Goal: for every break, measure how far the forecast is from what the ocean actually did, so accuracy becomes a number per break instead of an impression from Trigg.
@@ -140,8 +142,8 @@ Open-Meteo cost: about 54 small requests a day (27 breaks × offshore point + br
 
 - **Buoys go offline** (Maria Island was off for repairs in 2024 per the registry). The logger must write `null`, never reuse an old reading, and the stats must count missing hours.
 - **Site renames:** the bucket holds the same buoy under two names (e.g. `HILLARYS` / `Hillarys`, `Byron` / `Byron Bay`). Pair by WMO id or coordinates, not by name.
-- **Unit and definition mismatch:** `WHTH` (zero-crossing H1/3, Waverider) vs `WSSH` (spectral Hm0, Spotter) vs Open-Meteo `wave_height` (model Hm0). They typically differ by a few percent. That's textbook, not measured here. Log which one was used.
-- **Buoy QC:** this is the *non-QC* real-time feed. Spikes and flat-lines happen. The `WAVE_quality_control` flag exists, but I haven't confirmed what its values mean.
+- **Unit and definition mismatch:** `WHTH` is *"significant height from time domain analysis"* and `WSSH` is *"spectral significant height"* (dataset metadata). Open-Meteo `wave_height` is a model spectral height. The first two typically differ by a few percent; that's textbook, not measured here. Log which one was used.
+- **Buoy QC:** this is the *non-QC* real-time feed, so spikes and flat-lines happen. `WAVE_quality_control` values, read from the dataset's own metadata: 1 good, 2 not evaluated, 3 questionable, 4 bad, 9 missing (IOC Manuals and Guides 54, Vol. 3). The logger keeps 1 and 2 and drops 3, 4 and 9. Live rows are mostly 2 (Rottnest on 26/09).
 - **The app changes:** the log records the app's version (`CACHE_V` / git SHA), so a scoring change doesn't mix into the stats silently.
 - **Timezones:** everything in UTC in the log; local time only in reports.
 - **S3 layout changes:** AODN is "cloud optimised" and still evolving. The client is isolated in `lib/aodn.mjs` so there's one place to fix.

@@ -10,6 +10,8 @@ Tools to measure how accurate the forecast is, break by break.
 |---|---|
 | `break-audit.md` | **Part 1 report.** Every AU break: config vs coastline geometry, a table, and a "needs review" list. Generated. |
 | `BUOY-PLAN.md` | **Part 2 plan.** Buoy data sources, terms, break → buoy mapping, and the proposed daily log. Nothing in it runs yet. |
+| `WORKFLOW-PLAN.md` | Plan for running the daily log on GitHub Actions: schedule, path to `main`, where logs are stored, limits, risk and rollback. Awaiting approval. |
+| `BREAK-TYPES.md` | What `type` / `heavy` change in the engine, and a proposed type for the 14 untyped AU breaks. Report only. |
 | `scripts/break-audit.mjs` | Builds the audit: reads `app/breaks.js`, analyses the coastline around each break, writes `break-audit.md` + `data/break-audit.json`. |
 | `scripts/buoy-inventory.mjs` | Lists every AU buoy in the AODN real-time dataset (position, operator, WMO id, last report, fields) → `data/buoys-au.json`. |
 | `scripts/map-breaks.mjs` | Picks an offshore and a nearshore buoy for each break → `data/break-buoys.json` + `data/break-buoys.md`. |
@@ -40,7 +42,23 @@ AODN S3 bucket ──> buoy-inventory.mjs ──> data/buoys-au.json
 (lib/aodn.mjs)
 ```
 
-## Licences of the data used
+## Data attribution and licences
 
-- Coastline: © OpenStreetMap contributors, ODbL (via `@geo-maps/earth-lands-10m`). Only used locally, never redistributed.
-- Buoys: AODN / IMOS and contributing operators, **CC BY 4.0**. Credit required if published (citation text in `BUOY-PLAN.md`).
+### Wave buoy data: IMOS / AODN (CC BY 4.0)
+
+Wave buoy observations: **IMOS / Australian Ocean Data Network (AODN) and the contributing buoy operators**, licensed under the [Creative Commons Attribution 4.0 International licence (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+Anything published from this data (a report, a chart, the app) must carry this credit and a link to the licence.
+
+Dataset: *Wave buoys Observations - Australia - near real-time* ([AWS Open Data registry](https://registry.opendata.aws/aodn_wave_buoy_realtime_nonqc/), [metadata record](https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc)).
+
+Citation, in the form the dataset's registry entry asks for:
+
+> Department of Transport [W.A]; State of Queensland, Department of Environment and Science; Australian Bureau of Meteorology; Department of Planning and Environment (DPE), New South Wales Government; Gippsland Ports; Integrated Marine Observing System; University of Western Australia (UWA); Deakin University, Pilbara Ports Authority, Flinders University and South Australian Research and Development Institute (SARDI) [2026], Wave buoys Observations - Australia - near real-time, https://registry.opendata.aws/aodn_wave_buoy_realtime_nonqc/, accessed 26 September 2026.
+
+Update the year and access date when data is re-downloaded. No changes are made to the observations beyond averaging to the hour; any derived statistics are ours, not IMOS/AODN's.
+
+### Other data
+
+- **Coastline:** © OpenStreetMap contributors, ODbL (via `@geo-maps/earth-lands-10m`). Used locally for geometry only, never redistributed.
+- **Weather and marine forecasts** (future daily log): [Open-Meteo](https://open-meteo.com), CC BY 4.0, free tier for non-commercial use.
