@@ -44,18 +44,18 @@ export const BREAKS = [
   // Cottesloe/Leighton : plein dans l'ombre de Rottnest + Garden Island, les plus abrités du métro.
   { id: "cottesloe",    country: "AU", name: "Cottesloe",          region: "Perth, WA",    lat: -31.9950, lng: 115.7520, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
   { id: "leighton",     country: "AU", name: "Leighton",           region: "Perth, WA",    lat: -32.0283, lng: 115.7461, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
-  { id: "margaret",     country: "AU", name: "Margaret River Main",region: "Margaret River, WA", lat: -33.9717, lng: 114.9896, idealSwellDir: 225, offshoreWindDir: 90,  idealTide: "mid" },
-  { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6406, lng: 114.9908, idealSwellDir: 225, offshoreWindDir: 135, idealTide: "mid" },
-  { id: "gnaraloo",     country: "AU", name: "Gnaraloo (Tombstones)", region: "Coral Coast, WA", lat: -23.8489, lng: 113.5350, idealSwellDir: 225, offshoreWindDir: 90,  idealTide: "mid-low" },
+  { id: "margaret",     country: "AU", name: "Margaret River Main",region: "Margaret River, WA", lat: -33.9717, lng: 114.9896, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true, idealTide: "mid" },
+  { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6406, lng: 114.9908, idealSwellDir: 225, offshoreWindDir: 135, type: "reef", idealTide: "mid" },
+  { id: "gnaraloo",     country: "AU", name: "Gnaraloo (Tombstones)", region: "Coral Coast, WA", lat: -23.8489, lng: 113.5350, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true, idealTide: "mid-low" },
 
   // ─── New South Wales ─────────────────────────────────────────────────
   { id: "bondi",        country: "AU", name: "Bondi Beach",        region: "Sydney, NSW",  lat: -33.8915, lng: 151.2767, idealSwellDir: 140, offshoreWindDir: 270, idealTide: "mid" },
   { id: "manly",        country: "AU", name: "Manly",              region: "Sydney, NSW",  lat: -33.7969, lng: 151.2880, idealSwellDir: 140, offshoreWindDir: 270, idealTide: "mid" },
   { id: "north-narra",  country: "AU", name: "North Narrabeen",    region: "Sydney, NSW",  lat: -33.7050, lng: 151.2994, idealSwellDir: 150, offshoreWindDir: 270, idealTide: "mid" },
   { id: "byron",        country: "AU", name: "The Pass (Byron)",   region: "Byron Bay, NSW", lat: -28.6346, lng: 153.6311, idealSwellDir: 120, offshoreWindDir: 225, idealTide: "mid" },
-  { id: "lennox",       country: "AU", name: "Lennox Head",        region: "Northern NSW", lat: -28.7940, lng: 153.5942, idealSwellDir: 150, offshoreWindDir: 270, idealTide: "mid-low" },
+  { id: "lennox",       country: "AU", name: "Lennox Head",        region: "Northern NSW", lat: -28.7940, lng: 153.5942, idealSwellDir: 150, offshoreWindDir: 270, type: "reef", idealTide: "mid-low" },
   { id: "crescent",     country: "AU", name: "Crescent Head",      region: "Mid North Coast, NSW", lat: -31.1889, lng: 152.9825, idealSwellDir: 140, offshoreWindDir: 270, idealTide: "mid-low" },
-  { id: "angourie",     country: "AU", name: "Angourie",           region: "Northern NSW", lat: -29.4830, lng: 153.3630, idealSwellDir: 135, offshoreWindDir: 270, idealTide: "mid" },
+  { id: "angourie",     country: "AU", name: "Angourie",           region: "Northern NSW", lat: -29.4830, lng: 153.3630, idealSwellDir: 135, offshoreWindDir: 270, type: "reef", idealTide: "mid" },
 
   // ─── Queensland ──────────────────────────────────────────────────────
   { id: "snapper",      country: "AU", name: "Snapper Rocks",      region: "Gold Coast, QLD", lat: -28.1627, lng: 153.5522, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
@@ -63,11 +63,11 @@ export const BREAKS = [
   { id: "burleigh",     country: "AU", name: "Burleigh Heads",     region: "Gold Coast, QLD", lat: -28.1006, lng: 153.4500, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
   { id: "dbah",         country: "AU", name: "Duranbah (D'Bah)",   region: "Gold Coast, QLD", lat: -28.1681, lng: 153.5522, idealSwellDir: 135, offshoreWindDir: 270, idealTide: "mid" },
   { id: "noosa",        country: "AU", name: "Noosa (First Point)",region: "Sunshine Coast, QLD", lat: -26.3833, lng: 153.0900, idealSwellDir: 100, offshoreWindDir: 180, idealTide: "mid" },
-  { id: "alexandra",    country: "AU", name: "Alexandra Headland", region: "Sunshine Coast, QLD", lat: -26.6717, lng: 153.1031, idealSwellDir: 120, offshoreWindDir: 225, idealTide: "mid" },
+  { id: "alexandra",    country: "AU", name: "Alexandra Headland", region: "Sunshine Coast, QLD", lat: -26.6717, lng: 153.1031, idealSwellDir: 120, offshoreWindDir: 225, type: "reef", idealTide: "mid" },
 
   // ─── Victoria ────────────────────────────────────────────────────────
-  { id: "bells",        country: "AU", name: "Bells Beach",        region: "Torquay, VIC", lat: -38.3706, lng: 144.2839, idealSwellDir: 210, offshoreWindDir: 360, idealTide: "mid-high" },
-  { id: "winkipop",     country: "AU", name: "Winkipop",           region: "Torquay, VIC", lat: -38.3733, lng: 144.2872, idealSwellDir: 210, offshoreWindDir: 360, idealTide: "mid-high" },
+  { id: "bells",        country: "AU", name: "Bells Beach",        region: "Torquay, VIC", lat: -38.3706, lng: 144.2839, idealSwellDir: 210, offshoreWindDir: 360, type: "reef", idealTide: "mid-high" },
+  { id: "winkipop",     country: "AU", name: "Winkipop",           region: "Torquay, VIC", lat: -38.3733, lng: 144.2872, idealSwellDir: 210, offshoreWindDir: 360, type: "reef", idealTide: "mid-high" },
   { id: "jan-juc",      country: "AU", name: "Jan Juc",            region: "Torquay, VIC", lat: -38.3533, lng: 144.2917, idealSwellDir: 210, offshoreWindDir: 360, idealTide: "mid" },
 
   // ─── South Australia ─────────────────────────────────────────────────
