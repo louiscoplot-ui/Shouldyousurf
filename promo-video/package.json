@@ -1,0 +1,22 @@
+{
+  "name": "shouldyousurf-promo-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "15s vertical promo for shouldyousurf.com (Remotion). Standalone: not part of the Next.js app.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Promo out/shouldyousurf-promo.mp4",
+    "stills": "node scripts/stills.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.529",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}
