@@ -1,5 +1,7 @@
 # Break types: what the engine does with them, and a proposal for the 14 untyped breaks
 
+> **Decision (26/09/2026):** proposal approved, with **Alexandra Headland = reef** (err on the safe side). Shipstern Bluff is already `type: "reef", heavy: true` (`app/breaks.js:78`). The `breaks.js` edits belong to a separate config-fix task, together with the wrong coordinates and the marine sample points on land from `break-audit.md`.
+
 **Report only. `app/breaks.js` is not edited.** Line numbers refer to `main` at the time of writing.
 
 ## 1. What the engine supports

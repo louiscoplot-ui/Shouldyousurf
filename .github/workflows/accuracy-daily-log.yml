@@ -1,0 +1,80 @@
+# Daily forecast-accuracy log (see accuracy/WORKFLOW-PLAN.md).
+#
+# Writes ONLY to a data branch, never to main:
+#   push to feature/accuracy-audit  -> accuracy-data-test  (test runs)
+#   schedule / manual run           -> accuracy-data
+# The schedule only fires once this file is on the default branch
+# (GitHub rule), so until a human merges it, only the test trigger runs.
+name: Accuracy daily log
+
+on:
+  schedule:
+    - cron: "17 21 * * *" # 21:17 UTC = 05:17 Perth (AWST, UTC+8, no daylight saving)
+  workflow_dispatch: {}
+  push: # TEST PHASE ONLY: remove before this file is merged into main
+    branches: [feature/accuracy-audit]
+    paths:
+      - "accuracy/**"
+      - ".github/workflows/accuracy-daily-log.yml"
+
+permissions:
+  contents: write # push the log commit to the data branch
+
+concurrency:
+  group: accuracy-daily-log
+  cancel-in-progress: false
+
+env:
+  DATA_BRANCH: ${{ github.event_name == 'push' && 'accuracy-data-test' || 'accuracy-data' }}
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Refuse to write to the default branch
+        run: |
+          case "$DATA_BRANCH" in
+            main|master|"${{ github.event.repository.default_branch }}")
+              echo "::error::DATA_BRANCH '$DATA_BRANCH' is protected; refusing to run." ; exit 1 ;;
+          esac
+          echo "Writing to $DATA_BRANCH"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Install logger dependencies (no coastline data)
+        working-directory: accuracy
+        run: npm ci --omit=dev
+
+      - name: Open the data branch (create it on first run)
+        run: |
+          if git fetch --depth 1 origin "$DATA_BRANCH" 2>/dev/null; then
+            git worktree add log-branch FETCH_HEAD
+          else
+            git worktree add --detach log-branch
+            cd log-branch
+            git checkout --orphan "$DATA_BRANCH"
+            git rm -rf --quiet . && git clean -fdq
+            cp ../accuracy/data-branch/README.md ../accuracy/data-branch/vercel.json .
+          fi
+
+      - name: Run the logger
+        working-directory: accuracy
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./lib/register-esm.mjs scripts/daily-log.mjs --out ../log-branch/log
+
+      - name: Commit and push the log (data branch only)
+        if: always() && hashFiles('log-branch/log/runs.jsonl') != ''
+        working-directory: log-branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && { echo "Nothing new to commit"; exit 0; }
+          git commit -q -m "data: accuracy log $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push origin "HEAD:refs/heads/$DATA_BRANCH"

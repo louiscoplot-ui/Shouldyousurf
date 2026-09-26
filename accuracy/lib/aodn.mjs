@@ -48,3 +48,45 @@ export async function readParquet(key) {
   const buf = await res.arrayBuffer();
   return parquetReadObjects({ file: buf });
 }
+
+// Observations of one site between two instants, averaged to the hour.
+// Keeps QC flags 1 (good) and 2 (not evaluated); drops 3 questionable,
+// 4 bad, 9 missing (flag meanings from the dataset's own metadata).
+const QC_KEEP = new Set([1, 2]);
+
+export async function hourlyObservations(folder, from, to) {
+  const files = await siteFiles(folder);
+  const fromMonth = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1) / 1000;
+  const wanted = files.filter((k) => monthOf(k) >= fromMonth);
+  const rows = [];
+  for (const key of wanted) rows.push(...(await readParquet(key)));
+  const buckets = new Map();
+  for (const r of rows) {
+    const t = new Date(r.TIME);
+    if (!(t >= from && t < to)) continue;
+    const qc = r.WAVE_quality_control == null ? null : Number(r.WAVE_quality_control);
+    if (qc != null && !QC_KEEP.has(qc)) continue;
+    const hs = r.WSSH ?? r.WHTH;
+    if (hs == null) continue;
+    const hour = new Date(Math.floor(t.getTime() / 3600e3) * 3600e3).toISOString();
+    if (!buckets.has(hour)) buckets.set(hour, []);
+    buckets.get(hour).push({ ...r, hs, qc });
+  }
+  const mean = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null);
+  const circ = (a) => {
+    if (!a.length) return null;
+    const x = a.reduce((s, d) => s + Math.cos((d * Math.PI) / 180), 0);
+    const y = a.reduce((s, d) => s + Math.sin((d * Math.PI) / 180), 0);
+    return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  };
+  const r2 = (v) => (v == null ? null : Math.round(v * 100) / 100);
+  return [...buckets.entries()].map(([hour, list]) => ({
+    valid_utc: hour.slice(0, 13) + ":00Z",
+    hs: r2(mean(list.map((r) => r.hs))),
+    hs_field: list.some((r) => r.WSSH != null) ? "WSSH" : "WHTH",
+    tp: r2(mean(list.map((r) => r.WPPE).filter((v) => v != null))),
+    dir: r2(circ(list.map((r) => r.WPDI).filter((v) => v != null))),
+    n: list.length,
+    qc: Math.max(...list.map((r) => r.qc ?? 0)) || null,
+  }));
+}

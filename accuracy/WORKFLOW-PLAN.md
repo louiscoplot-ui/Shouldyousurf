@@ -1,6 +1,6 @@
 # Daily accuracy log on GitHub Actions: plan
 
-**Status: plan only. Nothing is created, and nothing touches `main`, until you give an explicit OK.**
+**Status (26/09/2026): approved and built on `feature/accuracy-audit`, in TEST PHASE.** Test runs write to `accuracy-data-test` only. Nothing touches `main`. Storage option A was chosen. The move to `main` (step 4 below) is yours to do, whenever you decide.
 
 Scope: the 27 Australian breaks, AODN buoys (see `BUOY-PLAN.md`).
 
@@ -99,7 +99,7 @@ An *orphan* branch shares no history with `main`. It holds only `log/`, a README
 - **Cons:**
   - **To verify on the first push:** I'm *assuming* Vercel reads `deploymentEnabled` from the `vercel.json` of the commit being pushed. The docs don't say which commit is read. If a preview still appears, the fallback is one setting in the Vercel dashboard: *Ignored Build Step* with `[ "$VERCEL_GIT_COMMIT_REF" = "accuracy-data" ] && exit 0 || exit 1`. That setting applies to production too, so it needs care.
   - The repo is **public** (its page loads without login), so the logs are public. That's fine for CC BY data with credit, but everyone can see your accuracy numbers.
-  - The repo grows by about 15 MB/month of raw text (about 2,000 rows/day, compresses well in git).
+  - The data grows by about 0.9 MB/day of raw text (measured on a full local run: forecast about 670 KB, model 116 KB, new buoy hours about 90 KB). That's roughly 27 MB/month before git compression, and JSON lines compress well.
 
 ### Option B: separate repository, e.g. `shouldyousurf-accuracy-data` (private or public)
 
@@ -141,9 +141,9 @@ Option B adds one secret (`ACCURACY_DATA_TOKEN`). A paid Open-Meteo plan later w
 | Marine forecast at each break's sample point (same 13 variables as the app) | 27 | 13 → 1.3 each | ≈ 35 |
 | Wind/air forecast at each break (5 hourly + 2 daily) | 27 | 7 → 1 each | 27 |
 | Marine forecast at each offshore reference buoy | 9 | 3 → 1 each | 9 |
-| **Total** | | | **≈ 71 calls/day, ≈ 2,200/month** |
+| **Total (plan)** | | | **≈ 71 calls/day** |
 
-That's under 1% of each limit. The runner's IP is GitHub's, not your users', so it doesn't eat into the app's own usage.
+**As built, it's about 133 calls/day (~4,000/month)**, still about 1.3% of each limit. The logger reuses the app's own `fetchRealForecast`, so it runs exactly the app's code. That function also requests the past 3 days (marine + wind) and a 5-day window, just as the app does, which roughly doubles the break requests. The runner's IP is GitHub's, not your users', so it doesn't eat into the app's own usage.
 
 **Terms to keep in mind** *(verified)*:
 - The free tier is **non-commercial only**.

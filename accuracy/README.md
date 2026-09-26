@@ -11,6 +11,13 @@ Tools to measure how accurate the forecast is, break by break.
 | `break-audit.md` | **Part 1 report.** Every AU break: config vs coastline geometry, a table, and a "needs review" list. Generated. |
 | `BUOY-PLAN.md` | **Part 2 plan.** Buoy data sources, terms, break → buoy mapping, and the proposed daily log. Nothing in it runs yet. |
 | `WORKFLOW-PLAN.md` | Plan for running the daily log on GitHub Actions: schedule, path to `main`, where logs are stored, limits, risk and rollback. Awaiting approval. |
+| `APP-ATTRIBUTION.md` | Whether the app credits Open-Meteo as CC BY 4.0 requires (it does in text, without the required links). Report only. |
+| `scripts/daily-log.mjs` | **The daily logger.** Freezes the app's 72 h forecast for each AU break, Open-Meteo at each offshore buoy, and the last 7 days of buoy measurements, into JSON-lines files. |
+| `lib/register-esm.mjs`, `lib/esm-extension-hooks.mjs` | Let Node import the app's own modules unchanged (they omit `.js` in imports, as Next.js allows). |
+| `lib/time.mjs`, `lib/log-store.mjs` | UTC time helpers; monthly JSON-lines files (append, or merge without duplicates). |
+| `data-branch/` | `README.md` + `vercel.json` copied onto the data branch when the workflow creates it (credits, and Vercel deployments off). |
+| `test/*.nodetest.mjs`, `test/fixtures/` | Unit tests plus an end-to-end logger run against a fake Open-Meteo. Named `.nodetest.mjs` so the app's vitest run ignores them. |
+| `../.github/workflows/accuracy-daily-log.yml` | The GitHub Actions workflow (see `WORKFLOW-PLAN.md`). |
 | `BREAK-TYPES.md` | What `type` / `heavy` change in the engine, and a proposed type for the 14 untyped AU breaks. Report only. |
 | `scripts/break-audit.mjs` | Builds the audit: reads `app/breaks.js`, analyses the coastline around each break, writes `break-audit.md` + `data/break-audit.json`. |
 | `scripts/buoy-inventory.mjs` | Lists every AU buoy in the AODN real-time dataset (position, operator, WMO id, last report, fields) → `data/buoys-au.json`. |
@@ -23,7 +30,10 @@ Tools to measure how accurate the forecast is, break by break.
 
 ```bash
 cd accuracy
-npm install            # ~35 MB download: OSM coastline (135 MB unpacked) + Parquet reader
+npm install            # ~35 MB download: OSM coastline (135 MB unpacked, dev only) + Parquet reader
+npm test               # 6 tests, no network needed
+npm run log -- --out /tmp/acc-log                     # one logger run (needs Open-Meteo + AWS access)
+npm run log -- --out /tmp/acc-log --skip forecast,model   # buoys only
 npm run audit          # Part 1 -> break-audit.md             (~10 s, offline)
 npm run buoys          # buoy inventory -> data/buoys-au.json (~10 s, needs internet)
 npm run map            # break -> buoy  -> data/break-buoys.* (~10 s, offline, after `buoys`)
@@ -31,6 +41,17 @@ COUNTRY=FR npm run audit   # any other country code from breaks.js
 ```
 
 ## How data flows
+
+Daily logger (GitHub Actions, or `npm run log` by hand):
+
+```
+app/breaks.js + app/v2/lib/realFetch.js + prodScoring.js ──> Open-Meteo ──> log/forecast/  (what the app shows, frozen)
+data/break-buoys.json ──> Open-Meteo at each offshore buoy ─────────────> log/model/     (model where truth is measured)
+data/break-buoys.json ──> AODN S3 (last 7 days, QC 1-2, hourly) ────────> log/obs/       (what the ocean did)
+                                                                          log/runs.jsonl (counts, errors, app version)
+```
+
+Audit and mapping (run by hand):
 
 ```
 app/breaks.js ──┐
