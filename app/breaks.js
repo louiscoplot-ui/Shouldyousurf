@@ -45,7 +45,7 @@ export const BREAKS = [
   { id: "cottesloe",    country: "AU", name: "Cottesloe",          region: "Perth, WA",    lat: -31.9950, lng: 115.7520, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
   { id: "leighton",     country: "AU", name: "Leighton",           region: "Perth, WA",    lat: -32.0283, lng: 115.7461, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
   { id: "margaret",     country: "AU", name: "Margaret River Main",region: "Margaret River, WA", lat: -33.9717, lng: 114.9896, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true, idealTide: "mid" },
-  { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6406, lng: 114.9908, idealSwellDir: 225, offshoreWindDir: 135, type: "reef", idealTide: "mid" },
+  { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6443, lng: 115.0211, idealSwellDir: 225, offshoreWindDir: 135, type: "reef", idealTide: "mid" },
   { id: "gnaraloo",     country: "AU", name: "Gnaraloo (Tombstones)", region: "Coral Coast, WA", lat: -23.8489, lng: 113.5350, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true, idealTide: "mid-low" },
 
   // ─── New South Wales ─────────────────────────────────────────────────
@@ -60,7 +60,7 @@ export const BREAKS = [
   // ─── Queensland ──────────────────────────────────────────────────────
   { id: "snapper",      country: "AU", name: "Snapper Rocks",      region: "Gold Coast, QLD", lat: -28.1627, lng: 153.5522, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
   { id: "kirra",        country: "AU", name: "Kirra",              region: "Gold Coast, QLD", lat: -28.1694, lng: 153.5333, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
-  { id: "burleigh",     country: "AU", name: "Burleigh Heads",     region: "Gold Coast, QLD", lat: -28.1006, lng: 153.4500, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
+  { id: "burleigh",     country: "AU", name: "Burleigh Heads",     region: "Gold Coast, QLD", lat: -28.0908, lng: 153.4573, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
   { id: "dbah",         country: "AU", name: "Duranbah (D'Bah)",   region: "Gold Coast, QLD", lat: -28.1681, lng: 153.5522, idealSwellDir: 135, offshoreWindDir: 270, idealTide: "mid" },
   { id: "noosa",        country: "AU", name: "Noosa (First Point)",region: "Sunshine Coast, QLD", lat: -26.3833, lng: 153.0900, idealSwellDir: 100, offshoreWindDir: 180, idealTide: "mid" },
   { id: "alexandra",    country: "AU", name: "Alexandra Headland", region: "Sunshine Coast, QLD", lat: -26.6717, lng: 153.1031, idealSwellDir: 120, offshoreWindDir: 225, type: "reef", idealTide: "mid" },
@@ -72,7 +72,7 @@ export const BREAKS = [
 
   // ─── South Australia ─────────────────────────────────────────────────
   { id: "middleton",    country: "AU", name: "Middleton",          region: "Fleurieu, SA", lat: -35.5078, lng: 138.6930, idealSwellDir: 210, offshoreWindDir: 360, idealTide: "mid" },
-  { id: "waits",        country: "AU", name: "Waitpinga",          region: "Fleurieu, SA", lat: -35.6467, lng: 138.5644, idealSwellDir: 225, offshoreWindDir: 360, idealTide: "mid" },
+  { id: "waits",        country: "AU", name: "Waitpinga",          region: "Fleurieu, SA", lat: -35.6363, lng: 138.5010, idealSwellDir: 225, offshoreWindDir: 360, idealTide: "mid" },
 
   // ─── Tasmania ────────────────────────────────────────────────────────
   { id: "shipstern",    country: "AU", name: "Shipstern Bluff",    region: "Tasmania",     lat: -43.1889, lng: 147.7500, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true, idealTide: "mid-low" },
