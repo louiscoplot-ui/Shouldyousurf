@@ -116,6 +116,9 @@ if (!skip.has("model")) {
         if (lead < 0 || lead >= HORIZON_H) return;
         rows.push({
           run_utc: runUtc, site, valid_utc: hourKey(valid), lead_h: +lead.toFixed(1),
+          // tp (peak period) came back null everywhere on the first real run
+          // (26/09, best_match); kept in case the model starts serving it.
+          // Compare tm with the buoy's mean period and dir with its mean direction.
           hs: r2(H.wave_height[i]), tp: r2(H.wave_peak_period[i]), tm: r2(H.wave_period[i]), dir: r2(H.wave_direction[i]),
           grid: { lat: j.latitude, lng: j.longitude },
         });

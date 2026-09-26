@@ -84,8 +84,14 @@ export async function hourlyObservations(folder, from, to) {
     valid_utc: hour.slice(0, 13) + ":00Z",
     hs: r2(mean(list.map((r) => r.hs))),
     hs_field: list.some((r) => r.WSSH != null) ? "WSSH" : "WHTH",
+    // Peak period / peak direction (WPPE, WPDI) and mean period / mean
+    // direction (WPFM spectral or WPMH time-domain, SSWMD). Open-Meteo only
+    // serves mean period and mean direction reliably, so both are kept.
     tp: r2(mean(list.map((r) => r.WPPE).filter((v) => v != null))),
+    tm: r2(mean(list.map((r) => r.WPFM ?? r.WPMH).filter((v) => v != null))),
+    tm_field: list.some((r) => r.WPFM != null) ? "WPFM" : list.some((r) => r.WPMH != null) ? "WPMH" : null,
     dir: r2(circ(list.map((r) => r.WPDI).filter((v) => v != null))),
+    dir_mean: r2(circ(list.map((r) => r.SSWMD).filter((v) => v != null))),
     n: list.length,
     qc: Math.max(...list.map((r) => r.qc ?? 0)) || null,
   }));
