@@ -333,6 +333,7 @@ button, input, select { font-family: inherit; color: inherit; }
 .footer { margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--border); text-align: center; }
 .footer p { font-size: 11.5px; color: var(--text-mu); line-height: 1.55; font-style: italic; font-family:'Bricolage Grotesque', system-ui, sans-serif; font-variation-settings: "opsz" 14; font-weight: 300; margin: 0 0 14px; }
 .footer .attr { font-family:'Geist Mono', ui-monospace, monospace; font-size: 9.5px; color: var(--text-dim); letter-spacing: 0.18em; text-transform: uppercase; }
+.footer a, .v2-faq-a a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 /* ───────────── Wind rose (expand detail) ───────────── */
 .wind-rose { width: 80px; height: 80px; }
