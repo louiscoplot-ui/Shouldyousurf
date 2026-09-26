@@ -1,0 +1,1670 @@
+[
+  {
+    "id": "trigg",
+    "name": "Trigg Beach",
+    "region": "Perth, WA",
+    "lat": -31.8826,
+    "lng": 115.7519,
+    "config": {
+      "idealSwellDir": 240,
+      "offshoreWindDir": 90,
+      "idealTide": "mid-high",
+      "swellAttenuation": 0.6,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 270,
+      "coastNormal": 265,
+      "window": [
+        [
+          200,
+          230
+        ],
+        [
+          245,
+          335
+        ]
+      ],
+      "expectedOffshore": 90,
+      "coastKm": 0,
+      "longestFetch": {
+        "bearing": 260,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 180,
+          "km": 12
+        },
+        {
+          "bearing": 185,
+          "km": 18
+        },
+        {
+          "bearing": 190,
+          "km": 36
+        },
+        {
+          "bearing": 195,
+          "km": 31
+        },
+        {
+          "bearing": 235,
+          "km": 23
+        },
+        {
+          "bearing": 240,
+          "km": 25
+        }
+      ],
+      "marineSample": {
+        "lat": -31.9052,
+        "lng": 115.7061
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 0.38668833921519763,
+      "swellVsFacing": 30.38668833921514,
+      "swellVsOffshore": 30,
+      "engineBlocked": 8,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": [
+      "idealSwellDir 240° has less than 100 km of open water (geo window: 200–230°, 245–335°). Consistent with its swellAttenuation 0.6 (sheltered)."
+    ]
+  },
+  {
+    "id": "scarborough",
+    "name": "Scarborough",
+    "region": "Perth, WA",
+    "lat": -31.8939,
+    "lng": 115.7553,
+    "config": {
+      "idealSwellDir": 240,
+      "offshoreWindDir": 90,
+      "idealTide": "mid-high",
+      "swellAttenuation": 0.6,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 270,
+      "coastNormal": 268,
+      "window": [
+        [
+          200,
+          235
+        ],
+        [
+          250,
+          335
+        ]
+      ],
+      "expectedOffshore": 90,
+      "coastKm": 0.15,
+      "longestFetch": {
+        "bearing": 260,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 185,
+          "km": 16
+        },
+        {
+          "bearing": 190,
+          "km": 36
+        },
+        {
+          "bearing": 195,
+          "km": 30
+        },
+        {
+          "bearing": 240,
+          "km": 25
+        },
+        {
+          "bearing": 245,
+          "km": 25
+        }
+      ],
+      "marineSample": {
+        "lat": -31.9165,
+        "lng": 115.7095
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 0.04953317624926967,
+      "swellVsFacing": 29.95046682375073,
+      "swellVsOffshore": 30,
+      "engineBlocked": 8,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": [
+      "idealSwellDir 240° has less than 100 km of open water (geo window: 200–235°, 250–335°). Consistent with its swellAttenuation 0.6 (sheltered)."
+    ]
+  },
+  {
+    "id": "cottesloe",
+    "name": "Cottesloe",
+    "region": "Perth, WA",
+    "lat": -31.995,
+    "lng": 115.752,
+    "config": {
+      "idealSwellDir": 240,
+      "offshoreWindDir": 90,
+      "idealTide": "mid-high",
+      "swellAttenuation": 0.55,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 273,
+      "coastNormal": 276,
+      "window": [
+        [
+          210,
+          260
+        ],
+        [
+          275,
+          335
+        ]
+      ],
+      "expectedOffshore": 93,
+      "coastKm": 0.03,
+      "longestFetch": {
+        "bearing": 275,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 195,
+          "km": 5
+        },
+        {
+          "bearing": 200,
+          "km": 6
+        },
+        {
+          "bearing": 205,
+          "km": 20
+        },
+        {
+          "bearing": 265,
+          "km": 19
+        },
+        {
+          "bearing": 270,
+          "km": 22
+        }
+      ],
+      "marineSample": {
+        "lat": -32.0176,
+        "lng": 115.7061
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 3.0310823794638964,
+      "swellVsFacing": 33.031082379463896,
+      "swellVsOffshore": 30,
+      "engineBlocked": 10,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": []
+  },
+  {
+    "id": "leighton",
+    "name": "Leighton",
+    "region": "Perth, WA",
+    "lat": -32.0283,
+    "lng": 115.7461,
+    "config": {
+      "idealSwellDir": 240,
+      "offshoreWindDir": 90,
+      "idealTide": "mid-high",
+      "swellAttenuation": 0.55,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 280,
+      "coastNormal": 293,
+      "window": [
+        [
+          220,
+          270
+        ],
+        [
+          285,
+          340
+        ]
+      ],
+      "expectedOffshore": 100,
+      "coastKm": 0.19,
+      "longestFetch": {
+        "bearing": 220,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 275,
+          "km": 19
+        },
+        {
+          "bearing": 280,
+          "km": 22
+        }
+      ],
+      "marineSample": {
+        "lat": -32.0509,
+        "lng": 115.7002
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 10.272294319479101,
+      "swellVsFacing": 40.2722943194791,
+      "swellVsOffshore": 30,
+      "engineBlocked": 12,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": []
+  },
+  {
+    "id": "margaret",
+    "name": "Margaret River Main",
+    "region": "Margaret River, WA",
+    "lat": -33.9717,
+    "lng": 114.9896,
+    "config": {
+      "idealSwellDir": 225,
+      "offshoreWindDir": 90,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 265,
+      "coastNormal": 265,
+      "window": [
+        [
+          180,
+          350
+        ]
+      ],
+      "expectedOffshore": 85,
+      "coastKm": 0.25,
+      "longestFetch": {
+        "bearing": 265,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 175,
+          "km": 10
+        }
+      ],
+      "marineSample": {
+        "lat": -34.0037,
+        "lng": 114.9513
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 5,
+      "swellVsFacing": 40,
+      "swellVsOffshore": 45,
+      "engineBlocked": 5,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a reef (heavy on size) (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "land inside the swell window (175° at 10 km) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "yallingup",
+    "name": "Yallingup",
+    "region": "Margaret River, WA",
+    "lat": -33.6406,
+    "lng": 114.9908,
+    "config": {
+      "idealSwellDir": 225,
+      "offshoreWindDir": 135,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 280,
+      "coastNormal": 285,
+      "window": [
+        [
+          195,
+          5
+        ]
+      ],
+      "expectedOffshore": 100,
+      "coastKm": 2.59,
+      "longestFetch": {
+        "bearing": 195,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 180,
+          "km": 6
+        },
+        {
+          "bearing": 185,
+          "km": 7
+        },
+        {
+          "bearing": 190,
+          "km": 7
+        }
+      ],
+      "marineSample": {
+        "lat": -33.6726,
+        "lng": 114.9527
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 35,
+      "swellVsFacing": 55,
+      "swellVsOffshore": 90,
+      "engineBlocked": 8,
+      "engineDirs": 29
+    },
+    "issues": [
+      "coordinates are 2.6 km offshore from the nearest coastline in the dataset (could be the dataset's resolution; check on a map)",
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a reef (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "offshoreWindDir 135° is 35° off 100° (inside the ±45° offshore band, but close to the edge)",
+      "idealSwellDir and offshoreWindDir disagree by 90° (expected roughly opposite)",
+      "land inside the swell window (180° at 6 km, 185° at 7 km, 190° at 7 km) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "gnaraloo",
+    "name": "Gnaraloo (Tombstones)",
+    "region": "Coral Coast, WA",
+    "lat": -23.8489,
+    "lng": 113.535,
+    "config": {
+      "idealSwellDir": 225,
+      "offshoreWindDir": 90,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 285,
+      "coastNormal": 285,
+      "window": [
+        [
+          250,
+          320
+        ]
+      ],
+      "expectedOffshore": 105,
+      "coastKm": 2.14,
+      "longestFetch": {
+        "bearing": 280,
+        "km": 398
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -23.8809,
+        "lng": 113.5003
+      },
+      "marineOnLand": true
+    },
+    "deltas": {
+      "offshoreErr": 15,
+      "swellVsFacing": 60,
+      "swellVsOffshore": 45,
+      "engineBlocked": 19,
+      "engineDirs": 29
+    },
+    "issues": [
+      "the marine forecast is read at -23.8809, 113.5003 (5 km toward 225°), which is **on land** in the dataset: the swell numbers may come from a coastal/land model cell (the Trigg bug of 01/08). Candidate fix: set `marineLat/marineLng` toward 285°",
+      "idealSwellDir 225° has less than 100 km of open water (geo window: 250–320°).",
+      "coordinates are 2.1 km inland from the nearest coastline in the dataset (could be the dataset's resolution; check on a map)",
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a reef (heavy) (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "19/29 of the directions the engine rewards (±70°) have no open ocean: 155–245°"
+    ]
+  },
+  {
+    "id": "bondi",
+    "name": "Bondi Beach",
+    "region": "Sydney, NSW",
+    "lat": -33.8915,
+    "lng": 151.2767,
+    "config": {
+      "idealSwellDir": 140,
+      "offshoreWindDir": 270,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 103,
+      "coastNormal": 90,
+      "window": [
+        [
+          25,
+          180
+        ]
+      ],
+      "expectedOffshore": 283,
+      "coastKm": 0.18,
+      "longestFetch": {
+        "bearing": 170,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -33.9261,
+        "lng": 151.3115
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 12.5,
+      "swellVsFacing": 37.5,
+      "swellVsOffshore": 50,
+      "engineBlocked": 6,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": []
+  },
+  {
+    "id": "manly",
+    "name": "Manly",
+    "region": "Sydney, NSW",
+    "lat": -33.7969,
+    "lng": 151.288,
+    "config": {
+      "idealSwellDir": 140,
+      "offshoreWindDir": 270,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 78,
+      "coastNormal": 89,
+      "window": [
+        [
+          30,
+          105
+        ],
+        [
+          140,
+          150
+        ]
+      ],
+      "expectedOffshore": 258,
+      "coastKm": 0.12,
+      "longestFetch": {
+        "bearing": 70,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 190,
+          "km": 8
+        },
+        {
+          "bearing": 195,
+          "km": 9
+        },
+        {
+          "bearing": 200,
+          "km": 9
+        },
+        {
+          "bearing": 205,
+          "km": 9
+        },
+        {
+          "bearing": 210,
+          "km": 5
+        }
+      ],
+      "marineSample": {
+        "lat": -33.8315,
+        "lng": 151.3227
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 11.747401352964403,
+      "swellVsFacing": 61.7474013529644,
+      "swellVsOffshore": 50,
+      "engineBlocked": 18,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": [
+      "idealSwellDir 140° is 62° off the open-ocean centre 78° (fine for a wrapping point break, suspicious for a beach)",
+      "18/29 of the directions the engine rewards (±70°) have no open ocean: 110–135°, 155–210°",
+      "land inside the swell window (190° at 8 km, 195° at 9 km, 200° at 9 km, 205° at 9 km, ...) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "north-narra",
+    "name": "North Narrabeen",
+    "region": "Sydney, NSW",
+    "lat": -33.705,
+    "lng": 151.2994,
+    "config": {
+      "idealSwellDir": 150,
+      "offshoreWindDir": 270,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 67,
+      "coastNormal": 67,
+      "window": [
+        [
+          30,
+          95
+        ],
+        [
+          155,
+          155
+        ]
+      ],
+      "expectedOffshore": 247,
+      "coastKm": 0.32,
+      "longestFetch": {
+        "bearing": 155,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -33.7442,
+        "lng": 151.3264
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 23.14085536083485,
+      "swellVsFacing": 83.14085536083485,
+      "swellVsOffshore": 60,
+      "engineBlocked": 24,
+      "engineDirs": 29
+    },
+    "issues": [
+      "idealSwellDir 150° has less than 100 km of open water (geo window: 30–95°, 155°)."
+    ],
+    "checks": [
+      "idealSwellDir 150° is 83° off the open-ocean centre 67° (fine for a wrapping point break, suspicious for a beach)",
+      "24/29 of the directions the engine rewards (±70°) have no open ocean: 100–150°, 160–220°"
+    ]
+  },
+  {
+    "id": "byron",
+    "name": "The Pass (Byron)",
+    "region": "Byron Bay, NSW",
+    "lat": -28.6346,
+    "lng": 153.6311,
+    "config": {
+      "idealSwellDir": 120,
+      "offshoreWindDir": 225,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 38,
+      "coastNormal": 10,
+      "window": [
+        [
+          355,
+          80
+        ]
+      ],
+      "expectedOffshore": 218,
+      "coastKm": 0.2,
+      "longestFetch": {
+        "bearing": 0,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -28.6572,
+        "lng": 153.6754
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 7.5,
+      "swellVsFacing": 82.5,
+      "swellVsOffshore": 75,
+      "engineBlocked": 22,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a sand point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "idealSwellDir 120° has less than 100 km of open water (geo window: 355–80°). Normal for a point break (swell wraps around the headland), but the engine gives this direction its best dirMult.",
+      "idealSwellDir 120° is 83° off the open-ocean centre 38° (fine for a wrapping point break, suspicious for a beach)",
+      "idealSwellDir and offshoreWindDir disagree by 75° (expected roughly opposite)",
+      "22/29 of the directions the engine rewards (±70°) have no open ocean: 85–190°"
+    ]
+  },
+  {
+    "id": "lennox",
+    "name": "Lennox Head",
+    "region": "Northern NSW",
+    "lat": -28.794,
+    "lng": 153.5942,
+    "config": {
+      "idealSwellDir": 150,
+      "offshoreWindDir": 270,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 80,
+      "coastNormal": 78,
+      "window": [
+        [
+          20,
+          140
+        ]
+      ],
+      "expectedOffshore": 260,
+      "coastKm": 0.19,
+      "longestFetch": {
+        "bearing": 90,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -28.8332,
+        "lng": 153.6198
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 10,
+      "swellVsFacing": 70,
+      "swellVsOffshore": 60,
+      "engineBlocked": 16,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a boulder point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "idealSwellDir 150° has less than 100 km of open water (geo window: 20–140°). Normal for a point break (swell wraps around the headland), but the engine gives this direction its best dirMult.",
+      "idealSwellDir 150° is 70° off the open-ocean centre 80° (fine for a wrapping point break, suspicious for a beach)",
+      "16/29 of the directions the engine rewards (±70°) have no open ocean: 145–220°"
+    ]
+  },
+  {
+    "id": "crescent",
+    "name": "Crescent Head",
+    "region": "Mid North Coast, NSW",
+    "lat": -31.1889,
+    "lng": 152.9825,
+    "config": {
+      "idealSwellDir": 140,
+      "offshoreWindDir": 270,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 105,
+      "coastNormal": 108,
+      "window": [
+        [
+          30,
+          180
+        ]
+      ],
+      "expectedOffshore": 285,
+      "coastKm": 0.05,
+      "longestFetch": {
+        "bearing": 120,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 185,
+          "km": 14
+        },
+        {
+          "bearing": 190,
+          "km": 7
+        },
+        {
+          "bearing": 195,
+          "km": 7
+        },
+        {
+          "bearing": 200,
+          "km": 6
+        }
+      ],
+      "marineSample": {
+        "lat": -31.2235,
+        "lng": 153.0162
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 15,
+      "swellVsFacing": 35,
+      "swellVsOffshore": 50,
+      "engineBlocked": 6,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a point (sand over rock) (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "land inside the swell window (185° at 14 km, 190° at 7 km, 195° at 7 km, 200° at 6 km) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "angourie",
+    "name": "Angourie",
+    "region": "Northern NSW",
+    "lat": -29.483,
+    "lng": 153.363,
+    "config": {
+      "idealSwellDir": 135,
+      "offshoreWindDir": 270,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 98,
+      "coastNormal": 100,
+      "window": [
+        [
+          20,
+          175
+        ]
+      ],
+      "expectedOffshore": 278,
+      "coastKm": 0.25,
+      "longestFetch": {
+        "bearing": 165,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -29.515,
+        "lng": 153.3995
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 7.5,
+      "swellVsFacing": 37.5,
+      "swellVsOffshore": 45,
+      "engineBlocked": 6,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a reef point (surf knowledge, unverified)"
+    ],
+    "checks": []
+  },
+  {
+    "id": "snapper",
+    "name": "Snapper Rocks",
+    "region": "Gold Coast, QLD",
+    "lat": -28.1627,
+    "lng": 153.5522,
+    "config": {
+      "idealSwellDir": 135,
+      "offshoreWindDir": 225,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 73,
+      "coastNormal": 38,
+      "window": [
+        [
+          0,
+          145
+        ]
+      ],
+      "expectedOffshore": 253,
+      "coastKm": 0.12,
+      "longestFetch": {
+        "bearing": 0,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -28.1947,
+        "lng": 153.5882
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 27.5,
+      "swellVsFacing": 62.5,
+      "swellVsOffshore": 90,
+      "engineBlocked": 12,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a sand point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "idealSwellDir 135° is 63° off the open-ocean centre 73° (fine for a wrapping point break, suspicious for a beach)",
+      "idealSwellDir and offshoreWindDir disagree by 90° (expected roughly opposite)"
+    ]
+  },
+  {
+    "id": "kirra",
+    "name": "Kirra",
+    "region": "Gold Coast, QLD",
+    "lat": -28.1694,
+    "lng": 153.5333,
+    "config": {
+      "idealSwellDir": 135,
+      "offshoreWindDir": 225,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 48,
+      "coastNormal": 23,
+      "window": [
+        [
+          5,
+          90
+        ]
+      ],
+      "expectedOffshore": 228,
+      "coastKm": 0.33,
+      "longestFetch": {
+        "bearing": 5,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -28.2014,
+        "lng": 153.5693
+      },
+      "marineOnLand": true
+    },
+    "deltas": {
+      "offshoreErr": 2.5,
+      "swellVsFacing": 87.5,
+      "swellVsOffshore": 90,
+      "engineBlocked": 23,
+      "engineDirs": 29
+    },
+    "issues": [
+      "the marine forecast is read at -28.2014, 153.5693 (5 km toward 135°), which is **on land** in the dataset: the swell numbers may come from a coastal/land model cell (the Trigg bug of 01/08). Candidate fix: set `marineLat/marineLng` toward 48°",
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a sand point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "idealSwellDir 135° has less than 100 km of open water (geo window: 5–90°). Normal for a point break (swell wraps around the headland), but the engine gives this direction its best dirMult.",
+      "idealSwellDir 135° is 88° off the open-ocean centre 48° (fine for a wrapping point break, suspicious for a beach)",
+      "idealSwellDir and offshoreWindDir disagree by 90° (expected roughly opposite)",
+      "23/29 of the directions the engine rewards (±70°) have no open ocean: 95–205°"
+    ]
+  },
+  {
+    "id": "burleigh",
+    "name": "Burleigh Heads",
+    "region": "Gold Coast, QLD",
+    "lat": -28.1006,
+    "lng": 153.45,
+    "config": {
+      "idealSwellDir": 135,
+      "offshoreWindDir": 225,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": null,
+      "coastNormal": null,
+      "window": [],
+      "expectedOffshore": null,
+      "coastKm": 0.1,
+      "longestFetch": {
+        "bearing": 160,
+        "km": 1
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -28.1326,
+        "lng": 153.486
+      },
+      "marineOnLand": true
+    },
+    "deltas": {
+      "offshoreErr": null,
+      "swellVsFacing": null,
+      "swellVsOffshore": 90,
+      "engineBlocked": 29,
+      "engineDirs": 29
+    },
+    "issues": [
+      "the marine forecast is read at -28.1326, 153.486 (5 km toward 135°), which is **on land** in the dataset: the swell numbers may come from a coastal/land model cell (the Trigg bug of 01/08). Candidate fix: set `marineLat/marineLng` on open water",
+      "no bearing has 100 km of open water from these coordinates (longest: 1 km toward 160°). Either the break is deeply sheltered or the point sits in an estuary / behind a headland: check on a map",
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a sand point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "idealSwellDir and offshoreWindDir disagree by 90° (expected roughly opposite)",
+      "29/29 of the directions the engine rewards (±70°) have no open ocean: 65–205°"
+    ]
+  },
+  {
+    "id": "dbah",
+    "name": "Duranbah (D'Bah)",
+    "region": "Gold Coast, QLD",
+    "lat": -28.1681,
+    "lng": 153.5522,
+    "config": {
+      "idealSwellDir": 135,
+      "offshoreWindDir": 270,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 58,
+      "coastNormal": 28,
+      "window": [
+        [
+          0,
+          115
+        ]
+      ],
+      "expectedOffshore": 238,
+      "coastKm": 0.07,
+      "longestFetch": {
+        "bearing": 115,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -28.2001,
+        "lng": 153.5882
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 32.5,
+      "swellVsFacing": 77.5,
+      "swellVsOffshore": 45,
+      "engineBlocked": 18,
+      "engineDirs": 29
+    },
+    "issues": [
+      "idealSwellDir 135° has less than 100 km of open water (geo window: 0–115°)."
+    ],
+    "checks": [
+      "offshoreWindDir 270° is 33° off 238° (inside the ±45° offshore band, but close to the edge)",
+      "idealSwellDir 135° is 78° off the open-ocean centre 58° (fine for a wrapping point break, suspicious for a beach)",
+      "18/29 of the directions the engine rewards (±70°) have no open ocean: 120–205°"
+    ]
+  },
+  {
+    "id": "noosa",
+    "name": "Noosa (First Point)",
+    "region": "Sunshine Coast, QLD",
+    "lat": -26.3833,
+    "lng": 153.09,
+    "config": {
+      "idealSwellDir": 100,
+      "offshoreWindDir": 180,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 40,
+      "coastNormal": 18,
+      "window": [
+        [
+          15,
+          65
+        ]
+      ],
+      "expectedOffshore": 220,
+      "coastKm": 0.16,
+      "longestFetch": {
+        "bearing": 15,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -26.3912,
+        "lng": 153.1394
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 40,
+      "swellVsFacing": 60,
+      "swellVsOffshore": 100,
+      "engineBlocked": 21,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a sand point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "offshoreWindDir 180° is 40° off 220° (inside the ±45° offshore band, but close to the edge)",
+      "idealSwellDir 100° has less than 100 km of open water (geo window: 15–65°). Normal for a point break (swell wraps around the headland), but the engine gives this direction its best dirMult.",
+      "idealSwellDir and offshoreWindDir disagree by 100° (expected roughly opposite)",
+      "21/29 of the directions the engine rewards (±70°) have no open ocean: 70–170°"
+    ]
+  },
+  {
+    "id": "alexandra",
+    "name": "Alexandra Headland",
+    "region": "Sunshine Coast, QLD",
+    "lat": -26.6717,
+    "lng": 153.1031,
+    "config": {
+      "idealSwellDir": 120,
+      "offshoreWindDir": 225,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 63,
+      "coastNormal": 60,
+      "window": [
+        [
+          10,
+          115
+        ]
+      ],
+      "expectedOffshore": 243,
+      "coastKm": 0.6,
+      "longestFetch": {
+        "bearing": 75,
+        "km": 399
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -26.6943,
+        "lng": 153.1466
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 17.5,
+      "swellVsFacing": 57.5,
+      "swellVsOffshore": 75,
+      "engineBlocked": 15,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a point (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "idealSwellDir 120° has less than 100 km of open water (geo window: 10–115°). Normal for a point break (swell wraps around the headland), but the engine gives this direction its best dirMult.",
+      "idealSwellDir and offshoreWindDir disagree by 75° (expected roughly opposite)",
+      "15/29 of the directions the engine rewards (±70°) have no open ocean: 120–190°"
+    ]
+  },
+  {
+    "id": "bells",
+    "name": "Bells Beach",
+    "region": "Torquay, VIC",
+    "lat": -38.3706,
+    "lng": 144.2839,
+    "config": {
+      "idealSwellDir": 210,
+      "offshoreWindDir": 360,
+      "idealTide": "mid-high",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 168,
+      "coastNormal": 140,
+      "window": [
+        [
+          110,
+          225
+        ]
+      ],
+      "expectedOffshore": 348,
+      "coastKm": 0.14,
+      "longestFetch": {
+        "bearing": 130,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 230,
+          "km": 42
+        }
+      ],
+      "marineSample": {
+        "lat": -38.4098,
+        "lng": 144.2553
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 12.5,
+      "swellVsFacing": 42.5,
+      "swellVsOffshore": 30,
+      "engineBlocked": 11,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a reef (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "land inside the swell window (230° at 42 km) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "winkipop",
+    "name": "Winkipop",
+    "region": "Torquay, VIC",
+    "lat": -38.3733,
+    "lng": 144.2872,
+    "config": {
+      "idealSwellDir": 210,
+      "offshoreWindDir": 360,
+      "idealTide": "mid-high",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 165,
+      "coastNormal": 140,
+      "window": [
+        [
+          105,
+          225
+        ]
+      ],
+      "expectedOffshore": 345,
+      "coastKm": 0.55,
+      "longestFetch": {
+        "bearing": 130,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 230,
+          "km": 43
+        },
+        {
+          "bearing": 235,
+          "km": 33
+        }
+      ],
+      "marineSample": {
+        "lat": -38.4125,
+        "lng": 144.2586
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 15,
+      "swellVsFacing": 45,
+      "swellVsOffshore": 30,
+      "engineBlocked": 11,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no `type`/`heavy`: engine treats it as a beach break, but it's a reef (surf knowledge, unverified)"
+    ],
+    "checks": [
+      "land inside the swell window (230° at 43 km, 235° at 33 km) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "jan-juc",
+    "name": "Jan Juc",
+    "region": "Torquay, VIC",
+    "lat": -38.3533,
+    "lng": 144.2917,
+    "config": {
+      "idealSwellDir": 210,
+      "offshoreWindDir": 360,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 160,
+      "coastNormal": 140,
+      "window": [
+        [
+          110,
+          210
+        ]
+      ],
+      "expectedOffshore": 340,
+      "coastKm": 0.45,
+      "longestFetch": {
+        "bearing": 130,
+        "km": 400
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -38.3925,
+        "lng": 144.2631
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 20,
+      "swellVsFacing": 50,
+      "swellVsOffshore": 30,
+      "engineBlocked": 14,
+      "engineDirs": 29
+    },
+    "issues": [],
+    "checks": []
+  },
+  {
+    "id": "middleton",
+    "name": "Middleton",
+    "region": "Fleurieu, SA",
+    "lat": -35.5078,
+    "lng": 138.693,
+    "config": {
+      "idealSwellDir": 210,
+      "offshoreWindDir": 360,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 158,
+      "coastNormal": 148,
+      "window": [
+        [
+          130,
+          175
+        ],
+        [
+          185,
+          190
+        ]
+      ],
+      "expectedOffshore": 338,
+      "coastKm": 1.38,
+      "longestFetch": {
+        "bearing": 155,
+        "km": 399
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -35.547,
+        "lng": 138.6654
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 21.721747289728228,
+      "swellVsFacing": 51.72174728972823,
+      "swellVsOffshore": 30,
+      "engineBlocked": 19,
+      "engineDirs": 29
+    },
+    "issues": [
+      "idealSwellDir 210° has less than 100 km of open water (geo window: 130–175°, 185–190°)."
+    ],
+    "checks": [
+      "19/29 of the directions the engine rewards (±70°) have no open ocean: 180°, 195–280°"
+    ]
+  },
+  {
+    "id": "waits",
+    "name": "Waitpinga",
+    "region": "Fleurieu, SA",
+    "lat": -35.6467,
+    "lng": 138.5644,
+    "config": {
+      "idealSwellDir": 225,
+      "offshoreWindDir": 360,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 178,
+      "coastNormal": 148,
+      "window": [
+        [
+          120,
+          235
+        ]
+      ],
+      "expectedOffshore": 358,
+      "coastKm": 2.95,
+      "longestFetch": {
+        "bearing": 150,
+        "km": 400
+      },
+      "shadows": [
+        {
+          "bearing": 240,
+          "km": 52
+        },
+        {
+          "bearing": 245,
+          "km": 44
+        },
+        {
+          "bearing": 250,
+          "km": 47
+        },
+        {
+          "bearing": 255,
+          "km": 47
+        },
+        {
+          "bearing": 260,
+          "km": 51
+        },
+        {
+          "bearing": 265,
+          "km": 89
+        },
+        {
+          "bearing": 270,
+          "km": 28
+        },
+        {
+          "bearing": 275,
+          "km": 13
+        }
+      ],
+      "marineSample": {
+        "lat": -35.6787,
+        "lng": 138.5253
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 2.5,
+      "swellVsFacing": 47.5,
+      "swellVsOffshore": 45,
+      "engineBlocked": 12,
+      "engineDirs": 29
+    },
+    "issues": [
+      "coordinates are 2.9 km offshore from the nearest coastline in the dataset (could be the dataset's resolution; check on a map)"
+    ],
+    "checks": [
+      "land inside the swell window (240° at 52 km, 245° at 44 km, 250° at 47 km, 255° at 47 km, ...) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "shipstern",
+    "name": "Shipstern Bluff",
+    "region": "Tasmania",
+    "lat": -43.1889,
+    "lng": 147.75,
+    "config": {
+      "idealSwellDir": 225,
+      "offshoreWindDir": 45,
+      "idealTide": "mid-low",
+      "swellAttenuation": null,
+      "type": "reef",
+      "heavy": true,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": 188,
+      "coastNormal": 210,
+      "window": [
+        [
+          155,
+          220
+        ]
+      ],
+      "expectedOffshore": 8,
+      "coastKm": 1.03,
+      "longestFetch": {
+        "bearing": 200,
+        "km": 399
+      },
+      "shadows": [
+        {
+          "bearing": 225,
+          "km": 49
+        },
+        {
+          "bearing": 230,
+          "km": 45
+        },
+        {
+          "bearing": 235,
+          "km": 37
+        },
+        {
+          "bearing": 240,
+          "km": 36
+        },
+        {
+          "bearing": 245,
+          "km": 38
+        },
+        {
+          "bearing": 275,
+          "km": 28
+        },
+        {
+          "bearing": 280,
+          "km": 29
+        },
+        {
+          "bearing": 285,
+          "km": 30
+        }
+      ],
+      "marineSample": {
+        "lat": -43.2209,
+        "lng": 147.7064
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": 37.5,
+      "swellVsFacing": 37.5,
+      "swellVsOffshore": 0,
+      "engineBlocked": 15,
+      "engineDirs": 29
+    },
+    "issues": [
+      "idealSwellDir 225° has less than 100 km of open water (geo window: 155–220°)."
+    ],
+    "checks": [
+      "offshoreWindDir 45° is 38° off 8° (inside the ±45° offshore band, but close to the edge)",
+      "15/29 of the directions the engine rewards (±70°) have no open ocean: 225–295°",
+      "land inside the swell window (225° at 49 km, 230° at 45 km, 235° at 37 km, 240° at 36 km, ...) but no swellAttenuation"
+    ]
+  },
+  {
+    "id": "clifton",
+    "name": "Clifton Beach",
+    "region": "Hobart, TAS",
+    "lat": -42.9817,
+    "lng": 147.5217,
+    "config": {
+      "idealSwellDir": 135,
+      "offshoreWindDir": 315,
+      "idealTide": "mid",
+      "swellAttenuation": null,
+      "type": null,
+      "heavy": false,
+      "marineLat": null,
+      "windLat": null,
+      "timezone": null
+    },
+    "geo": {
+      "facing": null,
+      "coastNormal": null,
+      "window": [],
+      "expectedOffshore": null,
+      "coastKm": 0.02,
+      "longestFetch": {
+        "bearing": 355,
+        "km": 3
+      },
+      "shadows": [],
+      "marineSample": {
+        "lat": -43.0137,
+        "lng": 147.5651
+      },
+      "marineOnLand": false
+    },
+    "deltas": {
+      "offshoreErr": null,
+      "swellVsFacing": null,
+      "swellVsOffshore": 0,
+      "engineBlocked": 29,
+      "engineDirs": 29
+    },
+    "issues": [
+      "no bearing has 100 km of open water from these coordinates (longest: 3 km toward 355°). Either the break is deeply sheltered or the point sits in an estuary / behind a headland: check on a map"
+    ],
+    "checks": [
+      "29/29 of the directions the engine rewards (±70°) have no open ocean: 65–205°"
+    ]
+  }
+]
