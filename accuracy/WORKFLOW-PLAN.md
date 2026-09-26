@@ -196,3 +196,38 @@ None of these touch the app, so a rollback can't break the site.
 1. **OK to build**, on `feature/accuracy-audit` only, with test runs writing to `accuracy-data-test`.
 2. **Storage choice:** A (recommended) or B.
 3. Whether you'll add the **ruleset protecting `main`** (recommended, takes one minute in the GitHub settings).
+
+---
+
+## 7. Test results (26/09/2026)
+
+Two runs, both triggered by pushes to `feature/accuracy-audit` and both writing to `accuracy-data-test`.
+
+| Check | Result |
+|---|---|
+| Run 1 ([#1](https://github.com/louiscoplot-ui/Shouldyousurf/actions/runs/36238385333)): creates the orphan branch, real Open-Meteo + AODN data | ✅ success in 27 s. Forecast 27/27 breaks (1,377 rows), model 9/9 buoys (648 rows), buoys 21/21 sites (1,885 hours), 0 errors |
+| Run 2: appends to the existing branch | ✅ forecast and model appended (2,754 / 1,296 rows), buoy rows merged without duplicates (0 added, 1,884 refreshed) |
+| **Vercel preview for `accuracy-data-test`** | ✅ **none**, after both pushes (Vercel deployment list, filtered by branch and by time). The only deployments in that window are the expected previews of `feature/accuracy-audit` itself. *Cause not isolated:* either the branch's `vercel.json` or Vercel not deploying pushes made with the Actions token. The outcome is what matters, and it will be re-checked on the first `accuracy-data` push. |
+| `main` untouched | ✅ still at `27bd0b5` |
+| App tests (`npm test` at the root, vitest) | ✅ 158/158. The accuracy tests are named `*.nodetest.mjs` so vitest doesn't collect them (with `*.test.mjs` it failed with "No test suite found") |
+| Accuracy tests (`npm test` in `accuracy/`) | ✅ 6/6 |
+
+### Findings from real data
+
+1. **Open-Meteo returns no peak period** (`wave_peak_period` is null at all 9 offshore buoys with `best_match`). Only the mean period and mean direction come back. The logger now also stores the buoy's **mean** period (`WPFM`/`WPMH`) and mean direction (`SSWMD`), so the comparison is mean against mean.
+2. **Buoy coverage in the AODN real-time copy is very uneven** (hours logged over the last 7 days, out of 168):
+   - NSW, QLD, SA and VIC: **131–167**, near complete.
+   - IMOS: **36–39**, because their feed stopped on 21/09.
+   - **WA Transport (Rottnest 6, Cape Naturaliste 12, Cottesloe 15)**: sparse snapshots, not an hourly series.
+
+   So **Perth, Trigg included, currently has the weakest buoy truth of all**. Options, for a later decision:
+   - wait for the AODN *delayed-mode* archive to fill in (unknown lag);
+   - check whether Transport WA's own site publishes the full series and on what terms (blocked from this session);
+   - lean on the IMOS Hillarys buoy for Trigg once its feed resumes.
+3. The Actions token cannot write anywhere except where the script pushes. Your `main` ruleset (PR required) also blocks any direct push, so the workflow cannot touch `main` even by mistake.
+
+### Before the move to `main` (your step 4)
+
+- Remove the `push:` block marked "TEST PHASE ONLY" (I'll do it on request).
+- Optionally delete `accuracy-data-test`.
+- The first scheduled run then creates `accuracy-data` the same way. Check its Vercel deployment list once more.
