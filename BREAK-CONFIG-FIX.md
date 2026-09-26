@@ -125,7 +125,7 @@ Waitpinga needs no override: with the new coordinates its default point is 4 km 
 **How to verify.**
 1. `npm test`: **160/160** pass, including the 2 Trigg golden tests.
 2. The Trigg proof: its output regenerated **after** the edit has the same sha256 as the snapshot recorded **before** it (`9c63e36e…62396`), in 5 device timezones.
-3. `npm run lint:undef`: 0 errors.
+3. `npm run lint:undef`: no new problems (9 before, 9 after). The 3 errors it reports (`crypto` not defined in `app/lib/analytics.js`) already exist on `main` since `c1e861a` and are unrelated to this change.
 4. On the Vercel preview of `fix/break-config`: open Bells as a beginner (expect SKIP + reef tip), open Trigg (expect exactly what prod shows).
 5. After parts 2 and 3: open the four relocated breaks and check the pin location in the break list.
 
