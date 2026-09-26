@@ -45,7 +45,7 @@ export const BREAKS = [
   { id: "cottesloe",    country: "AU", name: "Cottesloe",          region: "Perth, WA",    lat: -31.9950, lng: 115.7520, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
   { id: "leighton",     country: "AU", name: "Leighton",           region: "Perth, WA",    lat: -32.0283, lng: 115.7461, idealSwellDir: 240, offshoreWindDir: 90,  idealTide: "mid-high", swellAttenuation: 0.55 },
   { id: "margaret",     country: "AU", name: "Margaret River Main",region: "Margaret River, WA", lat: -33.9717, lng: 114.9896, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true, idealTide: "mid" },
-  { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6443, lng: 115.0211, idealSwellDir: 225, offshoreWindDir: 135, type: "reef", idealTide: "mid" },
+  { id: "yallingup",    country: "AU", name: "Yallingup",          region: "Margaret River, WA", lat: -33.6443, lng: 115.0211, idealSwellDir: 225, offshoreWindDir: 135, type: "reef", idealTide: "mid", marineLat: -33.6307, marineLng: 114.9696 },
   { id: "gnaraloo",     country: "AU", name: "Gnaraloo (Tombstones)", region: "Coral Coast, WA", lat: -23.8489, lng: 113.5350, idealSwellDir: 225, offshoreWindDir: 90,  type: "reef", heavy: true, idealTide: "mid-low" },
 
   // ─── New South Wales ─────────────────────────────────────────────────
@@ -59,8 +59,8 @@ export const BREAKS = [
 
   // ─── Queensland ──────────────────────────────────────────────────────
   { id: "snapper",      country: "AU", name: "Snapper Rocks",      region: "Gold Coast, QLD", lat: -28.1627, lng: 153.5522, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
-  { id: "kirra",        country: "AU", name: "Kirra",              region: "Gold Coast, QLD", lat: -28.1694, lng: 153.5333, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
-  { id: "burleigh",     country: "AU", name: "Burleigh Heads",     region: "Gold Coast, QLD", lat: -28.0908, lng: 153.4573, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low" },
+  { id: "kirra",        country: "AU", name: "Kirra",              region: "Gold Coast, QLD", lat: -28.1694, lng: 153.5333, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low", marineLat: -28.1389, marineLng: 153.5709 },
+  { id: "burleigh",     country: "AU", name: "Burleigh Heads",     region: "Gold Coast, QLD", lat: -28.0908, lng: 153.4573, idealSwellDir: 135, offshoreWindDir: 225, idealTide: "mid-low", marineLat: -28.0753, marineLng: 153.5051 },
   { id: "dbah",         country: "AU", name: "Duranbah (D'Bah)",   region: "Gold Coast, QLD", lat: -28.1681, lng: 153.5522, idealSwellDir: 135, offshoreWindDir: 270, idealTide: "mid" },
   { id: "noosa",        country: "AU", name: "Noosa (First Point)",region: "Sunshine Coast, QLD", lat: -26.3833, lng: 153.0900, idealSwellDir: 100, offshoreWindDir: 180, idealTide: "mid" },
   { id: "alexandra",    country: "AU", name: "Alexandra Headland", region: "Sunshine Coast, QLD", lat: -26.6717, lng: 153.1031, idealSwellDir: 120, offshoreWindDir: 225, type: "reef", idealTide: "mid" },

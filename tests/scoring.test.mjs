@@ -578,6 +578,10 @@ describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
   it("décale de 5 km vers le large (direction donnée par idealSwellDir)", () => {
     for (const b of BREAKS) {
       if (!Number.isFinite(b.idealSwellDir)) continue;
+      // Un spot qui force marineLat/marineLng sort de la règle par défaut
+      // (idealSwellDir y pointe dans un cap ou le long de la côte, ex. Kirra).
+      // Il est vérifié par le test suivant, pas ici.
+      if (Number.isFinite(b.marineLat) || Number.isFinite(b.marineLng)) continue;
       const mp = marineSamplePoint(b);
       expect(distKm(b, mp)).toBeCloseTo(KM, 1);
       // Le décalage doit suivre idealSwellDir : la houle vient de la mer.
@@ -587,6 +591,21 @@ describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
       ) * 180) / Math.PI;
       const delta = Math.abs(((bearing - b.idealSwellDir + 540) % 360) - 180);
       expect(delta).toBeLessThan(2);
+    }
+  });
+
+  it("les points marins forcés du catalogue sont complets, utilisés tels quels, et proches du spot", () => {
+    const forced = BREAKS.filter((b) => Number.isFinite(b.marineLat) || Number.isFinite(b.marineLng));
+    for (const b of forced) {
+      // Les deux champs ou aucun : un seul des deux serait ignoré en silence.
+      expect(Number.isFinite(b.marineLat) && Number.isFinite(b.marineLng)).toBe(true);
+      const mp = marineSamplePoint(b);
+      expect(mp).toEqual({ lat: b.marineLat, lng: b.marineLng });
+      // Garde-fou contre une faute de frappe : le point doit rester devant le
+      // spot (même ordre de grandeur que le décalage par défaut de 5 km).
+      const d = distKm(b, mp);
+      expect(d).toBeGreaterThan(3);
+      expect(d).toBeLessThan(7);
     }
   });
 
