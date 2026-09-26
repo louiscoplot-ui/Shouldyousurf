@@ -7,6 +7,15 @@ Scope: **`app/breaks.js` data only.** The scoring engine (`app/v2/lib/`) is not 
 | Part | Status |
 |---|---|
 | 1. Types for 8 reef breaks | **Applied** (commit `1ef7185`) |
+| 2. Coordinates for Burleigh, Yallingup, Waitpinga | **Applied** (commit `937814b`) |
+| 2. Coordinates for Gnaraloo | **Waiting** for the reef position from the maintainer (separate commit) |
+| 3. Marine overrides for Kirra, Burleigh, Yallingup | **Applied** (commit `b29fe45`), with a test adjustment explained there |
+| 3. Marine override for Gnaraloo | **Waiting**: recomputed from Gnaraloo's confirmed coordinates |
+| Trigg golden test | **Added before any edit** (commit `7b8f56e`); byte-identical after every commit |
+| `CACHE_V` | **Not bumped** (maintainer decision) |
+
+---|---|
+| 1. Types for 8 reef breaks | **Applied** (commit `1ef7185`) |
 | 2. Coordinates for 4 breaks | **Proposed, waiting for your OK** |
 | 3. Marine sample points (Kirra, Burleigh, Gnaraloo, plus Yallingup) | **Proposed, waiting for your OK** |
 | Trigg golden test | **Added before any edit** (commit `7b8f56e`) and passing |
@@ -40,7 +49,7 @@ Advanced and expert see no change. The raw score (`scoreV2`) never reads the typ
 
 **Audit before/after (types).** Each of the 8 breaks loses its "no `type`" review item. "Needs review" goes from 20 to 14. Trigg's audit entry is byte-identical.
 
-## 2. Coordinates (proposed, not applied)
+## 2. Coordinates (applied for Burleigh, Yallingup, Waitpinga; Gnaraloo pending)
 
 **How these were found, honestly:**
 - Google Maps, OpenStreetMap search, GeoNames, Geoscience Australia place names, Wikipedia and the surf-atlas sites are all **blocked from this session**.
@@ -54,7 +63,7 @@ Advanced and expert see no change. The raw score (`scoreV2`) never reads the typ
 | **Yallingup** | `-33.6406, 114.9908` · [map](https://www.google.com/maps/search/?api=1&query=-33.6406,114.9908) | `-33.6443, 115.0211` · [map](https://www.google.com/maps/search/?api=1&query=-33.6443,115.0211) | Pin is 2.6 km **out to sea** | Yallingup town (latlong.info, via search: -33.64592, 115.03514) snapped to the nearest OSM shore, i.e. Yallingup beach, where the reef is | medium-high |
 | **Waitpinga** | `-35.6467, 138.5644` · [map](https://www.google.com/maps/search/?api=1&query=-35.6467,138.5644) | `-35.6363, 138.5010` · [map](https://www.google.com/maps/search/?api=1&query=-35.6363,138.5010) | Pin is 2.9 km **out to sea**, about 6 km east of the beach | Two web sources for Waitpinga Beach (-35.6344, 138.4989 from the search summary; -35.6361, 138.5041 from bonzle.com) both snap onto the same beach; proposed pin is their midpoint on the OSM shore | high |
 
-## 3. Marine sample points (proposed, not applied)
+## 3. Marine sample points (applied for Kirra, Burleigh, Yallingup; Gnaraloo pending)
 
 ### How the app picks the point today (`app/v2/lib/realFetch.js`)
 
