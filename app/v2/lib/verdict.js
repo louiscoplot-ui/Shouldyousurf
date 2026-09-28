@@ -1,7 +1,7 @@
 // v2 verdict + score breakdown + level matrix — ported from export-v2/v2-main.jsx + mock.js
 // Pure functions; no window globals, no React, safe in both server + client.
 
-import { scoreV2, scoreForLevel, lookupBaseSize, levelPeakBaseSize, degToCompass, faceFtOf, getDominant, spotAttenuation } from "./prodScoring";
+import { scoreV2, scoreForLevel, levelBaseSize, levelPeakBaseSize, degToCompass, faceFtOf, getDominant, spotAttenuation } from "./prodScoring";
 
 // Bandes recalibrées post-multiplicatif. Distribution analysée sur 4800
 // combinaisons (10 swellH × 5 periods × 4 winds × 4 dir × 6 levels) :
@@ -141,7 +141,7 @@ export function drivingChipsFor(h, spot, userLevel) {
   // seulement quand vraiment under-sized pour ce niveau.
   const effH = dom.swellHeight * spotAttenuation(spot);
   if (Number.isFinite(effH) && userLevel) {
-    const bs = lookupBaseSize(effH, userLevel);
+    const bs = levelBaseSize(dom.swellHeight, dom.periodKnown ? dom.swellPeriod : 10, userLevel, spotAttenuation(spot));
     if (bs >= 60) chips.push({ t: "Good size for level", k: "pos" });
     else if (bs <= 18) chips.push({ t: "Too small for level", k: "neg" });
   } else {
