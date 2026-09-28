@@ -177,9 +177,11 @@ export function drivingChipsFor(h, spot, userLevel) {
 // classifyConditions / verdict logic the main score uses. Keeps the
 // "Can you surf?" block consistent with the top-of-screen number.
 function shortReason(userLevel, cls, foamie, period, verdict) {
-  const { size, wind, reefTooMuch, currentHazard, faceFt } = cls;
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, currentHazard, faceFt } = cls;
   if (currentHazard === "dangerous") return "Dangerous rip — stay out";
   if (reefTooMuch) return "Reef / heavy spot — too risky";
+  if (heavyTooMuch) return "Heavy break — beyond this level";
+  if (reefGoCap && verdict === "ok" && wind === "clean" && (size === "sweet" || size === "upper")) return "Reef — pick your waves carefully";
   // Inside-reform rescue only applies when the verdict actually came back
   // as something other than "no". If getPersonalVerdict decided the wind
   // is beyond reform (e.g. 30+ km/h onshore), we say so honestly instead
