@@ -1214,3 +1214,46 @@ describe("heavy / reef : plafonds de verdict par niveau", () => {
     }
   });
 });
+
+// ── Calibration advanced / expert (fix/level-calibration, 28/09) ───────
+// Bug d'origine : les grilles advanced/expert lisaient la houle en mètres
+// sans période, pendant que le verdict classait la taille sur la face.
+// Résultat : "GO 19-21 Poor" pour un advanced sur du 3-5 ft propre à Trigg.
+// Ces deux tests verrouillent le cas qui mentait, sans comparer les niveaux
+// entre eux (les grilles des autres niveaux ne sont pas touchées).
+describe("advanced / expert : jour propre idéal au milieu de la zone sweet", () => {
+  const ideal = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "any" };
+  const MID = { advanced: 5, expert: 7 }; // milieu de USER_LEVEL_ZONES.sweetLo..sweetHi (3-7 / 4-10)
+  // Houle qui donne `ft` de face à cette période (estimateFaceHeight inversé).
+  const swellFor = (ft, period) => {
+    let lo = 0, hi = 8;
+    for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; mToFt(estimateFaceHeight(m, period)) < ft ? (lo = m) : (hi = m); }
+    return lo;
+  };
+  const cases = [];
+  for (const level of Object.keys(MID))
+    for (const period of [11, 13, 15])
+      for (const dFt of [-0.5, 0, 0.5]) {
+        const ft = MID[level] + dFt;
+        cases.push({ level, period, ft, h: { hour: 8, swellHeight: swellFor(ft, period), swellPeriod: period, swellDir: 240, windSpeedKn: 5 / 1.852, windDir: 90, currentVel: 0, tideM: 0 } });
+      }
+
+  it("les heures testées sont bien 'sweet' + 'clean' pour le niveau", () => {
+    for (const { level, h, ft, period } of cases) {
+      const c = classifyConditions(level, h, ideal);
+      expect(`${c.size}/${c.wind}`, `${level} ${ft}ft ${period}s`).toBe("sweet/clean");
+    }
+  });
+  it("score ≥ 55 (Good ou mieux)", () => {
+    for (const { level, h, ft, period } of cases) {
+      expect(scoreForLevel(h, ideal, level).score, `${level} ${ft}ft ${period}s`).toBeGreaterThanOrEqual(55);
+    }
+  });
+  it("non-régression : jamais de GO sous 40 sur ces heures", () => {
+    for (const { level, h, ft, period } of cases) {
+      const v = getPersonalVerdict(level, h, ideal);
+      const s = scoreForLevel(h, ideal, level).score;
+      if (v === "yes") expect(s, `${level} ${ft}ft ${period}s GO`).toBeGreaterThanOrEqual(40);
+    }
+  });
+});
