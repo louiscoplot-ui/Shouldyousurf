@@ -37,6 +37,17 @@ export default function Home() {
     try { localStorage.setItem(THEME_KEY, next); } catch {}
     track("theme_changed", { theme: next });
   };
+  // Erreurs d'hydratation relevées par la balise de layout.js (avant
+  // l'hydratation) : envoyées une fois l'app montée, puis au fil de l'eau.
+  // track() passe par PostHog, qui respecte déjà ?noanalytics=1.
+  useEffect(() => {
+    const q = window.__hydrationErrors;
+    if (!Array.isArray(q)) return;
+    const send = (e) => track("hydration_error", { code: e.code, via: e.via, ms_after_nav: Math.round(e.t - (performance.timeOrigin || 0)) });
+    q.splice(0).forEach(send);
+    q.push = (e) => { send(e); return 0; };
+  }, []);
+
   // Track the initial theme once (picked from localStorage)
   useEffect(() => {
     if (prevThemeRef.current === null) {
