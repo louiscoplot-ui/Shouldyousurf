@@ -543,7 +543,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 6; // 6 : heavy = SKIP jusqu'à intermediate, reef = pas de GO early_int (28/09)
+const CACHE_V = 7; // 7 : grilles advanced/expert sur la face + cross < 12 km/h clean (28/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {

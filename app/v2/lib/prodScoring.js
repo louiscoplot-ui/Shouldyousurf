@@ -249,6 +249,32 @@ const BASE_SIZE_GRID = {
   ],
 };
 
+// ── Advanced / expert : grille indexée sur la FACE (ft), période incluse ──
+// Les grilles métriques ci-dessus lisent la houle en mètres SANS la période,
+// alors que le verdict classe la taille sur la face (période incluse,
+// USER_LEVEL_ZONES). Pour advanced/expert, les deux ne racontaient pas la
+// même vague : Yallingup 28/09, 1.14 m @ 14 s = 5.1 ft de face, "sweet" pour
+// un advanced (3-7 ft) côté verdict, mais 22/100 de baseSize côté score —
+// sous l'intermediate (59) et sous l'expert (43) sur les mêmes vagues.
+// Ces grilles lisent la même face que le verdict. Calage (jour propre, où
+// le multiplicateur combiné sature à 1.35) :
+//   advanced : 3-4 ft ≈ 55-65 (Good), Unreal (≥ 75) seulement vers 6-7 ft
+//   expert   : décalé vers le haut, Good vers 4-5 ft, Unreal vers 8-10 ft
+// Les 4 niveaux inférieurs gardent leur grille métrique, inchangée.
+export const FACE_BASE_GRID = {
+  advanced: [[0, 6], [1.5, 10], [2, 18], [3, 41], [4, 46], [5, 52], [6, 58], [7, 66], [8.5, 62], [10, 52], [13, 42], [20, 36]],
+  expert:   [[0, 8], [2, 12], [2.5, 18], [4, 40], [5, 46], [6.5, 52], [8, 58], [9, 64], [10, 70], [12, 66], [16, 55], [25, 50]],
+};
+
+// baseSize d'une partition pour un niveau : face (ft) pour advanced/expert,
+// grille métrique historique pour les autres. Source UNIQUE (score, chips,
+// pic affiché) — sinon la fiche "How this score is built" contredirait le score.
+export function levelBaseSize(swellH, swellPeriod, userLevel, attenuation = 1) {
+  const face = FACE_BASE_GRID[userLevel];
+  if (face) return lerpTable(mToFt(estimateFaceHeight(swellH, Number.isFinite(swellPeriod) ? swellPeriod : 10, attenuation)), face);
+  return lookupBaseSize(swellH * attenuation, userLevel);
+}
+
 export function lookupBaseSize(swellH, userLevel) {
   const grid = BASE_SIZE_GRID[userLevel] || BASE_SIZE_GRID.intermediate;
   if (swellH <= grid[0][0]) return grid[0][1];
@@ -268,7 +294,7 @@ export function lookupBaseSize(swellH, userLevel) {
 // au surfeur "il manque 35 points dispos" alors qu'il est literally au
 // sommet de sa grille (first_timer peak = 50, beginner peak = 65, etc.).
 export function levelPeakBaseSize(userLevel) {
-  const grid = BASE_SIZE_GRID[userLevel] || BASE_SIZE_GRID.intermediate;
+  const grid = FACE_BASE_GRID[userLevel] || BASE_SIZE_GRID[userLevel] || BASE_SIZE_GRID.intermediate;
   let max = 0;
   for (const [, s] of grid) if (s > max) max = s;
   return max;
@@ -420,7 +446,7 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // appliquée UNE fois ici), baseSize, multiplicateurs, chop, micro-cap.
   const partScore = (part) => {
     const hEff = part.swellHeight * att;
-    const baseSize = lookupBaseSize(hEff, level);
+    const baseSize = levelBaseSize(part.swellHeight, part.swellPeriod, level, att);
     const periodMult = part.periodKnown ? lookupPeriodMult(part.swellPeriod) : 1.00;
     const swellDelta = (part.swellDir != null && ideal != null) ? angDelta(part.swellDir, ideal) : null;
     const dirMult = swellDelta != null ? lookupDirMult(swellDelta) : 1.00;
@@ -785,7 +811,10 @@ export function classifyConditions(userLevel, h, spot) {
   } else {
     // intermediate et au-dessus : inchangé. Onshore dans la face = blown
     // tôt (20) ; cross-shore tient jusqu'à 30 ; offshore jusqu'au gale 55.
-    if ((isOffshore && kmh < 25) || kmh < 8) wind = "clean";
+    // Cross-shore léger (< 12 km/h) = clean : le repère de surface de ce
+    // fichier dit "8 à 15 léger, la face reste propre". Seul, le < 8 km/h
+    // rendait le GO quasi inatteignable (1-13 % des heures). Onshore : inchangé.
+    if ((isOffshore && kmh < 25) || kmh < 8 || (isCross && kmh < 12)) wind = "clean";
     else if (
       (isOnshore && kmh >= 20) ||
       (isCross && kmh >= 30) ||
