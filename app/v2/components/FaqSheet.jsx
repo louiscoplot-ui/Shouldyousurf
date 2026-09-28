@@ -3,6 +3,7 @@
 // v2 FaqSheet — same FAQ content as prod, wrapped in v2 visuals.
 
 import { useState } from "react";
+import AttributionText from "./AttributionText";
 
 const FAQ_KEYS = [
   { q: "faq_q1", a: "faq_a1" },
@@ -38,7 +39,7 @@ export default function FaqSheet({ onClose, t }) {
               </button>
               {open === i && (
                 <div className="v2-faq-a">
-                  {item.a ? t(item.a) : item.parts.map((p, j) => (
+                  {item.a ? <AttributionText text={t(item.a)} /> : item.parts.map((p, j) => (
                     <div key={j} style={{ marginTop: j > 0 ? 6 : 0 }}>
                       <span style={{ color: "var(--accent)", marginRight: 6, fontWeight: 600 }}>{j === 0 ? "iOS:" : "Android:"}</span>
                       {t(p)}
