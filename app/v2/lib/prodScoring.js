@@ -795,6 +795,19 @@ export function classifyConditions(userLevel, h, spot) {
   }
 
   const reefTooMuch = (spot.heavy || spot.type === "reef") && isEarlyLearner;
+  // Heavy break (Shipstern, Teahupoo, Pipeline…) : pas un spot pour un early
+  // intermediate ni un intermediate, quelle que soit la journée. Un vent
+  // propre et une taille "sweet" ne rendent pas une vague lourde praticable :
+  // c'est la puissance et le fond qui blessent, pas la surface. Le moteur
+  // rendait GO à un intermediate sur Shipstern par matin offshore (9 heures
+  // dans le forecast du 28/09). first_timer/beginner sont déjà couverts par
+  // reefTooMuch ; advanced/expert gardent leur jugement.
+  const heavyTooMuch = !!spot.heavy && (userLevel === "early_int" || userLevel === "intermediate");
+  // Reef (non heavy) pour un early_int : jamais GO, MAYBE au mieux. Il n'a
+  // pas le repli inside-reform (hasInsideReform exclut les reefs) et une
+  // erreur se paie sur le fond. Pas un SKIP : un reef mellow par jour propre
+  // reste une vraie session pour lui, avec prudence.
+  const reefGoCap = spot.type === "reef" && !spot.heavy && userLevel === "early_int";
 
   // Ocean-current hazard for learners — a rip drains them faster than they
   // can paddle against it. Open-Meteo returns velocity in m/s;
@@ -807,7 +820,7 @@ export function classifyConditions(userLevel, h, spot) {
   const currentHazard = hazardProne && curVel >= 0.56 ? "dangerous"
                       : hazardProne && curVel >= 0.28 ? "strong"
                       : "none";
-  return { size, wind, reefTooMuch, faceFt, currentHazard };
+  return { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard };
 }
 
 // isFoamieFriendly — the subset of users who should literally be riding a
@@ -847,7 +860,7 @@ export function hasInsideReform(userLevel, faceFt, spot) {
 // of drift between this function and scoreForLevel's bounds. Falls back to
 // recomputing via getPersonalVerdict when the caller doesn't have the score.
 export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
-  const { size, wind, reefTooMuch, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   const verdict = displayedVerdict || getPersonalVerdict(userLevel, h, spot);
   const foamie = hasInsideReform(userLevel, faceFt, spot);
   const { kmh, dir } = windContext(h, spot);
@@ -861,6 +874,7 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // here since both now cap a learner to SKIP.
     if (currentHazard !== "none" && isLearner) return "tip_" + userLevel + "_current";
     if (reefTooMuch) return "tip_" + userLevel + "_reef";
+    if (heavyTooMuch) return "tip_" + userLevel + "_heavy";
     // Gale tip — only fire when wind is actually shredding the face.
     // Used to fire at kmh >= 35 unconditionally, but 35-40 km/h offshore
     // for an advanced/expert is still surfable — galeKills() doesn't
@@ -883,6 +897,10 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     if (foamie && (size === "too_big" || size === "upper" || wind === "blown")) {
       return "tip_" + userLevel + "_inside";
     }
+    // Reef + early_int : c'est le plafond reef qui a retiré le GO, pas la
+    // surface. Sans cette ligne le conseil "sweet_clean" disait "vas-y" sous
+    // un label MAYBE.
+    if (reefGoCap && wind === "clean" && (size === "sweet" || size === "upper")) return "tip_early_int_reef_pick";
     if (size === "too_big") return "tip_" + userLevel + "_too_big";
     if (size === "too_small") return "tip_" + userLevel + "_too_small";
     if (wind === "blown") return "tip_" + userLevel + "_blown_" + size;
@@ -894,8 +912,8 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
 }
 
 export function getPersonalModifier(userLevel, h, spot) {
-  const { size, wind, reefTooMuch } = classifyConditions(userLevel, h, spot);
-  if (reefTooMuch) return null;
+  const { size, wind, reefTooMuch, heavyTooMuch } = classifyConditions(userLevel, h, spot);
+  if (reefTooMuch || heavyTooMuch) return null;
   if (size === "too_small" || size === "too_big") return null;
   if (wind === "blown") return null;
 
@@ -1084,12 +1102,13 @@ function galeKills(userLevel, kmh, dir) {
 }
 
 export function getPersonalVerdict(userLevel, h, spot) {
-  const { size, wind, reefTooMuch, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   // Current safety — overrides everything for learners who can't paddle
   // against a rip. "dangerous" = hard no; "strong" caps the verdict to
   // MAYBE below (never lets a learner see GO on a rippy day).
   if (currentHazard === "dangerous") return "no";
   if (reefTooMuch) return "no";
+  if (heavyTooMuch) return "no";
 
   const { kmh, dir } = windContext(h, spot);
   // Universal gale cap — applies to all levels. Even advanced/expert
@@ -1163,12 +1182,15 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // portée le reste quel que soit l'état de la surface.
     if (size === "upper" || size === "too_big") return "no";
     if (size === "too_small") return "no";
-    // Safety-first: blown wind + foamie-eligible learner (first_timer /
-    // beginner) = HARD no. They can't punch through chop yet — the inside
-    // reform rescue above already covers their fall-back. Early_int drops
-    // through to "ok" like intermediate, since they're on a mid-length or
-    // shortboard and can handle moderate blown conditions at the right size.
-    if (userLevel === "first_timer" || userLevel === "beginner") return "no";
+    // Safety-first: blown wind + learner = HARD no. For early_int "blown"
+    // is the learner cap (LEARNER_WIND_CAP, 24 km/h non-offshore), and on a
+    // beach break the inside-reform branch above already returns "no" for
+    // it. The only early_int hours that reach THIS line are at a reef /
+    // heavy break (no reform rescue) or above 10 ft (already too_big → no).
+    // Returning "ok" here made a reef MORE lenient than a beach for the same
+    // wind (measured 28/09: Angourie 1.7 ft, 25-26 km/h → MAYBE at the reef,
+    // SKIP had it been a beach).
+    if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
     return "ok";
   }
   if (size === "too_small") {
@@ -1203,7 +1225,8 @@ export function getPersonalVerdict(userLevel, h, spot) {
     }
     return "ok";
   }
-  const cap = currentHazard === "strong" ? "ok" : null;
+  // Plafond MAYBE : courant "strong" (early_int ici) ou reef pour early_int.
+  const cap = (currentHazard === "strong" || reefGoCap) ? "ok" : null;
   const downgrade = (v) => (cap && v === "yes" ? cap : v);
   if (size === "sweet") return downgrade(wind === "clean" ? "yes" : "ok");
   if (size === "upper") return downgrade(wind === "clean" ? "yes" : "ok");

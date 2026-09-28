@@ -625,6 +625,7 @@ function Loaded({
     return cls.currentHazard !== "none"
         || cls.size === "too_big"
         || cls.reefTooMuch
+        || cls.heavyTooMuch
         || (cls.wind === "blown" && bigEnoughToHurt);
   }, [effectiveLevel, hour, effectiveSpot]);
 

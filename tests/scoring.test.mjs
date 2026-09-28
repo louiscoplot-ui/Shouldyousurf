@@ -22,7 +22,9 @@ import {
   mToFt,
   LEARNER_WIND_CAP,
   usableGustKmh,
+  getPersonalAdviceKey,
 } from "../app/v2/lib/prodScoring.js";
+import { getT } from "../app/i18n.js";
 import { BREAKS } from "../app/breaks.js";
 import { marineSamplePoint, offsetPoint, probeOffshoreBearing } from "../app/v2/lib/realFetch.js";
 import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE, scoreBreakdown, drivingChipsFor } from "../app/v2/lib/verdict.js";
@@ -578,6 +580,10 @@ describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
   it("décale de 5 km vers le large (direction donnée par idealSwellDir)", () => {
     for (const b of BREAKS) {
       if (!Number.isFinite(b.idealSwellDir)) continue;
+      // Un spot qui force marineLat/marineLng sort de la règle par défaut
+      // (idealSwellDir y pointe dans un cap ou le long de la côte, ex. Kirra).
+      // Il est vérifié par le test suivant, pas ici.
+      if (Number.isFinite(b.marineLat) || Number.isFinite(b.marineLng)) continue;
       const mp = marineSamplePoint(b);
       expect(distKm(b, mp)).toBeCloseTo(KM, 1);
       // Le décalage doit suivre idealSwellDir : la houle vient de la mer.
@@ -587,6 +593,21 @@ describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
       ) * 180) / Math.PI;
       const delta = Math.abs(((bearing - b.idealSwellDir + 540) % 360) - 180);
       expect(delta).toBeLessThan(2);
+    }
+  });
+
+  it("les points marins forcés du catalogue sont complets, utilisés tels quels, et proches du spot", () => {
+    const forced = BREAKS.filter((b) => Number.isFinite(b.marineLat) || Number.isFinite(b.marineLng));
+    for (const b of forced) {
+      // Les deux champs ou aucun : un seul des deux serait ignoré en silence.
+      expect(Number.isFinite(b.marineLat) && Number.isFinite(b.marineLng)).toBe(true);
+      const mp = marineSamplePoint(b);
+      expect(mp).toEqual({ lat: b.marineLat, lng: b.marineLng });
+      // Garde-fou contre une faute de frappe : le point doit rester devant le
+      // spot (même ordre de grandeur que le décalage par défaut de 5 km).
+      const d = distKm(b, mp);
+      expect(d).toBeGreaterThan(3);
+      expect(d).toBeLessThan(7);
     }
   });
 
@@ -1138,5 +1159,58 @@ describe("ligne SWELL affichee = partition dominante", () => {
     const faceSiPrimaire = faceFtOf({ ...h, windWaveHeight: 0 }, TRIGG);
     expect(faceFt).toBeGreaterThan(faceSiPrimaire * 1.5);
     expect(dom.swellHeight).toBeGreaterThan(h.swellHeight);
+  });
+});
+
+// ── Sécurité heavy / reef (fix/heavy-break-safety, 28/09) ─────────────
+// Un intermediate recevait GO sur Shipstern Bluff (heavy) par matin offshore.
+describe("heavy / reef : plafonds de verdict par niveau", () => {
+  const LEARN_TO_INT = ["first_timer", "beginner", "early_int", "intermediate"];
+  // Heure "parfaite" : 1.2 m @ 12 s, houle dans l'axe, 5 km/h offshore.
+  const perfect = (s) => ({ hour: 8, swellHeight: 1.2, swellPeriod: 12, swellDir: s.idealSwellDir, windSpeedKn: 5 / 1.852, windDir: s.offshoreWindDir, currentVel: 0, tideM: 0 });
+  const heavy = { idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true };
+  const reef = { idealSwellDir: 225, offshoreWindDir: 45, type: "reef" };
+  const beach = { idealSwellDir: 225, offshoreWindDir: 45 };
+
+  it("heavy : SKIP de first_timer à intermediate, même par conditions parfaites", () => {
+    for (const lvl of LEARN_TO_INT) expect(getPersonalVerdict(lvl, perfect(heavy), heavy), lvl).toBe("no");
+  });
+  it("heavy : advanced/expert gardent leur jugement (le heavy seul ne les bloque pas)", () => {
+    const h = { ...perfect(heavy), swellHeight: 2.2 };
+    for (const lvl of ["advanced", "expert"]) expect(getPersonalVerdict(lvl, h, heavy), lvl).not.toBe("no");
+  });
+  it("heavy : score affiché plafonné à la bande SKIP (≤ 29) pour early_int / intermediate", () => {
+    for (const lvl of ["early_int", "intermediate"]) expect(scoreForLevel(perfect(heavy), heavy, lvl).score, lvl).toBeLessThanOrEqual(29);
+  });
+  it("reef non heavy : early_int jamais GO (MAYBE au mieux), intermediate peut être GO", () => {
+    const h = { ...perfect(reef), swellHeight: 0.9 };
+    expect(getPersonalVerdict("early_int", h, reef)).toBe("ok");
+    expect(getPersonalVerdict("early_int", h, beach)).toBe("yes"); // même heure sur un beach break : GO
+    expect(getPersonalVerdict("intermediate", h, reef)).toBe("yes");
+  });
+  it("reef non heavy : early_int en MAYBE reçoit un conseil reef, pas le conseil GO", () => {
+    const h = { ...perfect(reef), swellHeight: 0.9 };
+    expect(getPersonalAdviceKey("early_int", h, reef, "ok")).toBe("tip_early_int_reef_pick");
+  });
+  it("heavy : conseil dédié pour early_int / intermediate, clé traduite en EN et FR", () => {
+    for (const lvl of ["early_int", "intermediate"]) {
+      const key = getPersonalAdviceKey(lvl, perfect(heavy), heavy, "no");
+      expect(key).toBe(`tip_${lvl}_heavy`);
+      for (const lang of ["en", "fr"]) expect(getT(lang)(key), `${lang} ${key}`).not.toBe(key);
+    }
+  });
+  it("reef : jamais plus permissif qu'un beach break pour un early_int (vent blown)", () => {
+    const h = { ...perfect(reef), swellHeight: 0.6, swellPeriod: 9, windSpeedKn: 26 / 1.852, windDir: 135 }; // 26 km/h cross
+    expect(classifyConditions("early_int", h, reef).wind).toBe("blown");
+    expect(getPersonalVerdict("early_int", h, beach)).toBe("no");
+    expect(getPersonalVerdict("early_int", h, reef)).toBe("no");
+  });
+  it("catalogue : aucun break heavy ne donne GO à intermediate ou en dessous, sur un balayage de conditions", () => {
+    for (const b of BREAKS.filter((x) => x.heavy)) {
+      for (const swellHeight of [0.6, 1.0, 1.5, 2.2, 3.0]) for (const kmh of [0, 8, 15]) {
+        const h = { ...perfect(b), swellHeight, windSpeedKn: kmh / 1.852 };
+        for (const lvl of LEARN_TO_INT) expect(getPersonalVerdict(lvl, h, b), `${b.id} ${lvl} ${swellHeight}m ${kmh}km/h`).not.toBe("yes");
+      }
+    }
   });
 });
