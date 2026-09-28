@@ -1199,6 +1199,12 @@ describe("heavy / reef : plafonds de verdict par niveau", () => {
       for (const lang of ["en", "fr"]) expect(getT(lang)(key), `${lang} ${key}`).not.toBe(key);
     }
   });
+  it("reef : jamais plus permissif qu'un beach break pour un early_int (vent blown)", () => {
+    const h = { ...perfect(reef), swellHeight: 0.6, swellPeriod: 9, windSpeedKn: 26 / 1.852, windDir: 135 }; // 26 km/h cross
+    expect(classifyConditions("early_int", h, reef).wind).toBe("blown");
+    expect(getPersonalVerdict("early_int", h, beach)).toBe("no");
+    expect(getPersonalVerdict("early_int", h, reef)).toBe("no");
+  });
   it("catalogue : aucun break heavy ne donne GO à intermediate ou en dessous, sur un balayage de conditions", () => {
     for (const b of BREAKS.filter((x) => x.heavy)) {
       for (const swellHeight of [0.6, 1.0, 1.5, 2.2, 3.0]) for (const kmh of [0, 8, 15]) {

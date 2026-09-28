@@ -1182,12 +1182,15 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // portée le reste quel que soit l'état de la surface.
     if (size === "upper" || size === "too_big") return "no";
     if (size === "too_small") return "no";
-    // Safety-first: blown wind + foamie-eligible learner (first_timer /
-    // beginner) = HARD no. They can't punch through chop yet — the inside
-    // reform rescue above already covers their fall-back. Early_int drops
-    // through to "ok" like intermediate, since they're on a mid-length or
-    // shortboard and can handle moderate blown conditions at the right size.
-    if (userLevel === "first_timer" || userLevel === "beginner") return "no";
+    // Safety-first: blown wind + learner = HARD no. For early_int "blown"
+    // is the learner cap (LEARNER_WIND_CAP, 24 km/h non-offshore), and on a
+    // beach break the inside-reform branch above already returns "no" for
+    // it. The only early_int hours that reach THIS line are at a reef /
+    // heavy break (no reform rescue) or above 10 ft (already too_big → no).
+    // Returning "ok" here made a reef MORE lenient than a beach for the same
+    // wind (measured 28/09: Angourie 1.7 ft, 25-26 km/h → MAYBE at the reef,
+    // SKIP had it been a beach).
+    if (userLevel === "first_timer" || userLevel === "beginner" || userLevel === "early_int") return "no";
     return "ok";
   }
   if (size === "too_small") {
