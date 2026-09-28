@@ -6,8 +6,11 @@
 // FIXED instant (05:17 Perth, 27/09/2026). It then compares, byte for byte,
 // everything a user sees over the next 72 h against the committed snapshot
 // fixtures/trigg-golden.json:
-//   per level (6): score, band label, verdict, face range of every hour,
-//                  and the best window of each day.
+//   per level (6): score, band label, verdict, advice key, modifier, face
+//                  range of every hour, and the best window of each day.
+// Plus an engine-level SWEEP (1,008 synthetic hours: swell x period x wind
+// x direction x current) scored directly with Trigg's config, for the
+// combinations a 72 h window never shows.
 //
 // Why: Trigg is the break with the most field-verified sessions (see the
 // "cas terrain Trigg" tests). Config or engine work elsewhere must not move
@@ -17,13 +20,18 @@
 //   - You did NOT mean to change Trigg: find what leaked (a shared default,
 //     a table, an engine constant). Don't touch the snapshot.
 //   - You DID mean to change the engine: regenerate on purpose, commit the
-//     snapshot diff with the reason, and review it line by line:
-//       UPDATE_TRIGG_GOLDEN=1 npx vitest run tests/trigg-golden.test.mjs
+//     snapshot diff with the reason, and review it line by line. Regenerate
+//     ONLY the levels you meant to change; the others must stay identical:
+//       UPDATE_TRIGG_GOLDEN=intermediate,advanced,expert npx vitest run tests/trigg-golden.test.mjs
+//       UPDATE_TRIGG_GOLDEN=1   (all levels)
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { readFileSync, writeFileSync } from "node:fs";
 import { BREAKS } from "../app/breaks.js";
 import { fetchRealForecast } from "../app/v2/lib/realFetch.js";
-import { adaptForecastToLevel, getPersonalVerdict, USER_LEVELS } from "../app/v2/lib/prodScoring.js";
+import {
+  adaptForecastToLevel, getPersonalVerdict, getPersonalAdviceKey, getPersonalModifier,
+  scoreForLevel, classifyConditions, USER_LEVELS,
+} from "../app/v2/lib/prodScoring.js";
 import { getLevel } from "../app/v2/lib/verdict.js";
 
 const NOW = new Date("2026-09-26T21:17:00Z"); // 05:17 AWST, 27/09
@@ -75,17 +83,61 @@ async function triggOutput() {
         best: d.bestHour && { time: d.bestHour.time, score: d.bestHour.score, band: getLevel(d.bestHour.score).label },
         hours: d.hours.filter(inWindow).map((h) => {
           const hDeg = { ...h, swellDir: h.swellDirDeg ?? h.swellDir, windDir: h.windDirDeg ?? h.windDir };
+          const verdict = getPersonalVerdict(level, hDeg, spot);
           return {
             time: h.time,
             score: h.score,
             band: getLevel(h.score).label,
-            verdict: getPersonalVerdict(level, hDeg, spot),
+            verdict,
+            advice: getPersonalAdviceKey(level, hDeg, spot, verdict),
+            modifier: getPersonalModifier(level, hDeg, spot),
             face: `${h.faceFtLow}-${h.faceFtHigh}`,
           };
         }),
       }));
   }
-  return JSON.stringify(out, null, 1) + "\n";
+  out.sweep = sweepOutput(BREAKS.find((b) => b.id === "trigg"));
+  return out;
+}
+
+// Engine-level sweep on Trigg's config: one compact line per hour and level
+// ("score|verdict|advice|modifier|size|wind|current").
+function sweepOutput(trigg) {
+  const out = {};
+  for (const swellHeight of [0.3, 0.6, 0.9, 1.2, 1.6, 2.0, 2.5])
+    for (const swellPeriod of [8, 11, 14])
+      for (const kmh of [0, 6, 10, 14, 18, 22, 28, 36])
+        for (const windDir of [90, 180, 270]) // offshore, cross, onshore at Trigg (offshoreWindDir 90)
+          for (const currentVel of [0, 0.35]) {
+            const h = { hour: 9, swellHeight, swellPeriod, swellDir: 240, windSpeedKn: kmh / 1.852, windDir, currentVel, tideM: 0 };
+            const id = `h${swellHeight} p${swellPeriod} w${kmh}@${windDir} c${currentVel}`;
+            out[id] = Object.fromEntries(USER_LEVELS.map((level) => {
+              const verdict = getPersonalVerdict(level, h, trigg);
+              const c = classifyConditions(level, h, trigg);
+              return [level, [scoreForLevel(h, trigg, level).score, verdict, getPersonalAdviceKey(level, h, trigg, verdict),
+                getPersonalModifier(level, h, trigg), c.size, c.wind, c.currentHazard].join("|")];
+            }));
+          }
+  return out;
+}
+
+// Serialises the snapshot: pipeline part pretty-printed as before, sweep one
+// line per hour so a diff points at the exact case.
+function serialise(out) {
+  const { sweep, ...pipeline } = out;
+  const sweepLines = Object.entries(sweep).map(([id, v]) => `  ${JSON.stringify(id)}: ${JSON.stringify(v)}`);
+  return JSON.stringify(pipeline, null, 1).replace(/\n\}$/, `,\n "sweep": {\n${sweepLines.join(",\n")}\n }\n}`) + "\n";
+}
+
+// Keeps the committed values for every level not named in UPDATE_TRIGG_GOLDEN.
+function mergeLevels(actual, committed, levels) {
+  const out = structuredClone(actual);
+  for (const level of USER_LEVELS) {
+    if (levels.includes(level)) continue;
+    out.levels[level] = committed.levels[level];
+    for (const id of Object.keys(out.sweep)) out.sweep[id][level] = committed.sweep[id]?.[level];
+  }
+  return out;
 }
 
 describe("Trigg golden output (must not change by accident)", () => {
@@ -104,18 +156,21 @@ describe("Trigg golden output (must not change by accident)", () => {
     if (savedLocalStorage) globalThis.localStorage = savedLocalStorage;
   });
 
-  it("scores, bands, verdicts, face and best window for all 6 levels over 72 h are byte-identical", async () => {
+  it("scores, bands, verdicts, advice, face, best window and the sweep, for all 6 levels, are byte-identical", async () => {
     const actual = await triggOutput();
-    if (process.env.UPDATE_TRIGG_GOLDEN === "1") {
-      writeFileSync(GOLDEN_URL, actual);
+    const update = process.env.UPDATE_TRIGG_GOLDEN;
+    if (update) {
+      const levels = update === "1" ? USER_LEVELS : update.split(",");
+      const next = update === "1" ? actual : mergeLevels(actual, JSON.parse(readFileSync(GOLDEN_URL, "utf8")), levels);
+      writeFileSync(GOLDEN_URL, serialise(next));
       return;
     }
     const expected = readFileSync(GOLDEN_URL, "utf8");
-    expect(actual).toBe(expected);
+    expect(serialise(actual)).toBe(expected);
   });
 
   it("the fixture really exercises the engine (not a flat day)", async () => {
-    const out = JSON.parse(await triggOutput());
+    const out = await triggOutput();
     const verdicts = new Set(Object.values(out.levels).flatMap((days) => days.flatMap((d) => d.hours.map((h) => h.verdict))));
     expect([...verdicts].sort()).toEqual(["no", "ok", "yes"]);
     expect(out.levels.intermediate.flatMap((d) => d.hours).length).toBeGreaterThanOrEqual(45);
