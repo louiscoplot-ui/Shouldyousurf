@@ -1,6 +1,6 @@
 # Daily accuracy log on GitHub Actions: plan
 
-**Status (26/09/2026): approved and built on `feature/accuracy-audit`, in TEST PHASE.** Test runs write to `accuracy-data-test` only. Nothing touches `main`. Storage option A was chosen. The move to `main` (step 4 below) is yours to do, whenever you decide.
+**Status (28/09/2026): test phase finished, push trigger removed (step 3 done).** The workflow now runs only on the daily schedule and on manual dispatch, and writes to `accuracy-data`. It starts running on its own once this branch is merged into `main` (step 4, yours). Storage option A was chosen.
 
 Scope: the 27 Australian breaks, AODN buoys (see `BUOY-PLAN.md`).
 
@@ -228,6 +228,6 @@ Two runs, both triggered by pushes to `feature/accuracy-audit` and both writing 
 
 ### Before the move to `main` (your step 4)
 
-- Remove the `push:` block marked "TEST PHASE ONLY" (I'll do it on request).
+- ~~Remove the `push:` block marked "TEST PHASE ONLY"~~ done 28/09.
 - Optionally delete `accuracy-data-test`.
 - The first scheduled run then creates `accuracy-data` the same way. Check its Vercel deployment list once more.

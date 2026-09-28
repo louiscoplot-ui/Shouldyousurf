@@ -1,21 +1,16 @@
 # Daily forecast-accuracy log (see accuracy/WORKFLOW-PLAN.md).
 #
-# Writes ONLY to a data branch, never to main:
-#   push to feature/accuracy-audit  -> accuracy-data-test  (test runs)
-#   schedule / manual run           -> accuracy-data
-# The schedule only fires once this file is on the default branch
-# (GitHub rule), so until a human merges it, only the test trigger runs.
+# Writes ONLY to the data branch `accuracy-data`, never to main.
+# Triggers: the daily schedule and a manual run (workflow_dispatch).
+# The schedule only fires from the default branch (GitHub rule).
+# The test-phase push trigger (-> accuracy-data-test) was removed before
+# this file went to main.
 name: Accuracy daily log
 
 on:
   schedule:
     - cron: "17 21 * * *" # 21:17 UTC = 05:17 Perth (AWST, UTC+8, no daylight saving)
   workflow_dispatch: {}
-  push: # TEST PHASE ONLY: remove before this file is merged into main
-    branches: [feature/accuracy-audit]
-    paths:
-      - "accuracy/**"
-      - ".github/workflows/accuracy-daily-log.yml"
 
 permissions:
   contents: write # push the log commit to the data branch
@@ -25,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  DATA_BRANCH: ${{ github.event_name == 'push' && 'accuracy-data-test' || 'accuracy-data' }}
+  DATA_BRANCH: accuracy-data
 
 jobs:
   log:
