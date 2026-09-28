@@ -187,6 +187,26 @@ export default function RootLayout({ children }) {
             } catch (e) {}
           })();
         `}} />
+        {/* Balise des erreurs d'hydratation React (#418/#423/#425). Observé
+            en prod le 28/09 (2 chargements sur ~40, jamais reproduit en dev ni
+            sur 140 chargements suivants) : la cause n'est pas isolée, donc on
+            MESURE avant de corriger. Posé AVANT l'hydratation pour ne rien
+            rater ; page.js vide la file vers track() une fois monté. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var q = window.__hydrationErrors = [];
+            function note(msg, via) {
+              var m = String(msg || "").match(/Minified React error #(418|423|425)/);
+              if (m) q.push({ code: +m[1], via: via, t: Date.now() });
+            }
+            window.addEventListener("error", function(e){ note(e && e.message, "error"); }, true);
+            var ce = console.error;
+            console.error = function(){
+              try { note(arguments[0] && (arguments[0].message || arguments[0]), "console"); } catch (e) {}
+              return ce.apply(this, arguments);
+            };
+          })();
+        `}} />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-77RCEQZ2YS"></script>
         <script dangerouslySetInnerHTML={{ __html: `
           window.dataLayer = window.dataLayer || [];
@@ -288,6 +308,11 @@ export default function RootLayout({ children }) {
             playsInline
             preload="none"
             aria-hidden="true"
+            // Le script juste en dessous pose `src` AVANT l'hydratation :
+            // React voyait un attribut en trop à chaque chargement ("Extra
+            // attributes from the server: src"). Sans effet visible, mais ce
+            // bruit masquait les vraies alertes d'hydratation en dev.
+            suppressHydrationWarning
           />
           <script dangerouslySetInnerHTML={{ __html: `
             (function(){

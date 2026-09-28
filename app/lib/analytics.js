@@ -23,6 +23,7 @@
 //   custom_spot_added     { lat, lng }
 //   faq_opened            {}
 //   theme_changed         { theme }
+//   hydration_error       { code, via, ms_after_nav }   (React #418/#423/#425)
 
 export function track(event, props = {}) {
   if (typeof window === "undefined") return;
