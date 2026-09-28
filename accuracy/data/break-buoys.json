@@ -1,0 +1,910 @@
+[
+  {
+    "id": "trigg",
+    "name": "Trigg Beach",
+    "region": "Perth, WA",
+    "window": [
+      [
+        200,
+        230
+      ],
+      [
+        245,
+        335
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Rottnest Island",
+      "operator": "DOT-WA",
+      "wmo": "56005",
+      "km": 41.1,
+      "bearing": 234,
+      "depthM": 48,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "HILLARYS",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 10.5,
+      "bearing": 289,
+      "depthM": 28,
+      "overWater": true,
+      "windowOverlap": 0.88,
+      "lastObs": "2026-09-21T00:30:00.000Z"
+    }
+  },
+  {
+    "id": "scarborough",
+    "name": "Scarborough",
+    "region": "Perth, WA",
+    "window": [
+      [
+        200,
+        235
+      ],
+      [
+        250,
+        335
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Rottnest Island",
+      "operator": "DOT-WA",
+      "wmo": "56005",
+      "km": 40.6,
+      "bearing": 236,
+      "depthM": 48,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "HILLARYS",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 11.3,
+      "bearing": 295,
+      "depthM": 28,
+      "overWater": true,
+      "windowOverlap": 0.88,
+      "lastObs": "2026-09-21T00:30:00.000Z"
+    }
+  },
+  {
+    "id": "cottesloe",
+    "name": "Cottesloe",
+    "region": "Perth, WA",
+    "window": [
+      [
+        210,
+        260
+      ],
+      [
+        275,
+        335
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Rottnest Island",
+      "operator": "DOT-WA",
+      "wmo": "56005",
+      "km": 35.2,
+      "bearing": 251,
+      "depthM": 48,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "Cottesloe",
+      "operator": "DOT-WA",
+      "wmo": "56008",
+      "km": 7,
+      "bearing": 284,
+      "depthM": 17,
+      "overWater": true,
+      "windowOverlap": 0.92,
+      "lastObs": "2026-09-26T00:00:00.000Z"
+    }
+  },
+  {
+    "id": "leighton",
+    "name": "Leighton",
+    "region": "Perth, WA",
+    "window": [
+      [
+        220,
+        270
+      ],
+      [
+        285,
+        340
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Rottnest Island",
+      "operator": "DOT-WA",
+      "wmo": "56005",
+      "km": 33.6,
+      "bearing": 256,
+      "depthM": 48,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "Cottesloe",
+      "operator": "DOT-WA",
+      "wmo": "56008",
+      "km": 8.2,
+      "bearing": 311,
+      "depthM": 17,
+      "overWater": true,
+      "windowOverlap": 0.87,
+      "lastObs": "2026-09-26T00:00:00.000Z"
+    }
+  },
+  {
+    "id": "margaret",
+    "name": "Margaret River Main",
+    "region": "Margaret River, WA",
+    "window": [
+      [
+        180,
+        350
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Cape Naturaliste",
+      "operator": "DOT-WA",
+      "wmo": "56006",
+      "km": 53.1,
+      "bearing": 337,
+      "depthM": 50,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T09:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "weak",
+      "site": "BUNBURY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 80.4,
+      "bearing": 28,
+      "depthM": 29,
+      "overWater": false,
+      "windowOverlap": 0.66,
+      "lastObs": "2026-09-21T00:40:00.000Z"
+    }
+  },
+  {
+    "id": "yallingup",
+    "name": "Yallingup",
+    "region": "Margaret River, WA",
+    "window": [
+      [
+        195,
+        5
+      ]
+    ],
+    "offshore": {
+      "grade": "good",
+      "site": "Cape Naturaliste",
+      "operator": "DOT-WA",
+      "wmo": "56006",
+      "km": 23.9,
+      "bearing": 301,
+      "depthM": 50,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T09:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "BUNBURY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 51.1,
+      "bearing": 48,
+      "depthM": 29,
+      "overWater": false,
+      "windowOverlap": 0.74,
+      "lastObs": "2026-09-21T00:40:00.000Z"
+    }
+  },
+  {
+    "id": "gnaraloo",
+    "name": "Gnaraloo (Tombstones)",
+    "region": "Coral Coast, WA",
+    "window": [
+      [
+        250,
+        320
+      ]
+    ],
+    "offshore": null,
+    "nearshore": {
+      "grade": "fair",
+      "site": "CORAL-BAY-0-2",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 79.9,
+      "bearing": 15,
+      "depthM": 31,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-21T00:50:00.000Z"
+    }
+  },
+  {
+    "id": "bondi",
+    "name": "Bondi Beach",
+    "region": "Sydney, NSW",
+    "window": [
+      [
+        25,
+        180
+      ]
+    ],
+    "offshore": {
+      "grade": "good",
+      "site": "Sydney",
+      "operator": "MHL",
+      "wmo": "55024",
+      "km": 19.4,
+      "bearing": 36,
+      "depthM": 90,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "COLLAROY-NARRABEEN",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 18.5,
+      "bearing": 8,
+      "depthM": 14,
+      "overWater": false,
+      "windowOverlap": 0.75,
+      "lastObs": "2026-09-21T00:55:00.000Z"
+    }
+  },
+  {
+    "id": "manly",
+    "name": "Manly",
+    "region": "Sydney, NSW",
+    "window": [
+      [
+        30,
+        105
+      ],
+      [
+        140,
+        150
+      ]
+    ],
+    "offshore": {
+      "grade": "good",
+      "site": "Sydney",
+      "operator": "MHL",
+      "wmo": "55024",
+      "km": 11.6,
+      "bearing": 63,
+      "depthM": 90,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "COLLAROY-NARRABEEN",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 8,
+      "bearing": 12,
+      "depthM": 14,
+      "overWater": false,
+      "windowOverlap": 0.95,
+      "lastObs": "2026-09-21T00:55:00.000Z"
+    }
+  },
+  {
+    "id": "north-narra",
+    "name": "North Narrabeen",
+    "region": "Sydney, NSW",
+    "window": [
+      [
+        30,
+        95
+      ],
+      [
+        155,
+        155
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Sydney",
+      "operator": "MHL",
+      "wmo": "55024",
+      "km": 10.6,
+      "bearing": 118,
+      "depthM": 90,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T06:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "COLLAROY-NARRABEEN",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 2.5,
+      "bearing": 165,
+      "depthM": 14,
+      "overWater": true,
+      "windowOverlap": 0.93,
+      "lastObs": "2026-09-21T00:55:00.000Z"
+    }
+  },
+  {
+    "id": "byron",
+    "name": "The Pass (Byron)",
+    "region": "Byron Bay, NSW",
+    "window": [
+      [
+        355,
+        80
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Byron Bay",
+      "operator": "MHL",
+      "wmo": "55017",
+      "km": 26.6,
+      "bearing": 170,
+      "depthM": 62,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "Tweed Heads",
+      "operator": "DES-QLD",
+      "wmo": "55037",
+      "km": 50.8,
+      "bearing": 354,
+      "depthM": 25,
+      "overWater": true,
+      "windowOverlap": 0.94,
+      "lastObs": "2026-09-25T23:00:00.000Z"
+    }
+  },
+  {
+    "id": "lennox",
+    "name": "Lennox Head",
+    "region": "Northern NSW",
+    "window": [
+      [
+        20,
+        140
+      ]
+    ],
+    "offshore": {
+      "grade": "good",
+      "site": "Byron Bay",
+      "operator": "MHL",
+      "wmo": "55017",
+      "km": 11.9,
+      "bearing": 135,
+      "depthM": 62,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "Tweed Heads",
+      "operator": "DES-QLD",
+      "wmo": "55037",
+      "km": 68.3,
+      "bearing": 359,
+      "depthM": 25,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-25T23:00:00.000Z"
+    }
+  },
+  {
+    "id": "crescent",
+    "name": "Crescent Head",
+    "region": "Mid North Coast, NSW",
+    "window": [
+      [
+        30,
+        180
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Crowdy Head",
+      "operator": "MHL",
+      "wmo": "55019",
+      "km": 71.3,
+      "bearing": 190,
+      "depthM": 79,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:00:00.000Z"
+    },
+    "nearshore": null
+  },
+  {
+    "id": "angourie",
+    "name": "Angourie",
+    "region": "Northern NSW",
+    "window": [
+      [
+        20,
+        175
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Byron Bay",
+      "operator": "MHL",
+      "wmo": "55017",
+      "km": 74.8,
+      "bearing": 24,
+      "depthM": 62,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:00:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "WOOLI",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 41.8,
+      "bearing": 186,
+      "depthM": 30,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-21T01:20:00.000Z"
+    }
+  },
+  {
+    "id": "snapper",
+    "name": "Snapper Rocks",
+    "region": "Gold Coast, QLD",
+    "window": [
+      [
+        0,
+        145
+      ]
+    ],
+    "offshore": {
+      "grade": "good",
+      "site": "Tweed Offshore",
+      "operator": "DES-QLD",
+      "wmo": "55057",
+      "km": 14.1,
+      "bearing": 117,
+      "depthM": 60,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "Tweed Heads",
+      "operator": "DES-QLD",
+      "wmo": "55037",
+      "km": 3.3,
+      "bearing": 125,
+      "depthM": 25,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-25T23:00:00.000Z"
+    }
+  },
+  {
+    "id": "kirra",
+    "name": "Kirra",
+    "region": "Gold Coast, QLD",
+    "window": [
+      [
+        5,
+        90
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Tweed Offshore",
+      "operator": "DES-QLD",
+      "wmo": "55057",
+      "km": 15.4,
+      "bearing": 111,
+      "depthM": 60,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "Tweed Heads",
+      "operator": "DES-QLD",
+      "wmo": "55037",
+      "km": 4.7,
+      "bearing": 104,
+      "depthM": 25,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-25T23:00:00.000Z"
+    }
+  },
+  {
+    "id": "burleigh",
+    "name": "Burleigh Heads",
+    "region": "Gold Coast, QLD",
+    "window": [],
+    "offshore": {
+      "grade": "weak",
+      "site": "Tweed Offshore",
+      "operator": "DES-QLD",
+      "wmo": "55057",
+      "km": 26.2,
+      "bearing": 121,
+      "depthM": 60,
+      "overWater": false,
+      "windowOverlap": 0,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    },
+    "nearshore": {
+      "grade": "weak",
+      "site": "Palm Beach",
+      "operator": "DES-QLD",
+      "wmo": "55050",
+      "km": 2.9,
+      "bearing": 89,
+      "depthM": 24,
+      "overWater": false,
+      "windowOverlap": 0,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    }
+  },
+  {
+    "id": "dbah",
+    "name": "Duranbah (D'Bah)",
+    "region": "Gold Coast, QLD",
+    "window": [
+      [
+        0,
+        115
+      ]
+    ],
+    "offshore": {
+      "grade": "good",
+      "site": "Tweed Offshore",
+      "operator": "DES-QLD",
+      "wmo": "55057",
+      "km": 13.8,
+      "bearing": 115,
+      "depthM": 60,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "Tweed Heads",
+      "operator": "DES-QLD",
+      "wmo": "55037",
+      "km": 3,
+      "bearing": 116,
+      "depthM": 25,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-25T23:00:00.000Z"
+    }
+  },
+  {
+    "id": "noosa",
+    "name": "Noosa (First Point)",
+    "region": "Sunshine Coast, QLD",
+    "window": [
+      [
+        15,
+        65
+      ]
+    ],
+    "offshore": {
+      "grade": "fair",
+      "site": "Wide Bay",
+      "operator": "DES-QLD",
+      "wmo": "55056",
+      "km": 69.1,
+      "bearing": 9,
+      "depthM": 45,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "Mooloolaba",
+      "operator": "DES-QLD",
+      "wmo": "55030",
+      "km": 22.6,
+      "bearing": 157,
+      "depthM": 32,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    }
+  },
+  {
+    "id": "alexandra",
+    "name": "Alexandra Headland",
+    "region": "Sunshine Coast, QLD",
+    "window": [
+      [
+        10,
+        115
+      ]
+    ],
+    "offshore": {
+      "grade": "weak",
+      "site": "Wide Bay",
+      "operator": "DES-QLD",
+      "wmo": "55056",
+      "km": 100.7,
+      "bearing": 6,
+      "depthM": 45,
+      "overWater": false,
+      "windowOverlap": 0.95,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "Mooloolaba",
+      "operator": "DES-QLD",
+      "wmo": "55030",
+      "km": 13.6,
+      "bearing": 34,
+      "depthM": 32,
+      "overWater": true,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T08:30:00.000Z"
+    }
+  },
+  {
+    "id": "bells",
+    "name": "Bells Beach",
+    "region": "Torquay, VIC",
+    "window": [
+      [
+        110,
+        225
+      ]
+    ],
+    "offshore": {
+      "grade": "weak",
+      "site": "INVERLOCH",
+      "operator": "VIC-DEAKIN-UNI",
+      "wmo": null,
+      "km": 136.7,
+      "bearing": 109,
+      "depthM": 51,
+      "overWater": true,
+      "windowOverlap": 0.71,
+      "lastObs": "2026-09-26T09:50:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "APOLLO-BAY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 64.8,
+      "bearing": 229,
+      "depthM": 30,
+      "overWater": false,
+      "windowOverlap": 0.96,
+      "lastObs": "2026-09-21T00:55:00.000Z"
+    }
+  },
+  {
+    "id": "winkipop",
+    "name": "Winkipop",
+    "region": "Torquay, VIC",
+    "window": [
+      [
+        105,
+        225
+      ]
+    ],
+    "offshore": {
+      "grade": "weak",
+      "site": "INVERLOCH",
+      "operator": "VIC-DEAKIN-UNI",
+      "wmo": null,
+      "km": 136.3,
+      "bearing": 109,
+      "depthM": 51,
+      "overWater": true,
+      "windowOverlap": 0.68,
+      "lastObs": "2026-09-26T09:50:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "APOLLO-BAY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 64.8,
+      "bearing": 229,
+      "depthM": 30,
+      "overWater": false,
+      "windowOverlap": 0.96,
+      "lastObs": "2026-09-21T00:55:00.000Z"
+    }
+  },
+  {
+    "id": "jan-juc",
+    "name": "Jan Juc",
+    "region": "Torquay, VIC",
+    "window": [
+      [
+        110,
+        210
+      ]
+    ],
+    "offshore": {
+      "grade": "weak",
+      "site": "INVERLOCH",
+      "operator": "VIC-DEAKIN-UNI",
+      "wmo": null,
+      "km": 136.7,
+      "bearing": 110,
+      "depthM": 51,
+      "overWater": true,
+      "windowOverlap": 0.67,
+      "lastObs": "2026-09-26T09:50:00.000Z"
+    },
+    "nearshore": {
+      "grade": "fair",
+      "site": "APOLLO-BAY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 66.6,
+      "bearing": 228,
+      "depthM": 30,
+      "overWater": false,
+      "windowOverlap": 0.95,
+      "lastObs": "2026-09-21T00:55:00.000Z"
+    }
+  },
+  {
+    "id": "middleton",
+    "name": "Middleton",
+    "region": "Fleurieu, SA",
+    "window": [
+      [
+        130,
+        175
+      ],
+      [
+        185,
+        190
+      ]
+    ],
+    "offshore": null,
+    "nearshore": {
+      "grade": "fair",
+      "site": "VICTOR-HARBOUROFFSHORE",
+      "operator": "SA-FLINDERS",
+      "wmo": null,
+      "km": 12.3,
+      "bearing": 205,
+      "depthM": 32,
+      "overWater": false,
+      "windowOverlap": 1,
+      "lastObs": "2026-09-26T10:10:19.000Z"
+    }
+  },
+  {
+    "id": "waits",
+    "name": "Waitpinga",
+    "region": "Fleurieu, SA",
+    "window": [
+      [
+        120,
+        235
+      ]
+    ],
+    "offshore": {
+      "grade": "weak",
+      "site": "NORTH-KANGAROO-ISLAND",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 148.4,
+      "bearing": 273,
+      "depthM": 45,
+      "overWater": false,
+      "windowOverlap": 0,
+      "lastObs": "2026-09-21T00:45:00.000Z"
+    },
+    "nearshore": {
+      "grade": "good",
+      "site": "VICTOR-HARBOUROFFSHORE",
+      "operator": "SA-FLINDERS",
+      "wmo": null,
+      "km": 7.7,
+      "bearing": 57,
+      "depthM": 32,
+      "overWater": true,
+      "windowOverlap": 0.96,
+      "lastObs": "2026-09-26T10:10:19.000Z"
+    }
+  },
+  {
+    "id": "shipstern",
+    "name": "Shipstern Bluff",
+    "region": "Tasmania",
+    "window": [
+      [
+        155,
+        220
+      ]
+    ],
+    "offshore": null,
+    "nearshore": {
+      "grade": "fair",
+      "site": "STORM-BAY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 24,
+      "bearing": 264,
+      "depthM": 38,
+      "overWater": false,
+      "windowOverlap": 0.64,
+      "lastObs": "2026-09-21T00:50:00.000Z"
+    }
+  },
+  {
+    "id": "clifton",
+    "name": "Clifton Beach",
+    "region": "Hobart, TAS",
+    "window": [],
+    "offshore": null,
+    "nearshore": {
+      "grade": "weak",
+      "site": "STORM-BAY",
+      "operator": "IMOS",
+      "wmo": null,
+      "km": 26,
+      "bearing": 192,
+      "depthM": 38,
+      "overWater": false,
+      "windowOverlap": 0,
+      "lastObs": "2026-09-21T00:50:00.000Z"
+    }
+  }
+]

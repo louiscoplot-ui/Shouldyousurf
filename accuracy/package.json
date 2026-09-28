@@ -1,0 +1,20 @@
+{
+  "name": "shouldyousurf-accuracy",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Forecast accuracy tooling (standalone, not part of the Next.js app).",
+  "type": "module",
+  "scripts": {
+    "audit": "node scripts/break-audit.mjs",
+    "buoys": "node scripts/buoy-inventory.mjs",
+    "map": "node scripts/map-breaks.mjs",
+    "log": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./lib/register-esm.mjs scripts/daily-log.mjs",
+    "test": "node --test test/*.nodetest.mjs"
+  },
+  "dependencies": {
+    "hyparquet": "1.31.1"
+  },
+  "devDependencies": {
+    "@geo-maps/earth-lands-10m": "0.6.0"
+  }
+}

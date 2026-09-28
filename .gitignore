@@ -20,3 +20,6 @@ icon_s.json
 e1.json
 e2.json
 erddap.json
+
+# Accuracy tooling (standalone, /accuracy): deps
+/accuracy/node_modules/
