@@ -11,8 +11,9 @@
 //   node --import ./lib/register-esm.mjs scripts/daily-log.mjs --out <dir>
 //     [--breaks trigg,bondi] [--skip forecast,model,obs]
 //
-// Exit code 1 when less than 80% of breaks or buoy sites produced data, so
-// a half-empty day shows up as a failed run instead of passing silently.
+// Exit code 1 when a stage is unhealthy (see lib/health.mjs), so a half-empty
+// day shows up as a failed run instead of passing silently. A buoy whose
+// source published nothing is reported, not counted as a failure.
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join } from "node:path";
@@ -20,6 +21,7 @@ import { BREAKS } from "../../app/breaks.js";
 import { fetchRealForecast } from "../../app/v2/lib/realFetch.js";
 import { scoreForLevel, getPersonalVerdict, USER_LEVELS } from "../../app/v2/lib/prodScoring.js";
 import { hourlyObservations } from "../lib/aodn.mjs";
+import { healthProblems } from "../lib/health.mjs";
 import { localToUtc, hourKey } from "../lib/time.mjs";
 import { appendByMonth, mergeByMonth, appendLine } from "../lib/log-store.mjs";
 
@@ -51,7 +53,7 @@ const buoys = JSON.parse(readFileSync(here("data/buoys-au.json"), "utf8"));
 const buoyBySite = new Map(buoys.map((b) => [b.site, b]));
 const mapOf = new Map(mapping.map((m) => [m.id, m]));
 
-const summary = { run_utc: runUtc, app: appVersion, breaks: breaks.length, errors: [] };
+const summary = { run_utc: runUtc, app: appVersion, breaks: breaks.length, errors: [], warnings: [] };
 const r2 = (v) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : null);
 
 // ── 1. FORECAST: the app's own numbers ─────────────────────────────────
@@ -140,30 +142,31 @@ if (!skip.has("obs")) {
   const from = new Date(run.getTime() - OBS_DAYS * 864e5);
   const rows = [];
   let ok = 0;
+  const failed = [], silent = [];
   for (const site of sites) {
     const b = buoyBySite.get(site);
     try {
       const obs = await hourlyObservations(b.folder, from, run);
       for (const o of obs) rows.push({ site, operator: b.operator, wmo: b.wmo, ...o, fetched_utc: runUtc });
-      if (obs.length) ok++; else summary.errors.push(`${site}: no observations in the last ${OBS_DAYS} days`);
+      if (obs.length) ok++;
+      else { silent.push(site); summary.warnings.push(`${site}: source published no observations in the last ${OBS_DAYS} days`); }
     } catch (e) {
+      failed.push(site);
       summary.errors.push(`${site}: obs ${e.message}`);
     }
   }
   const merged = mergeByMonth(OUT, "obs", rows, "valid_utc", (r) => `${r.site}|${r.valid_utc}`);
-  summary.obs = { sites_ok: ok, sites: sites.length, rows: rows.length, ...merged };
-  console.log(`obs: ${ok}/${sites.length} buoy sites, ${rows.length} hours (${merged.added} new, ${merged.replaced} refreshed)`);
+  summary.obs = { sites_ok: ok, sites: sites.length, sites_failed: failed.length, sites_silent: silent.length, silent, rows: rows.length, ...merged };
+  console.log(`obs: ${ok}/${sites.length} buoy sites, ${rows.length} hours (${merged.added} new, ${merged.replaced} refreshed)` +
+    (silent.length ? `, ${silent.length} silent at source` : "") + (failed.length ? `, ${failed.length} unreadable` : ""));
 }
 
 appendLine(join(OUT, "runs.jsonl"), summary);
+for (const w of summary.warnings) console.warn(`  ~ ${w}`);
 for (const e of summary.errors) console.warn(`  ! ${e}`);
 
-const ratios = [
-  summary.forecast && summary.forecast.breaks_ok / breaks.length,
-  summary.model && summary.model.sites_ok / Math.max(1, summary.model.sites),
-  summary.obs && summary.obs.sites_ok / Math.max(1, summary.obs.sites),
-].filter((v) => v != null);
-if (ratios.some((r) => r < HEALTH_MIN)) {
-  console.error(`health check failed: a stage produced data for less than ${HEALTH_MIN * 100}% of its targets`);
+const problems = healthProblems(summary, { breaks: breaks.length, min: HEALTH_MIN });
+if (problems.length) {
+  for (const p of problems) console.error(`health check failed: ${p}`);
   process.exit(1);
 }
