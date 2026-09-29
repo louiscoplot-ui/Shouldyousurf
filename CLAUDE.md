@@ -202,12 +202,12 @@ Tip selector : `currentHazard !== "none"` pour learner en SKIP → `tip_<level>_
 
 ### ⚠️ L'APP EST MONDIALE — règle n°0
 
-**111 spots, 23 pays** (AU ID FR PT ES US MX CR BR NZ PF ZA MA LK MV IE GB NI PE EC FJ PH JP) **plus la recherche libre sur n'importe quelle plage du monde.**
+**129 spots, 23 pays** (111 historiques + 18 ajoutés le 29/09, cf. commentaire en tête du bloc dans `breaks.js` : coordonnées vérifiées OSM, `offshoreWindDir` mesuré sur la côte, `idealSwellDir` estimé depuis les voisins) (AU ID FR PT ES US MX CR BR NZ PF ZA MA LK MV IE GB NI PE EC FJ PH JP) **plus la recherche libre sur n'importe quelle plage du monde.**
 
 Conséquence sur toute décision technique : **rien ne doit dépendre d'un point fixe.** Une station d'observation, une bouée, une table codée en dur pour un spot, un modèle météo régional — tout ça couvre UN endroit et n'existe pas ailleurs. Cette piste a été explorée pour le vent (stations BoM) puis abandonnée : elle ne passe pas l'échelle, et elle ne répond même pas au besoin (« les bonnes conditions à chaque changement de plage, pas juste Trigg »).
 
 Ce qui a le droit d'exister :
-- **PAR SPOT, dérivé des coordonnées** : `idealSwellDir` / `offshoreWindDir` / `idealTide` (renseignés **111/111**), inférés pour un spot libre via `probeOffshoreBearing` + `inferSpotProfile`. Open-Meteo répond par coordonnées partout.
+- **PAR SPOT, dérivé des coordonnées** : `idealSwellDir` / `offshoreWindDir` / `idealTide` (renseignés **129/129** ; pour les 18 ajouts du 29/09, `idealTide` = "mid" par défaut, non vérifié terrain), inférés pour un spot libre via `probeOffshoreBearing` + `inferSpotProfile`. Open-Meteo répond par coordonnées partout.
 - **PHYSIQUE et universel** : facteur de rafale plausible, repères de surface, conversion houle→face. Ça vaut à Trigg comme à Pipeline.
 
 Une observation locale sert à **valider** un seuil physique. Jamais de source de production.
