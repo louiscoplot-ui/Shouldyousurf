@@ -311,7 +311,9 @@ export async function probeShoreNormal(spot, signal) {
     + `&longitude=${pts.map((p) => p.lng.toFixed(5)).join(",")}${OM_KEY_PARAM}`;
   let shore = null;
   try {
-    const res = await fetch(url, { signal });
+    // Un retry sur échec transitoire : sans ça, un seul hoquet réseau laissait
+    // ce chargement sur l'ancienne inférence (vu en test navigateur 29/09).
+    const res = await fetchResilient(url, signal);
     if (!res.ok) return null;
     shore = seawardFromRing((await res.json())?.elevation);
   } catch { return null; }
