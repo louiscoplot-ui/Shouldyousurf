@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BREAKS, COUNTRIES } from "../../breaks";
 import { distanceKm } from "../lib/prodScoring";
+import { searchPlaces } from "../lib/placeSearch";
 import MapPicker from "./MapPicker";
 
 // Spots curés triés par distance. Le GPS envoyait TOUJOURS sur le plus
@@ -34,7 +35,7 @@ function BreakRow({ b, onSelect, toggleFav, isFav, current, t }) {
   );
 }
 
-export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, country, setCountry }) {
+export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, currentId, t, lang, country, setCountry }) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -84,11 +85,7 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
     setSearching(true);
     setSearchError(null);
     try {
-      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=10&language=en&format=json`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
-      const data = await res.json();
-      setSearchResults(data.results || []);
+      setSearchResults(await searchPlaces(term, { lang }));
     } catch (e) {
       console.warn("[v2] geocoding search failed:", e);
       setSearchResults([]);
@@ -101,7 +98,9 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
   useEffect(() => {
     const term = query.trim();
     if (term.length < 2) { setSearchResults([]); return; }
-    const timer = setTimeout(() => { geoSearch(term); }, 220);
+    // 400 ms : chaque recherche interroge Photon (OSM, usage équitable) —
+    // on attend que la frappe se pose au lieu d'envoyer chaque lettre.
+    const timer = setTimeout(() => { geoSearch(term); }, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
@@ -191,15 +190,15 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
                 {searching ? t("searching") : t("search_results")}
               </div>
               {searchResults.map((r, i) => {
-                const ccode = r.country_code ? `${r.country_code}` : "";
-                const regionLabel = [r.admin1, r.admin2].filter(Boolean).join(" · ");
+                const ccode = r.country || "";
+                const regionLabel = [r.region, r.kind && r.kind !== "place" ? t(r.kind) : null].filter(Boolean).join(" · ");
                 return (
                   <div key={i} className="v2-break-row">
                     <button className="v2-break-row-main" onClick={() => onSelect({
-                      id: `custom-${r.latitude.toFixed(4)}-${r.longitude.toFixed(4)}`,
+                      id: `custom-${r.lat.toFixed(4)}-${r.lng.toFixed(4)}`,
                       name: r.name,
-                      region: [regionLabel, ccode].filter(Boolean).join(", ") || r.name,
-                      lat: r.latitude, lng: r.longitude,
+                      region: [r.region, ccode].filter(Boolean).join(", ") || r.name,
+                      lat: r.lat, lng: r.lng,
                       // PAS de idealSwellDir/offshoreWindDir hardcodés —
                       // realFetch.js détecte leur absence et appelle
                       // inferSpotProfile sur les vraies données swell de
@@ -214,6 +213,11 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
                   </div>
                 );
               })}
+              {searchResults.some((r) => r.source === "osm") && (
+                <div className="v2-break-empty mono" style={{ fontSize: 10, padding: "6px 0" }}>
+                  Search © OpenStreetMap contributors · Photon
+                </div>
+              )}
               {!searching && searchResults.length === 0 && localMatches.length === 0 && !searchError && (
                 <div className="v2-break-empty mono">{t("search_none")}</div>
               )}

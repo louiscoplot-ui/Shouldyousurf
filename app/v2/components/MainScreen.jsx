@@ -475,6 +475,7 @@ export default function MainScreen({ theme, setTheme }) {
           toggleFav={toggleFav}
           currentId={spot.id}
           t={t}
+          lang={lang}
           country={country}
           setCountry={saveCountry}
         />
