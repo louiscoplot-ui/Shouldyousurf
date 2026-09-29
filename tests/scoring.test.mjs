@@ -336,6 +336,18 @@ describe("score/verdict précis PAR NIVEAU (pas de bon surf raté, pas de danger
     expect(getPersonalVerdict("first_timer", h, spot)).toBe("yes");
     expect(scoreForLevel(h, spot, "first_timer").score).toBeGreaterThanOrEqual(45);
   });
+  it("first_timer : un jour ordinaire de 1-2 ft propre est un GO bien noté", () => {
+    // 29/09 : la grille culminait à 0.3 m de houle PILE (face ~1 ft) et le
+    // sweet s'arrêtait à 1.5 ft → sur 110 spots, 4 GO et un max mondial à 33
+    // un jour de houle ordinaire. Lue sur la face : 1-2 ft = le jour idéal.
+    for (const sh of [0.4, 0.5]) {
+      const h = mk({ swellHeight: sh, swellPeriod: 10, windSpeedKn: 3 });
+      expect(getPersonalVerdict("first_timer", h, spot)).toBe("yes");
+      expect(scoreForLevel(h, spot, "first_timer").score).toBeGreaterThanOrEqual(50);
+    }
+    // Le plafond dur n'a pas bougé : ~3.3 ft reste un SKIP franc.
+    expect(getPersonalVerdict("first_timer", mk({ swellHeight: 1.0, swellPeriod: 10, windSpeedKn: 3 }), spot)).toBe("no");
+  });
   it("beginner rising zone (0.55m clean) scores like the sweet day it is", () => {
     const h = mk({ swellHeight: 0.55, swellPeriod: 10, windSpeedKn: 5 });
     expect(getPersonalVerdict("beginner", h, spot)).toBe("yes");
