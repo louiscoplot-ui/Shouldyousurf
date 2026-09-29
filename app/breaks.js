@@ -221,6 +221,39 @@ export const BREAKS = [
 
   // ─── Japan ───────────────────────────────────────────────────────────
   { id: "chiba",        country: "JP", name: "Ichinomiya",         region: "Chiba",               lat: 35.3686, lng: 140.4100, idealSwellDir: 140, offshoreWindDir: 270, idealTide: "mid" },
+
+  // ─── Ajouts 29/09 : spots très fréquentés qui manquaient (surtout débutants) ───
+  // Provenance, pour chaque ligne :
+  //  - lat/lng : position d'un objet OpenStreetMap du même nom (plage le plus
+  //    souvent), trouvé via Photon à < 3.1 km de l'estimation initiale.
+  //    Hiriketiya : seule une voie homonyme est cartographiée (position de la baie).
+  //  - offshoreWindDir : MESURÉ, orientation géométrique de la côte (anneau
+  //    d'altitude Open-Meteo, même méthode que les spots libres, concentration
+  //    0.38-0.84) + 180°, arrondi à 5°.
+  //  - idealSwellDir : ESTIMÉ, calé sur les spots curés voisins (Bali 225,
+  //    sud Sri Lanka 180, Ericeira 290, Pays basque 295…), vérifié à ±50° du large.
+  //  - idealTide "mid" : valeur par défaut du catalogue, NON vérifiée terrain.
+  //  - type : "reef" quand le fond est mixte (Echo Beach, Hiriketiya) — par
+  //    prudence, un débutant n'y reçoit jamais de GO.
+  // Écartés faute de vérification : Kugenuma (aucun objet OSM), Tonel (côte ambiguë).
+  { id: "kuta-bali",      country: "ID", name: "Kuta Beach",            region: "Bali",              lat: -8.7180, lng: 115.1690, idealSwellDir: 225, offshoreWindDir: 85,  idealTide: "mid" },
+  { id: "legian",         country: "ID", name: "Legian Beach",          region: "Bali",              lat: -8.7033, lng: 115.1645, idealSwellDir: 225, offshoreWindDir: 70,  idealTide: "mid" },
+  { id: "seminyak",       country: "ID", name: "Double Six (Seminyak)", region: "Bali",              lat: -8.6930, lng: 115.1584, idealSwellDir: 225, offshoreWindDir: 55,  idealTide: "mid" },
+  { id: "batu-bolong",    country: "ID", name: "Batu Bolong (Canggu)",  region: "Bali",              lat: -8.6595, lng: 115.1301, idealSwellDir: 225, offshoreWindDir: 40,  idealTide: "mid" },
+  { id: "echo-beach",     country: "ID", name: "Echo Beach (Canggu)",   region: "Bali",              lat: -8.6548, lng: 115.1249, idealSwellDir: 225, offshoreWindDir: 35,  type: "reef", idealTide: "mid" },
+  { id: "selong-belanak", country: "ID", name: "Selong Belanak",        region: "Lombok",            lat: -8.8701, lng: 116.1607, idealSwellDir: 225, offshoreWindDir: 60,  idealTide: "mid" },
+  { id: "hiriketiya",     country: "LK", name: "Hiriketiya",            region: "Southern Province", lat: 5.9643,  lng: 80.7076,  idealSwellDir: 180, offshoreWindDir: 355, type: "reef", idealTide: "mid" },
+  { id: "baleal",         country: "PT", name: "Baleal",                region: "Peniche",           lat: 39.3655, lng: -9.3419,  idealSwellDir: 300, offshoreWindDir: 145, idealTide: "mid" },
+  { id: "carcavelos",     country: "PT", name: "Carcavelos",            region: "Lisbon",            lat: 38.6792, lng: -9.3352,  idealSwellDir: 225, offshoreWindDir: 15,  idealTide: "mid" },
+  { id: "caparica",       country: "PT", name: "Costa da Caparica",     region: "Lisbon",            lat: 38.6404, lng: -9.2334,  idealSwellDir: 270, offshoreWindDir: 55,  idealTide: "mid" },
+  { id: "foz-lizandro",   country: "PT", name: "Foz do Lizandro",       region: "Ericeira",          lat: 38.9420, lng: -9.4155,  idealSwellDir: 290, offshoreWindDir: 100, idealTide: "mid" },
+  { id: "cote-basques",   country: "FR", name: "Côte des Basques",      region: "Biarritz",          lat: 43.4749, lng: -1.5688,  idealSwellDir: 295, offshoreWindDir: 115, idealTide: "mid" },
+  { id: "famara",         country: "ES", name: "Famara",                region: "Lanzarote",         lat: 29.1173, lng: -13.5518, idealSwellDir: 330, offshoreWindDir: 170, idealTide: "mid" },
+  { id: "muizenberg",     country: "ZA", name: "Muizenberg",            region: "Cape Town",         lat: -34.0974, lng: 18.5043, idealSwellDir: 190, offshoreWindDir: 345, idealTide: "mid" },
+  { id: "baler",          country: "PH", name: "Sabang Beach (Baler)",  region: "Aurora",            lat: 15.7637, lng: 121.5672, idealSwellDir: 60,  offshoreWindDir: 220, idealTide: "mid" },
+  { id: "arpoador",       country: "BR", name: "Arpoador",              region: "Rio de Janeiro",    lat: -22.9890, lng: -43.1921, idealSwellDir: 180, offshoreWindDir: 335, idealTide: "mid" },
+  { id: "guiones",        country: "CR", name: "Playa Guiones (Nosara)", region: "Guanacaste",       lat: 9.9282,  lng: -85.6626, idealSwellDir: 225, offshoreWindDir: 60,  idealTide: "mid" },
+  { id: "maderas",        country: "NI", name: "Playa Maderas",         region: "Rivas",             lat: 11.2927, lng: -85.9094, idealSwellDir: 225, offshoreWindDir: 40,  idealTide: "mid" },
 ];
 
 export function findBreak(id) {
