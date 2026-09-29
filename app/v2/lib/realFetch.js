@@ -254,6 +254,71 @@ export async function probeOffshoreBearing(spot, marineModels, signal) {
   return picked;
 }
 
+// ── Orientation GÉOMÉTRIQUE de la côte (spots libres) ─────────────────
+// Un spot libre (recherche, carte, GPS) n'a pas d'offshoreWindDir curé.
+// inferSpotProfile le déduisait de la direction MOYENNE de la houle + 180°.
+// Or le vent offshore dépend de la CÔTE, pas de la houle : sur une côte
+// oblique la houle n'arrive pas de face, et le vent "offshore" était mal
+// orienté. Mesuré le 29/09 sur les 111 spots curés (vérité = leur
+// offshoreWindDir à la main) :
+//   houle moyenne + 180 (avant)     : écart médian 34°, p90 70°, > 90° : 4
+//   côte géométrique (ci-dessous)   : écart médian 20°, p90 59°, > 90° : 2
+// Et pour idealSwellDir, c'est l'INVERSE : la houle réelle gagne (18° vs
+// 51° pour la côte) — on ne touche donc qu'au vent.
+// Méthode : un anneau de 24 caps à 1 et 3 km, altitude via l'API elevation
+// d'Open-Meteo (0 m = mer, mondial, gratuit, une seule requête). Le large
+// = moyenne circulaire des caps en mer. `conc` (0-1) mesure la netteté :
+// un atoll ou un point posé dans l'eau (mer tout autour) donne ~0 → on
+// garde l'ancienne inférence.
+const SHORE_BEARINGS = 24;
+const SHORE_RADII_KM = [1, 3];
+export const SHORE_MIN_CONC = 0.2;
+const SHORE_KEY = "surf-shore-normal-v1-";
+
+// elevations : SHORE_RADII_KM.length anneaux de SHORE_BEARINGS valeurs, dans
+// l'ordre des rayons. Renvoie { bearing (vers le large), conc } ou null.
+export function seawardFromRing(elevations, nb = SHORE_BEARINGS) {
+  if (!Array.isArray(elevations) || elevations.length < nb) return null;
+  let sx = 0, sy = 0, n = 0;
+  for (let k = 0; k < elevations.length; k++) {
+    const e = elevations[k];
+    if (!Number.isFinite(e) || e > 0) continue;
+    const a = ((k % nb) * 360 / nb) * Math.PI / 180;
+    sx += Math.cos(a); sy += Math.sin(a); n++;
+  }
+  if (!n) return null;
+  return { bearing: (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360, conc: Math.hypot(sx, sy) / n };
+}
+
+// Vent offshore d'un spot libre : la côte quand elle est nette, sinon
+// l'inférence houle d'avant. Jamais appelé pour un spot curé.
+export function offshoreFromShore(inferred, shore) {
+  if (!shore || !Number.isFinite(shore.bearing) || !(shore.conc >= SHORE_MIN_CONC)) return inferred;
+  const offshoreWindDir = (shore.bearing + 180) % 360;
+  return inferred ? { ...inferred, offshoreWindDir } : { idealSwellDir: shore.bearing, offshoreWindDir };
+}
+
+export async function probeShoreNormal(spot, signal) {
+  if (!Number.isFinite(spot?.lat) || !Number.isFinite(spot?.lng)) return null;
+  const key = `${SHORE_KEY}${spot.lat.toFixed(3)},${spot.lng.toFixed(3)}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(key) || "null");
+    if (cached && "shore" in cached) return cached.shore;
+  } catch {}
+  const pts = [];
+  for (const km of SHORE_RADII_KM) for (let i = 0; i < SHORE_BEARINGS; i++) pts.push(offsetPoint(spot.lat, spot.lng, i * 360 / SHORE_BEARINGS, km));
+  const url = `https://${OM_FORECAST_HOST}/v1/elevation?latitude=${pts.map((p) => p.lat.toFixed(5)).join(",")}`
+    + `&longitude=${pts.map((p) => p.lng.toFixed(5)).join(",")}${OM_KEY_PARAM}`;
+  let shore = null;
+  try {
+    const res = await fetch(url, { signal });
+    if (!res.ok) return null;
+    shore = seawardFromRing((await res.json())?.elevation);
+  } catch { return null; }
+  try { localStorage.setItem(key, JSON.stringify({ shore, at: Date.now() })); } catch {}
+  return shore;
+}
+
 // ── Endpoint Open-Meteo : gratuit (non-commercial) vs commercial ───────
 // Le tier gratuit est non-commercial ET rate-limité. Quand il refuse une
 // requête (429/403), la réponse d'erreur ne porte PAS les headers CORS →
@@ -543,7 +608,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 9; // 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
+const CACHE_V = 10; // 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
@@ -634,6 +699,7 @@ export async function fetchRealForecast(spot, signal) {
   // lit la cellule terrestre — donc lui seul attend.
   const cured = Number.isFinite(spot.idealSwellDir);
   let probedBearing = null;
+  let shorePromise = null;
   if (cured) {
     // Feu et oubli : jamais attendu, jamais propagé en erreur (la sonde est
     // déjà best-effort de bout en bout et avale ses propres échecs).
@@ -648,6 +714,9 @@ export async function fetchRealForecast(spot, signal) {
       }
     }
   } else {
+    // Spot libre : l'orientation de la côte part en parallèle de la sonde
+    // marine (best-effort, attendue plus bas au moment de l'inférence).
+    shorePromise = probeShoreNormal(spot, signal).catch(() => null);
     probedBearing = await probeOffshoreBearing(spot, marineModels, signal);
   }
   const mp = marineSamplePoint(spot, probedBearing);
@@ -802,12 +871,14 @@ export async function fetchRealForecast(spot, signal) {
   // renvoie null quand il n'a pas assez d'heures exploitables — dans ce cas le
   // spot restait sans idealSwellDir DU TOUT (dirMult neutre, vent non
   // classifiable). Le cap du large fait alors un repli honnête.
-  const inferred = needsInfer
+  const inferredSwell = needsInfer
     ? (inferSpotProfile(allRaw)
        || (Number.isFinite(probedBearing)
            ? { idealSwellDir: probedBearing, offshoreWindDir: (probedBearing + 180) % 360 }
            : null))
     : null;
+  // Le vent offshore suit la CÔTE quand elle est lisible (cf. seawardFromRing).
+  const inferred = needsInfer ? offshoreFromShore(inferredSwell, shorePromise ? await shorePromise : null) : null;
   // Resolve the spot's actual timezone from the API response (returned when
   // we sent `timezone=auto`). Fall back to whatever the spot already had,
   // then to the local browser tz, then to the safety net. After this point

@@ -8,13 +8,15 @@ import { BREAKS, COUNTRIES } from "../../breaks";
 import { distanceKm } from "../lib/prodScoring";
 import MapPicker from "./MapPicker";
 
-function nearestBreak(lat, lng) {
-  let best = null, bestD = Infinity;
-  for (const b of BREAKS) {
-    const d = distanceKm(lat, lng, b.lat, b.lng);
-    if (d < bestD) { bestD = d; best = b; }
-  }
-  return best ? { spot: best, distanceKm: bestD } : null;
+// Spots curés triés par distance. Le GPS envoyait TOUJOURS sur le plus
+// proche, même à 800 km (un surfeur à Kuta atterrissait sur un reef à
+// Uluwatu, un autre au Brésil sur le spot le plus proche du catalogue).
+// Au-delà de NEAR_KM on montre la liste avec les distances ET la position
+// exacte, qui passe par l'inférence des spots libres (côte + houle).
+const NEAR_KM = 15;
+function breaksByDistance(lat, lng) {
+  return BREAKS.map((b) => ({ spot: b, distanceKm: distanceKm(lat, lng, b.lat, b.lng) }))
+    .sort((a, b) => a.distanceKm - b.distanceKm);
 }
 
 function BreakRow({ b, onSelect, toggleFav, isFav, current, t }) {
@@ -40,6 +42,7 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
   const [countryOpen, setCountryOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [nearby, setNearby] = useState(null);
 
   function useMyLocation() {
     if (!navigator.geolocation) { alert(t("gps_unsupported")); return; }
@@ -47,8 +50,12 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
     navigator.geolocation.getCurrentPosition(
       pos => {
         setLocating(false);
-        const r = nearestBreak(pos.coords.latitude, pos.coords.longitude);
-        if (r) onSelect(r.spot);
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const list = breaksByDistance(lat, lng);
+        if (list.length && list[0].distanceKm <= NEAR_KM) { onSelect(list[0].spot); return; }
+        setNearby({ lat, lng, list: list.slice(0, 5) });
+        // La liste du dessous suit le pays du spot le plus proche.
+        if (list.length && setCountry) setCountry(list[0].spot.country);
       },
       () => { setLocating(false); alert(t("gps_denied")); },
       { timeout: 10000, maximumAge: 300000 }
@@ -147,6 +154,28 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
               placeholder={t("search_placeholder")}/>
             <button className="v2-search-btn" onClick={() => geoSearch()}>{searching ? "…" : "🔍"}</button>
           </div>
+
+          {nearby && !isSearching && (
+            <>
+              <button className="v2-locate-btn" style={{ width: "100%", margin: "0 0 6px" }} onClick={() => onSelect({
+                id: `custom-${nearby.lat.toFixed(4)}-${nearby.lng.toFixed(4)}`,
+                name: t("my_location"),
+                region: `${nearby.lat.toFixed(3)}, ${nearby.lng.toFixed(3)}`,
+                lat: nearby.lat, lng: nearby.lng,
+                // Pas d'orientation en dur : realFetch l'infère (côte + houle).
+                type: "beach",
+              })}>
+                📍 {t("use_exact_location")}
+              </button>
+              <div className="v2-region-header">{t("nearby_spots")}</div>
+              {nearby.list.map(({ spot: b, distanceKm: d }) => (
+                <div key={b.id} style={{ position: "relative" }}>
+                  <BreakRow b={b} onSelect={onSelect} toggleFav={toggleFav} isFav={favorites.includes(b.id)} current={currentId===b.id} t={t}/>
+                  <span className="mono" style={{ position: "absolute", right: 44, top: 12, fontSize: 11, color: "var(--text-mu)" }}>{Math.round(d)} km</span>
+                </div>
+              ))}
+            </>
+          )}
 
           {isSearching && (
             <>
