@@ -14,7 +14,7 @@
 // mesuré sur le centre de cellule que l'API renvoie — jamais une distance
 // devinée à l'avance.
 import { describe, it, expect } from "vitest";
-import { windSamplePoint, resolveSeaWind, offshoreBearing, offsetPoint, pickProbedBearing } from "../app/v2/lib/realFetch.js";
+import { windSamplePoint, resolveSeaWind, offshoreBearing, offsetPoint, pickProbedBearing, seawardFromRing, offshoreFromShore, SHORE_MIN_CONC } from "../app/v2/lib/realFetch.js";
 import { angDelta } from "../app/v2/lib/prodScoring.js";
 
 const TRIGG = { id: "trigg", lat: -31.8826, lng: 115.7519, idealSwellDir: 240 };
@@ -463,5 +463,40 @@ describe("cas terrain : profil de decroissance du 17/09", () => {
     // inapplicable telle quelle.
     expect(TRIGG[45]).toBeGreaterThan(TRIGG[30]);
     expect(HATTERAS[45]).toBeGreaterThan(HATTERAS[30]);
+  });
+});
+
+// Orientation GÉOMÉTRIQUE de la côte pour les spots libres (29/09).
+// Anneaux RÉELS renvoyés par l'API elevation d'Open-Meteo le 29/09, encodés
+// tels quels : 24 caps (0°, 15°, …) à 1 km puis à 3 km. 0 = mer.
+describe("côte géométrique : réponses réelles de l'API elevation du 29/09", () => {
+  const TRIGG = [0,23,23,14,22,31,25,25,34,21,19,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,29,48,50,41,46,43,51,27,15,37,0,0,0,0,0,0,0,0,0,0,0,0];
+  const CHICKENS = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0];
+  const HATTERAS = [0,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  const angD = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+
+  it("Trigg : côte nette, vent offshore à quelques degrés du 90° curé à la main", () => {
+    const shore = seawardFromRing(TRIGG);
+    expect(shore.conc).toBeGreaterThan(SHORE_MIN_CONC);
+    const out = offshoreFromShore({ idealSwellDir: 250, offshoreWindDir: 70 }, shore);
+    expect(angD(out.offshoreWindDir, 90)).toBeLessThan(10);
+    // idealSwellDir n'est PAS touché : la houle réelle le devine mieux (mesuré).
+    expect(out.idealSwellDir).toBe(250);
+  });
+
+  it("atoll (Chickens) et île-barrière (Hatteras) : mer partout → on garde l'inférence houle", () => {
+    const inferred = { idealSwellDir: 180, offshoreWindDir: 0 };
+    for (const ring of [CHICKENS, HATTERAS]) {
+      const shore = seawardFromRing(ring);
+      expect(shore.conc).toBeLessThan(SHORE_MIN_CONC);
+      expect(offshoreFromShore(inferred, shore)).toBe(inferred);
+    }
+  });
+
+  it("best-effort : pas de réponse ou anneau tout terre → aucun changement", () => {
+    const inferred = { idealSwellDir: 180, offshoreWindDir: 0 };
+    expect(offshoreFromShore(inferred, null)).toBe(inferred);
+    expect(seawardFromRing(new Array(48).fill(12))).toBeNull();
+    expect(seawardFromRing(null)).toBeNull();
   });
 });
