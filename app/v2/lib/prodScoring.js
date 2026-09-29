@@ -805,8 +805,17 @@ export function classifyConditions(userLevel, h, spot) {
     const blown = isOffshore ? cap.offshore : cap.other;
     // La zone "bumpy" fait toujours les 6 derniers km/h avant le blown :
     // un learner ne passe jamais de "clean" à "blown" sans palier lisible.
+    // Cross-shore léger = clean jusqu'à 12 km/h, comme intermediate+ (#58).
+    // 8 km/h, c'était la limite du glassy (Beaufort 0-2), pas celle d'une
+    // face propre : de 8 à 12 la surface reste lisse (Beaufort 2, crêtes
+    // vitreuses), les crêtes ne commencent à casser qu'à partir de 12
+    // (Beaufort 3). Ressenti terrain Trigg (Louis) : "à partir de 12-14 tu
+    // le sens". Résultat : un GO learner exigeait du quasi-glassy, et une
+    // matinée à 10 km/h de travers restait MAYBE. Borné par blown - 6 pour
+    // garder la zone bumpy de 6 km/h (first_timer : clean < 10, pas 12).
+    // L'onshore reste à 8 : c'est là qu'il commence à gêner (vent dans la face).
     if (kmh >= blown) wind = "blown";
-    else if (kmh < 8 || (isOffshore && kmh < blown - 6)) wind = "clean";
+    else if (kmh < 8 || (isOffshore && kmh < blown - 6) || (isCross && kmh < Math.min(12, blown - 6))) wind = "clean";
     else wind = "bumpy";
   } else {
     // intermediate et au-dessus : inchangé. Onshore dans la face = blown
