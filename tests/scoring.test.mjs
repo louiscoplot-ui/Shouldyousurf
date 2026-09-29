@@ -562,6 +562,30 @@ describe("vent — monotonie et continuité du score affiché", () => {
       expect(at(cap.other + 5)).toBe("no");
     });
   });
+
+  // 29/09 : 8 km/h, c'est la limite du glassy (Beaufort 0-2), pas d'une face
+  // propre. En travers, la surface reste lisse jusqu'à ~12 km/h (Beaufort 3 :
+  // les crêtes commencent à casser) — même repère qu'intermediate+ (#58).
+  // Avant, un GO learner exigeait du quasi-glassy : 10 km/h de travers = MAYBE.
+  it("learner : cross-shore léger (< 12 km/h) = clean, onshore reste à 8", () => {
+    const w = (kmh, lvl, dir) => classifyConditions(lvl, mk({ swellHeight: 0.5, windSpeedKn: kmh / 1.852, windDir: dir }), spot).wind;
+    const CROSS = 190, ONSHORE = 270;
+    for (const lvl of ["beginner", "early_int"]) {
+      expect(w(11.5, lvl, CROSS)).toBe("clean");
+      expect(w(12, lvl, CROSS)).toBe("bumpy");
+      expect(w(9, lvl, ONSHORE)).toBe("bumpy");
+    }
+    // first_timer : borné par blown - 6 (plafond 16) → clean < 10, pour
+    // garder une zone bumpy de 6 km/h avant le SKIP.
+    expect(w(9.5, "first_timer", CROSS)).toBe("clean");
+    expect(w(10, "first_timer", CROSS)).toBe("bumpy");
+    // La règle ne rend jamais un learner plus tolérant que le niveau du dessus.
+    for (let k = 0; k <= 30; k += 0.5) {
+      const r = { clean: 0, bumpy: 1, blown: 2 };
+      expect(r[w(k, "first_timer", CROSS)]).toBeGreaterThanOrEqual(r[w(k, "beginner", CROSS)]);
+      expect(r[w(k, "beginner", CROSS)]).toBeGreaterThanOrEqual(r[w(k, "early_int", CROSS)]);
+    }
+  });
 });
 
 describe("point d'échantillonnage marin (grille 1/12° ≈ 9 km)", () => {
