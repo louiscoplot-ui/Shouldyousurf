@@ -262,6 +262,14 @@ const BASE_SIZE_GRID = {
 //   expert   : décalé vers le haut, Good vers 4-5 ft, Unreal vers 8-10 ft
 // Les 4 niveaux inférieurs gardent leur grille métrique, inchangée.
 export const FACE_BASE_GRID = {
+  // first_timer (29/09) : la grille métrique culminait à 0.3 m de houle PILE
+  // (50) et retombait à 12 dès 0.6 m, période ignorée. 1.4 % des heures
+  // mondiales ont une houle ≤ 0.35 m : sur 10 656 heures réelles (111 spots,
+  // 5 jours), 84 % des scores first_timer étaient < 10 et le meilleur spot
+  // du monde un jour ordinaire plafonnait à 33. Lue sur la face comme le
+  // verdict : pic 1-2 ft (session idéale), encore bon à 2.5 ft (mousse),
+  // retombe vers 3.5-4 ft où le verdict coupe de toute façon.
+  first_timer: [[0, 5], [0.4, 10], [0.7, 35], [1, 50], [1.5, 58], [2, 56], [2.5, 42], [3, 26], [3.5, 15], [4.5, 7], [6, 5]],
   advanced: [[0, 6], [1.5, 10], [2, 18], [3, 41], [4, 46], [5, 52], [6, 58], [7, 66], [8.5, 62], [10, 52], [13, 42], [20, 36]],
   expert:   [[0, 8], [2, 12], [2.5, 18], [4, 40], [5, 46], [6.5, 52], [8, 58], [9, 64], [10, 70], [12, 66], [16, 55], [25, 50]],
 };
@@ -599,7 +607,12 @@ export function offsetDate(isoDate, n) {
 export const USER_LEVELS = ["first_timer", "beginner", "early_int", "intermediate", "advanced", "expert"];
 
 export const USER_LEVEL_ZONES = {
-  first_timer:  { min: 0.3, sweetLo: 0.6, sweetHi: 1.5, upperMax: 2.2 },
+  // first_timer (29/09) : sweet jusqu'à 2 ft (avant 1.5). Sur 110 spots
+  // mondiaux, un jour de houle ordinaire (0.5-1 m) ne donnait que 4 GO ;
+  // les écoles et les guides placent la première session à 1-2 ft de face.
+  // upperMax reste 2.2 → plafond dur ×1.3 = 2.86 ft INCHANGÉ : on élargit
+  // le GO, on n'assouplit aucun SKIP. Reste ≤ beginner (sweetHi 2).
+  first_timer:  { min: 0.3, sweetLo: 0.6, sweetHi: 2,   upperMax: 2.2 },
   beginner:     { min: 0.3, sweetLo: 1,   sweetHi: 2,   upperMax: 3 },
   // early_int : sweet = waist-to-head-high (2-4.5ft), cœur de la zone d'un
   // early intermediate. Avant : sweetHi 3 / upperMax 4 → tout 3.5-5ft clean
