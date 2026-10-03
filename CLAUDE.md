@@ -259,6 +259,17 @@ exactement ça : à lancer avant tout push touchant un composant.
    - Ne JAMAIS demander à Louis de merger manuellement.
 8. Pull `origin/main` après le merge pour aligner le local.
 
+### ⚠️ Rapports Instagram (données des slides) — `scripts/social/`
+
+**Une ligne de slide = UNE session homogène.** Faute du 03/10 : la slide Intermediate de Trigg affichait « 6-7am, 8-11am, 5-6pm · 2-4 ft · 15 km/h SSW ». La fenêtre listait toutes les heures proches du meilleur score, mais taille et vent venaient d'UNE seule heure (17h). Le matin c'était 1-3 ft et 1-7 km/h. Deux conditions différentes sur la même ligne, sur le support que le public lit.
+- **Ne JAMAIS calculer à la main** : `node --import ./scripts/social/register.mjs scripts/social/report.mjs --date YYYY-MM-DD --out <dossier> [--payloads f] [--prev slides-précédent.json]` (moteur = `app/` du repo, aucun fichier du repo modifié). Sort `report-<date>.txt` (items 0 à 6) et `slides-<date>.json` (chaînes prêtes à coller). Code de sortie 1 si une assertion échoue : ne rien publier tant que `ASSERTIONS` n'est pas 100 %.
+- Les sessions sont construites par `scripts/social/lib/sessions.mjs` (pur, testé par `tests/social-sessions.test.mjs` sur les VRAIES heures de Trigg du 03/10). Deux heures partagent une ligne seulement si même verdict, même taille AFFICHÉE (faceFtLow-High), même classe de vent (< 8 km/h = « light », direction ignorée ; sinon offshore/cross/onshore) et écart de vent ≤ 8 km/h. Sinon : autre ligne (« also: … » avec ses PROPRES chiffres). Heures retenues : score ≥ meilleur − 5, en plein jour uniquement (lever ≤ h ≤ coucher−1).
+- La ligne principale est celle qui contient l'heure du meilleur score ; le score affiché est le pic de CETTE session, avec son heure (`peak 9am`). « all day » seulement si la session couvre ≥ 75 % des heures de jour.
+- La carte « Best window » de l'app (`day.bestHour`) prend le meilleur score de 04h à 20h SANS filtre lever/coucher : elle peut tomber avant le lever (4h) ou après le coucher (7-8h pm). L'item 4 imprime ses chiffres à elle et signale `BEFORE SUNRISE / AFTER SUNSET`. Ne jamais donner à la carte les chiffres d'une autre heure.
+- **DST** : les libellés horaires d'Open-Meteo restent à l'ancien décalage UTC le jour du changement (mesuré : fuseau Sydney le 04/10/2026, passage à 02:00). Le script avertit (`DST GUARD`). Générer le rapport APRÈS le changement local et relire les heures.
+- Snapper Rocks tombe en `Australia/Sydney` côté point marin alors que le spot est QLD (flaggé en item 5, non corrigé).
+- Vérif UI faite le 03/10 (`scripts/social/ui-cards.mjs`) : 34/34 cartes horaires Trigg early_int + intermediate identiques au moteur, carte Best window identique. À refaire si le front change.
+
 ### Style commit
 Préfixes : `fix:` `feat:` `perf:` `ux:` `sec:` `chore:` `verdict:` `scoring:` `ui:` `pwa:` `auto-update:` `typography:`
 Body explique le POURQUOI, pas le quoi.
