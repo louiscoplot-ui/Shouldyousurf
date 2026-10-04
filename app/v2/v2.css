@@ -758,6 +758,12 @@ button, input, select { font-family: inherit; color: inherit; }
   .phone::before { display: none; }
   .viewport { position: static; inset: auto; padding-top: 0; height: auto; overflow: visible; }
   .status { display: none; }
+  /* ⚠️ App installée (iOS) : status-bar-style "black-translucent" +
+     viewport-fit=cover → la page passe SOUS l'heure / la batterie. Sans
+     cette marge, la ligne d'en-tête (cloche, ?, langue, palette) était
+     cachée sous la barre d'état et inaccessible (vidéo terrain 04/10).
+     env() vaut 0 dans Safari normal → aucun changement hors PWA. */
+  .wrap { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
