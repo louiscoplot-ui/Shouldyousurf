@@ -292,7 +292,7 @@ export default function RootLayout({ children }) {
             The <video> is HTML-native (not React) so it starts loading
             with the HTML rather than after hydration. */}
         <div id="__preload">
-          {/* ⚠️ PAS de `src` ici, et `preload="none"` : surfer.mp4 pèse 5.3 MB,
+          {/* ⚠️ PAS de `src` ici (posé par le script ci-dessous) : surfer.mp4 pesait 5.3 MB,
               soit 80 % de /public, et il se téléchargeait à CHAQUE chargement
               en `preload="auto"` — en concurrence directe avec le fetch des
               prévisions. Sur la 4G à la plage, on faisait patienter
@@ -302,11 +302,12 @@ export default function RootLayout({ children }) {
           <video
             className="pl-video"
             data-src="/assets/surfer.mp4"
+            poster="/assets/surfer-poster.jpg"
             autoPlay
             muted
             loop
             playsInline
-            preload="none"
+            preload="auto"
             aria-hidden="true"
             // Le script juste en dessous pose `src` AVANT l'hydratation :
             // React voyait un attribut en trop à chaque chargement ("Extra
@@ -348,7 +349,21 @@ export default function RootLayout({ children }) {
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            var MIN_SHOW = 1000;  // 1s — see the video start without taxing every visit's LCP
+            // La vidéo (0.9 MB, + image fixe `poster` instantanée) EST l'écran
+            // d'accueil : on ne ferme pas le splash avant qu'elle ait joué
+            // MIN_PLAY ms, plafonné à MAX_WAIT pour ne jamais bloquer l'app
+            // (réseau lent, autoplay refusé en mode économie d'énergie : le
+            // poster reste alors affiché). Avant : fermeture à 1 s fixe, la
+            // vidéo arrivait trop tard et l'app démarrait par-dessus.
+            var MIN_PLAY = 1500;
+            var MAX_WAIT = 3500;
+            var vid = document.querySelector("#__preload .pl-video");
+            var playStart = 0;
+            var videoOn = !!(vid && vid.getAttribute("src"));
+            if (vid) {
+              vid.addEventListener("playing", function(){ if (!playStart) playStart = Date.now(); });
+              vid.addEventListener("error", function(){ videoOn = false; });
+            }
             function hide() {
               if (hidden) return;
               hidden = true;
@@ -358,9 +373,9 @@ export default function RootLayout({ children }) {
               setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 220);
             }
             function tryHide() {
-              var elapsed = Date.now() - startTime;
-              if (elapsed >= MIN_SHOW) hide();
-              else setTimeout(hide, MIN_SHOW - elapsed);
+              var now = Date.now();
+              var ok = !videoOn || (playStart && now - playStart >= MIN_PLAY) || now - startTime >= MAX_WAIT;
+              if (ok) hide(); else setTimeout(tryHide, 100);
             }
             // Poll for app-ready signal from page.js (set after first
             // fetchAllDays resolves or errors).
