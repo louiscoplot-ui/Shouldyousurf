@@ -67,6 +67,7 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1125x2436.png?v=3" />
         <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-750x1334.png?v=3" />
         <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-640x1136.png?v=3" />
+        <link rel="preload" as="image" href="/assets/surfer-poster.jpg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" />
@@ -302,6 +303,9 @@ export default function RootLayout({ children }) {
           <video
             className="pl-video"
             data-src="/assets/surfer.mp4"
+            // 1re image de la vidéo (60 Ko) : affichée instantanément, sinon
+            // on voyait le dégradé nu le temps que les 5.3 MB arrivent.
+            poster="/assets/surfer-poster.jpg"
             autoPlay
             muted
             loop
