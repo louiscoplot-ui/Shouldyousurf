@@ -181,7 +181,7 @@ export default function MapPicker({ onSelect, onClose, t, initialCenter }) {
                 value={editedName}
                 onChange={e => setEditedName(e.target.value)}
                 placeholder={geocoding ? t("locating") : t("map_picker_name_placeholder")}
-                style={{ width: "100%", border: "none", background: "transparent", fontSize: 15, fontWeight: 500, color: "var(--text)", fontFamily: "inherit", outline: "none", padding: 0 }}/>
+                style={{ width: "100%", border: "none", background: "transparent", fontSize: 16, fontWeight: 500, color: "var(--text)", fontFamily: "inherit", outline: "none", padding: 0 }}/>
               {suggestedRegion && (
                 <div className="mono" style={{ fontSize: 10, color: "var(--text-mu)", marginTop: 3 }}>{suggestedRegion}</div>
               )}

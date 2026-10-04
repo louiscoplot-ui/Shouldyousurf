@@ -1079,7 +1079,10 @@ button, input, select { font-family: inherit; color: inherit; }
   flex: 1; width: 100%;
   background: var(--bg-el);
   border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 12px; font-size: 13px;
+  /* ⚠️ 16px MINIMUM : Safari iOS zoome automatiquement la page dès qu'un
+     champ < 16px prend le focus, et ne dézoome JAMAIS à la fermeture. C'est
+     le "ça zoome, tout disparaît, je dois dézoomer à la main" du terrain. */
+  padding: 10px 12px; font-size: 16px;
   outline: none; color: var(--text);
   font-family: inherit;
 }
