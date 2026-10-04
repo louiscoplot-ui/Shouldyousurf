@@ -54,14 +54,9 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* apple-mobile-web-app-status-bar-style written by app/page.js —
             avoids a static "default" that locks iOS PWA to a light strip. */}
-        {/* Images de démarrage iOS : SANS texte, juste le dégradé + voile du
-            splash vidéo, pour que le passage vers la vidéo soit invisible.
-            ⚠️ iOS mémorise ces images à l'installation de la PWA et ne les
-            rafraîchit pas de façon fiable : on garde les MÊMES chemins (les
-            installs existantes les re-demandent peut-être) avec ?v=2 pour
-            casser le cache. Aucune garantie côté iOS pour les installs
-            anciennes — ne pas supprimer ces liens : sans eux l'ancienne
-            image en cache resterait la seule référence. */}
+        {/* Apple touch startup images — shown BEFORE the HTML loads on iOS
+            PWA cold start. Without these, iOS defaults to a black splash.
+            Matched per device resolution so iOS picks the right one. */}
         <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1290x2796.png?v=2" />
         <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1284x2778.png?v=2" />
         <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-1242x2688.png?v=2" />
@@ -353,19 +348,7 @@ export default function RootLayout({ children }) {
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            // La vidéo EST l'écran d'accueil : on ne ferme pas le splash avant
-            // qu'elle ait réellement joué. Avant, les prévisions arrivaient du
-            // cache en ~100 ms, le splash tombait à 1 s et les 5.3 MB de vidéo
-            // n'avaient pas démarré : l'utilisateur ne la voyait jamais.
-            var MIN_PLAY = 2500;   // ms de lecture visible une fois la 1re image affichée
-            var MAX_WAIT = 6000;   // plafond : jamais bloquer l'app sur un réseau lent
-            var vid = document.querySelector("#__preload .pl-video");
-            var playStart = 0;
-            var videoOn = !!(vid && vid.getAttribute("src"));
-            if (vid) {
-              vid.addEventListener("playing", function(){ if (!playStart) playStart = Date.now(); });
-              vid.addEventListener("error", function(){ videoOn = false; });
-            }
+            var MIN_SHOW = 1000;  // 1s — see the video start without taxing every visit's LCP
             function hide() {
               if (hidden) return;
               hidden = true;
@@ -375,9 +358,9 @@ export default function RootLayout({ children }) {
               setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 220);
             }
             function tryHide() {
-              var now = Date.now();
-              var ok = !videoOn || (playStart && now - playStart >= MIN_PLAY) || now - startTime >= MAX_WAIT;
-              if (ok) hide(); else setTimeout(tryHide, 100);
+              var elapsed = Date.now() - startTime;
+              if (elapsed >= MIN_SHOW) hide();
+              else setTimeout(hide, MIN_SHOW - elapsed);
             }
             // Poll for app-ready signal from page.js (set after first
             // fetchAllDays resolves or errors).
