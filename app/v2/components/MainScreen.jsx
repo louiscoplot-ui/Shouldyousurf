@@ -273,14 +273,12 @@ export default function MainScreen({ theme, setTheme }) {
   // plays (video + wave animation + dots). Without this the mock data
   // seed below makes payload truthy within one frame and the user never
   // sees the splash.
-  const [splashReady, setSplashReady] = useState(false);
-  useEffect(() => {
-    // 1.2s floor (was 2.5s): long enough for the splash not to flash,
-    // short enough not to tax every single visit's LCP — the app's whole
-    // promise is a fast decision.
-    const id = setTimeout(() => setSplashReady(true), 1200);
-    return () => clearTimeout(id);
-  }, []);
+  // ⚠️ Plus de plancher React ici : le splash HTML (#__preload, layout.js)
+  // a déjà son propre minimum d'affichage (1 s). Le plancher de 1.2 s en
+  // React tombait APRÈS lui → ~0.2-0.5 s d'écran crème vide entre la vidéo
+  // et l'app (vu en vidéo terrain le 04/10). L'app se rend maintenant SOUS
+  // le splash, prête quand il s'efface.
+  const splashReady = true;
 
   // Fetch forecast whenever the spot changes — and refetch when the user
   // returns to the tab so the displayed data isn't stale.
