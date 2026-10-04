@@ -113,9 +113,28 @@ export default function BreakPicker({ onSelect, onClose, favorites, toggleFav, c
 
   const isSearching = query.trim().length >= 2;
 
+  // Clavier iOS : le viewport de MISE EN PAGE ne rétrécit pas, seul le
+  // viewport VISIBLE (visualViewport) le fait. Une feuille ancrée en bas de
+  // `position: fixed; inset: 0` passait donc derrière le clavier dès la
+  // première lettre ("ça disparaît à l'écriture"). On cale l'overlay sur la
+  // zone réellement visible : la feuille remonte au-dessus du clavier, elle
+  // ne descend jamais.
+  const [vv, setVv] = useState(null);
+  useEffect(() => {
+    const v = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!v) return;
+    const sync = () => setVv({ top: v.offsetTop, height: v.height });
+    sync();
+    v.addEventListener("resize", sync);
+    v.addEventListener("scroll", sync);
+    return () => { v.removeEventListener("resize", sync); v.removeEventListener("scroll", sync); };
+  }, []);
+
   return (
-    <div className="v2-overlay" onClick={onClose}>
-      <div className="v2-sheet" onClick={e => e.stopPropagation()}>
+    <div className="v2-overlay" onClick={onClose}
+      style={vv ? { inset: "auto 0 auto 0", top: vv.top, height: vv.height } : undefined}>
+      <div className="v2-sheet" onClick={e => e.stopPropagation()}
+        style={vv ? { maxHeight: "94%" } : undefined}>
         <div className="v2-handle"/>
         <div className="v2-sheet-body">
           <div className="v2-sheet-header">
