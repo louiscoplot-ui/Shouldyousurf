@@ -343,6 +343,9 @@ export default function RootLayout({ children }) {
             })();
           `}} />
           <div className="pl-veil" aria-hidden="true"/>
+          <div className="pl-brand">Should You Surf?</div>
+          <div className="pl-dots"><span/><span/><span/></div>
+          <p className="pl-text">Reading the ocean…</p>
         </div>
         {children}
         <VercelAnalytics />
@@ -354,8 +357,8 @@ export default function RootLayout({ children }) {
             // qu'elle ait réellement joué. Avant, les prévisions arrivaient du
             // cache en ~100 ms, le splash tombait à 1 s et les 5.3 MB de vidéo
             // n'avaient pas démarré : l'utilisateur ne la voyait jamais.
-            var MIN_PLAY = 1800;   // ms de lecture visible une fois la 1re image affichée
-            var MAX_WAIT = 5000;   // plafond : jamais bloquer l'app sur un réseau lent
+            var MIN_PLAY = 2500;   // ms de lecture visible une fois la 1re image affichée
+            var MAX_WAIT = 6000;   // plafond : jamais bloquer l'app sur un réseau lent
             var vid = document.querySelector("#__preload .pl-video");
             var playStart = 0;
             var videoOn = !!(vid && vid.getAttribute("src"));
