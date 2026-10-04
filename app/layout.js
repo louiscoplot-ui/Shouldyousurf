@@ -336,7 +336,19 @@ export default function RootLayout({ children }) {
           (function(){
             var hidden = false;
             var startTime = Date.now();
-            var MIN_SHOW = 1000;  // 1s — see the video start without taxing every visit's LCP
+            // La vidéo EST l'écran d'accueil : on ne ferme pas le splash avant
+            // qu'elle ait réellement joué. Avant, les prévisions arrivaient du
+            // cache en ~100 ms, le splash tombait à 1 s et les 5.3 MB de vidéo
+            // n'avaient pas démarré : l'utilisateur ne la voyait jamais.
+            var MIN_PLAY = 1800;   // ms de lecture visible une fois la 1re image affichée
+            var MAX_WAIT = 5000;   // plafond : jamais bloquer l'app sur un réseau lent
+            var vid = document.querySelector("#__preload .pl-video");
+            var playStart = 0;
+            var videoOn = !!(vid && vid.getAttribute("src"));
+            if (vid) {
+              vid.addEventListener("playing", function(){ if (!playStart) playStart = Date.now(); });
+              vid.addEventListener("error", function(){ videoOn = false; });
+            }
             function hide() {
               if (hidden) return;
               hidden = true;
@@ -346,9 +358,9 @@ export default function RootLayout({ children }) {
               setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 220);
             }
             function tryHide() {
-              var elapsed = Date.now() - startTime;
-              if (elapsed >= MIN_SHOW) hide();
-              else setTimeout(hide, MIN_SHOW - elapsed);
+              var now = Date.now();
+              var ok = !videoOn || (playStart && now - playStart >= MIN_PLAY) || now - startTime >= MAX_WAIT;
+              if (ok) hide(); else setTimeout(tryHide, 100);
             }
             // Poll for app-ready signal from page.js (set after first
             // fetchAllDays resolves or errors).
