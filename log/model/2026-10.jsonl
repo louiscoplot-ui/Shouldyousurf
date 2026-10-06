@@ -4021,3 +4021,651 @@
 {"run_utc":"2026-10-04T23:57Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T21:00Z","lead_h":69,"hs":1.6,"tp":null,"tm":12.9,"dir":245,"grid":{"lat":-35.541668,"lng":136.95836}}
 {"run_utc":"2026-10-04T23:57Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T22:00Z","lead_h":70,"hs":1.58,"tp":null,"tm":12.7,"dir":247,"grid":{"lat":-35.541668,"lng":136.95836}}
 {"run_utc":"2026-10-04T23:57Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T23:00Z","lead_h":71,"hs":1.56,"tp":null,"tm":12.45,"dir":248,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":3.14,"tp":null,"tm":13.05,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":3.16,"tp":null,"tm":13.1,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":3.18,"tp":null,"tm":13.15,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":3.2,"tp":null,"tm":13.2,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":3.22,"tp":null,"tm":13.2,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":3.24,"tp":null,"tm":13.15,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":3.26,"tp":null,"tm":13.1,"dir":227,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":3.28,"tp":null,"tm":13.05,"dir":227,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":3.3,"tp":null,"tm":13,"dir":227,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":3.32,"tp":null,"tm":12.9,"dir":226,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":3.34,"tp":null,"tm":12.85,"dir":226,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":3.34,"tp":null,"tm":12.8,"dir":226,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":3.36,"tp":null,"tm":12.75,"dir":226,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":3.36,"tp":null,"tm":12.7,"dir":226,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":3.34,"tp":null,"tm":12.7,"dir":226,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":3.3,"tp":null,"tm":12.7,"dir":227,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":3.28,"tp":null,"tm":12.7,"dir":227,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":3.26,"tp":null,"tm":12.7,"dir":227,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":3.24,"tp":null,"tm":12.65,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":3.22,"tp":null,"tm":12.65,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":3.18,"tp":null,"tm":12.65,"dir":228,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":3.16,"tp":null,"tm":12.65,"dir":229,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":3.12,"tp":null,"tm":12.7,"dir":229,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":3.08,"tp":null,"tm":12.75,"dir":230,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":3.04,"tp":null,"tm":12.85,"dir":230,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":3,"tp":null,"tm":12.9,"dir":231,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":2.98,"tp":null,"tm":12.9,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":2.94,"tp":null,"tm":12.85,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":2.92,"tp":null,"tm":12.75,"dir":233,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":2.9,"tp":null,"tm":12.65,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":2.86,"tp":null,"tm":12.55,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":2.84,"tp":null,"tm":12.4,"dir":235,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":2.84,"tp":null,"tm":12.2,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":2.84,"tp":null,"tm":12,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":2.84,"tp":null,"tm":11.85,"dir":237,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":2.82,"tp":null,"tm":11.75,"dir":237,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":2.8,"tp":null,"tm":11.7,"dir":238,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":2.78,"tp":null,"tm":11.65,"dir":238,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":2.8,"tp":null,"tm":11.55,"dir":239,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":2.8,"tp":null,"tm":11.4,"dir":239,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":2.82,"tp":null,"tm":11.25,"dir":240,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":2.86,"tp":null,"tm":11.15,"dir":239,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":2.92,"tp":null,"tm":11.05,"dir":238,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":2.96,"tp":null,"tm":11,"dir":237,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":3.02,"tp":null,"tm":10.95,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":3.06,"tp":null,"tm":10.85,"dir":235,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":3.12,"tp":null,"tm":10.8,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":3.18,"tp":null,"tm":10.75,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":3.26,"tp":null,"tm":10.7,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":3.32,"tp":null,"tm":10.65,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":3.38,"tp":null,"tm":10.65,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":3.42,"tp":null,"tm":10.6,"dir":235,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":3.48,"tp":null,"tm":10.6,"dir":235,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":3.54,"tp":null,"tm":10.55,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":3.6,"tp":null,"tm":10.5,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":3.66,"tp":null,"tm":10.5,"dir":237,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":3.76,"tp":null,"tm":10.55,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":3.88,"tp":null,"tm":10.65,"dir":236,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":3.98,"tp":null,"tm":10.8,"dir":235,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":4.08,"tp":null,"tm":11,"dir":234,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":4.18,"tp":null,"tm":11.2,"dir":233,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":4.28,"tp":null,"tm":11.4,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":4.32,"tp":null,"tm":11.6,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":4.36,"tp":null,"tm":11.8,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":4.4,"tp":null,"tm":12,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":4.4,"tp":null,"tm":12.15,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":4.42,"tp":null,"tm":12.3,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":4.42,"tp":null,"tm":12.45,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":4.42,"tp":null,"tm":12.6,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":4.4,"tp":null,"tm":12.7,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":4.4,"tp":null,"tm":12.8,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Rottnest Island","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":4.4,"tp":null,"tm":12.9,"dir":232,"grid":{"lat":-32.125,"lng":115.375015}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":3.76,"tp":null,"tm":13.05,"dir":222,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":3.76,"tp":null,"tm":13.1,"dir":222,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":3.76,"tp":null,"tm":13.15,"dir":222,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":3.74,"tp":null,"tm":13.2,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":3.74,"tp":null,"tm":13.25,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":3.74,"tp":null,"tm":13.25,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":3.76,"tp":null,"tm":13.25,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":3.76,"tp":null,"tm":13.25,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":3.74,"tp":null,"tm":13.2,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":3.72,"tp":null,"tm":13.2,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":3.7,"tp":null,"tm":13.15,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":3.66,"tp":null,"tm":13.15,"dir":223,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":3.64,"tp":null,"tm":13.15,"dir":224,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":3.6,"tp":null,"tm":13.15,"dir":224,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":3.54,"tp":null,"tm":13.15,"dir":224,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":3.5,"tp":null,"tm":13.15,"dir":225,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":3.44,"tp":null,"tm":13.15,"dir":225,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":3.4,"tp":null,"tm":13.15,"dir":225,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":3.34,"tp":null,"tm":13.15,"dir":226,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":3.3,"tp":null,"tm":13.1,"dir":226,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":3.28,"tp":null,"tm":13.05,"dir":226,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":3.26,"tp":null,"tm":13,"dir":227,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":3.24,"tp":null,"tm":12.9,"dir":227,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":3.22,"tp":null,"tm":12.8,"dir":227,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":3.18,"tp":null,"tm":12.75,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":3.16,"tp":null,"tm":12.65,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":3.12,"tp":null,"tm":12.55,"dir":229,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":3.1,"tp":null,"tm":12.45,"dir":229,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":3.06,"tp":null,"tm":12.3,"dir":230,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":3.04,"tp":null,"tm":12.15,"dir":231,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":3.04,"tp":null,"tm":11.95,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":3.02,"tp":null,"tm":11.75,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":3.04,"tp":null,"tm":11.55,"dir":234,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":3.04,"tp":null,"tm":11.35,"dir":235,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":3.06,"tp":null,"tm":11.2,"dir":236,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":3.08,"tp":null,"tm":11.05,"dir":235,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":3.12,"tp":null,"tm":10.95,"dir":235,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":3.14,"tp":null,"tm":10.9,"dir":234,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":3.18,"tp":null,"tm":10.9,"dir":234,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":3.24,"tp":null,"tm":10.9,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":3.28,"tp":null,"tm":10.9,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":3.34,"tp":null,"tm":10.9,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":3.38,"tp":null,"tm":10.9,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":3.44,"tp":null,"tm":10.9,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":3.5,"tp":null,"tm":10.9,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":3.56,"tp":null,"tm":10.85,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":3.62,"tp":null,"tm":10.85,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":3.68,"tp":null,"tm":10.85,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":3.76,"tp":null,"tm":10.8,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":3.82,"tp":null,"tm":10.75,"dir":234,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":4,"tp":null,"tm":10.6,"dir":235,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":4.18,"tp":null,"tm":10.4,"dir":236,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":4.36,"tp":null,"tm":10.3,"dir":237,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":4.52,"tp":null,"tm":10.35,"dir":236,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":4.68,"tp":null,"tm":10.45,"dir":234,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":4.84,"tp":null,"tm":10.6,"dir":233,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":4.9,"tp":null,"tm":10.75,"dir":232,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":4.96,"tp":null,"tm":10.95,"dir":231,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":5.02,"tp":null,"tm":11.15,"dir":230,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":5.02,"tp":null,"tm":11.35,"dir":230,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":5.02,"tp":null,"tm":11.55,"dir":229,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":5.02,"tp":null,"tm":11.7,"dir":229,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":5,"tp":null,"tm":11.85,"dir":229,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":5,"tp":null,"tm":12,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":4.98,"tp":null,"tm":12.1,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":4.98,"tp":null,"tm":12.2,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":4.96,"tp":null,"tm":12.35,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":4.96,"tp":null,"tm":12.45,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":4.96,"tp":null,"tm":12.55,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":4.94,"tp":null,"tm":12.65,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":4.94,"tp":null,"tm":12.7,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Cape Naturaliste","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":4.94,"tp":null,"tm":12.75,"dir":228,"grid":{"lat":-33.541668,"lng":114.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":0.86,"tp":null,"tm":8.8,"dir":99,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":0.84,"tp":null,"tm":8.8,"dir":99,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":0.84,"tp":null,"tm":8.8,"dir":100,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":0.84,"tp":null,"tm":8.85,"dir":102,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":0.84,"tp":null,"tm":8.85,"dir":103,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":0.82,"tp":null,"tm":8.9,"dir":104,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":0.82,"tp":null,"tm":8.95,"dir":105,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":0.8,"tp":null,"tm":8.9,"dir":106,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":0.82,"tp":null,"tm":8.7,"dir":110,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":0.82,"tp":null,"tm":8.45,"dir":113,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":0.84,"tp":null,"tm":8.05,"dir":117,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":1.08,"tp":null,"tm":7.45,"dir":130,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":1.34,"tp":null,"tm":6.7,"dir":144,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":1.58,"tp":null,"tm":6.25,"dir":157,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":1.78,"tp":null,"tm":6.25,"dir":159,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":1.98,"tp":null,"tm":6.5,"dir":162,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":2.18,"tp":null,"tm":6.75,"dir":164,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":2.2,"tp":null,"tm":6.9,"dir":165,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":2.24,"tp":null,"tm":7.1,"dir":166,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":2.26,"tp":null,"tm":7.25,"dir":167,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":2.22,"tp":null,"tm":7.4,"dir":167,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":2.2,"tp":null,"tm":7.5,"dir":168,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":2.16,"tp":null,"tm":7.55,"dir":168,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":2.16,"tp":null,"tm":7.55,"dir":168,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":2.18,"tp":null,"tm":7.45,"dir":167,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":2.18,"tp":null,"tm":7.4,"dir":167,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":2.14,"tp":null,"tm":7.35,"dir":166,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":2.1,"tp":null,"tm":7.3,"dir":164,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":2.06,"tp":null,"tm":7.3,"dir":163,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":2,"tp":null,"tm":7.35,"dir":161,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":1.96,"tp":null,"tm":7.4,"dir":160,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":1.9,"tp":null,"tm":7.5,"dir":158,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":1.88,"tp":null,"tm":7.55,"dir":157,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":1.86,"tp":null,"tm":7.65,"dir":155,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":1.84,"tp":null,"tm":7.7,"dir":154,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":1.8,"tp":null,"tm":7.75,"dir":153,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":1.78,"tp":null,"tm":7.85,"dir":151,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":1.74,"tp":null,"tm":7.9,"dir":150,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":1.72,"tp":null,"tm":7.95,"dir":149,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":1.68,"tp":null,"tm":7.95,"dir":149,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":1.66,"tp":null,"tm":7.95,"dir":148,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":1.64,"tp":null,"tm":8,"dir":147,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":1.6,"tp":null,"tm":8,"dir":146,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":1.58,"tp":null,"tm":8.05,"dir":145,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":1.56,"tp":null,"tm":8.1,"dir":144,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":1.52,"tp":null,"tm":8.1,"dir":144,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":1.5,"tp":null,"tm":8.15,"dir":143,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":1.48,"tp":null,"tm":8.15,"dir":142,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":1.44,"tp":null,"tm":8.15,"dir":142,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.42,"tp":null,"tm":8.15,"dir":141,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.4,"tp":null,"tm":8.15,"dir":141,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.38,"tp":null,"tm":8.2,"dir":140,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.36,"tp":null,"tm":8.2,"dir":140,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.34,"tp":null,"tm":8.2,"dir":140,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.34,"tp":null,"tm":8.25,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.32,"tp":null,"tm":8.25,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.32,"tp":null,"tm":8.3,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.3,"tp":null,"tm":8.35,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.3,"tp":null,"tm":8.4,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.3,"tp":null,"tm":8.5,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.32,"tp":null,"tm":8.6,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.32,"tp":null,"tm":8.7,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.34,"tp":null,"tm":8.85,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.38,"tp":null,"tm":9.05,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.4,"tp":null,"tm":9.2,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.44,"tp":null,"tm":9.35,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.46,"tp":null,"tm":9.45,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.5,"tp":null,"tm":9.55,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.52,"tp":null,"tm":9.65,"dir":138,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1.52,"tp":null,"tm":9.7,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":1.54,"tp":null,"tm":9.7,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Sydney","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":1.54,"tp":null,"tm":9.6,"dir":139,"grid":{"lat":-33.708336,"lng":151.37502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":1.34,"tp":null,"tm":7.75,"dir":70,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":1.36,"tp":null,"tm":7.5,"dir":67,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":1.38,"tp":null,"tm":7.3,"dir":63,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":1.4,"tp":null,"tm":7.1,"dir":60,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":1.42,"tp":null,"tm":7.05,"dir":56,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":1.38,"tp":null,"tm":7.15,"dir":58,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":1.34,"tp":null,"tm":7.35,"dir":60,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":1.3,"tp":null,"tm":7.55,"dir":62,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":1.26,"tp":null,"tm":7.65,"dir":65,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":1.24,"tp":null,"tm":7.8,"dir":68,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":1.2,"tp":null,"tm":7.9,"dir":71,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":1.18,"tp":null,"tm":8.05,"dir":75,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":1.18,"tp":null,"tm":8.2,"dir":78,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":1.16,"tp":null,"tm":8.35,"dir":82,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":1.14,"tp":null,"tm":8.5,"dir":85,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":1.14,"tp":null,"tm":8.65,"dir":87,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":1.12,"tp":null,"tm":8.65,"dir":90,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":1.14,"tp":null,"tm":8.45,"dir":100,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":1.18,"tp":null,"tm":8.1,"dir":111,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":1.2,"tp":null,"tm":7.7,"dir":121,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":1.36,"tp":null,"tm":7.25,"dir":134,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":1.54,"tp":null,"tm":6.75,"dir":147,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":1.7,"tp":null,"tm":6.45,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":1.72,"tp":null,"tm":6.4,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":1.72,"tp":null,"tm":6.5,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":1.74,"tp":null,"tm":6.6,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":1.82,"tp":null,"tm":6.55,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":1.88,"tp":null,"tm":6.5,"dir":158,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":1.96,"tp":null,"tm":6.5,"dir":157,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":2.02,"tp":null,"tm":6.6,"dir":156,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":2.08,"tp":null,"tm":6.7,"dir":156,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":2.14,"tp":null,"tm":6.85,"dir":155,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":2.16,"tp":null,"tm":6.95,"dir":156,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":2.18,"tp":null,"tm":7.05,"dir":156,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":2.2,"tp":null,"tm":7.2,"dir":157,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":2.2,"tp":null,"tm":7.35,"dir":157,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":2.18,"tp":null,"tm":7.55,"dir":158,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":2.18,"tp":null,"tm":7.7,"dir":158,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":2.16,"tp":null,"tm":7.85,"dir":159,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":2.14,"tp":null,"tm":8,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":2.12,"tp":null,"tm":8.1,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":2.12,"tp":null,"tm":8.15,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":2.1,"tp":null,"tm":8.2,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":2.1,"tp":null,"tm":8.2,"dir":163,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":2.1,"tp":null,"tm":8.2,"dir":163,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":2.08,"tp":null,"tm":8.15,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":2.08,"tp":null,"tm":8.15,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":2.04,"tp":null,"tm":8.2,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":2,"tp":null,"tm":8.25,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.96,"tp":null,"tm":8.35,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.92,"tp":null,"tm":8.45,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.88,"tp":null,"tm":8.55,"dir":163,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.84,"tp":null,"tm":8.65,"dir":163,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.82,"tp":null,"tm":8.7,"dir":163,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.78,"tp":null,"tm":8.75,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.76,"tp":null,"tm":8.8,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.72,"tp":null,"tm":8.85,"dir":162,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.7,"tp":null,"tm":8.85,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.66,"tp":null,"tm":8.9,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.64,"tp":null,"tm":8.95,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.6,"tp":null,"tm":8.95,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.58,"tp":null,"tm":9,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.56,"tp":null,"tm":9.05,"dir":161,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.54,"tp":null,"tm":9.05,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.52,"tp":null,"tm":9.1,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.5,"tp":null,"tm":9.15,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.5,"tp":null,"tm":9.25,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.48,"tp":null,"tm":9.3,"dir":160,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.48,"tp":null,"tm":9.35,"dir":159,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1.5,"tp":null,"tm":9.4,"dir":158,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":1.5,"tp":null,"tm":9.35,"dir":157,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Byron Bay","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":1.54,"tp":null,"tm":9.2,"dir":154,"grid":{"lat":-28.875,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":1.3,"tp":null,"tm":9.45,"dir":108,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":1.28,"tp":null,"tm":9.45,"dir":110,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":1.28,"tp":null,"tm":9.4,"dir":111,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":1.26,"tp":null,"tm":9.4,"dir":113,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":1.26,"tp":null,"tm":9.35,"dir":114,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":1.24,"tp":null,"tm":9.35,"dir":115,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":1.24,"tp":null,"tm":9.35,"dir":116,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":1.22,"tp":null,"tm":9.4,"dir":117,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":1.2,"tp":null,"tm":9.5,"dir":119,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":1.18,"tp":null,"tm":9.6,"dir":120,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":1.16,"tp":null,"tm":9.65,"dir":122,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":1.16,"tp":null,"tm":9.7,"dir":123,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":1.14,"tp":null,"tm":9.75,"dir":123,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":1.14,"tp":null,"tm":9.65,"dir":124,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":1.18,"tp":null,"tm":9.3,"dir":129,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":1.22,"tp":null,"tm":8.85,"dir":133,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":1.26,"tp":null,"tm":8.35,"dir":138,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":1.4,"tp":null,"tm":7.8,"dir":144,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":1.56,"tp":null,"tm":7.25,"dir":151,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":1.7,"tp":null,"tm":6.85,"dir":157,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":1.9,"tp":null,"tm":6.8,"dir":160,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":2.1,"tp":null,"tm":6.9,"dir":164,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":2.3,"tp":null,"tm":7.05,"dir":167,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":2.38,"tp":null,"tm":7.25,"dir":168,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":2.48,"tp":null,"tm":7.45,"dir":170,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":2.56,"tp":null,"tm":7.65,"dir":171,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":2.6,"tp":null,"tm":7.8,"dir":172,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":2.62,"tp":null,"tm":8,"dir":172,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":2.66,"tp":null,"tm":8.1,"dir":173,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":2.66,"tp":null,"tm":8.2,"dir":173,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":2.66,"tp":null,"tm":8.2,"dir":172,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":2.66,"tp":null,"tm":8.25,"dir":172,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":2.62,"tp":null,"tm":8.25,"dir":171,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":2.58,"tp":null,"tm":8.3,"dir":170,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":2.54,"tp":null,"tm":8.3,"dir":169,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":2.48,"tp":null,"tm":8.35,"dir":168,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":2.42,"tp":null,"tm":8.45,"dir":167,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":2.36,"tp":null,"tm":8.5,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":2.3,"tp":null,"tm":8.55,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":2.26,"tp":null,"tm":8.65,"dir":165,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":2.2,"tp":null,"tm":8.7,"dir":165,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":2.16,"tp":null,"tm":8.75,"dir":165,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":2.14,"tp":null,"tm":8.8,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":2.1,"tp":null,"tm":8.85,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":2.08,"tp":null,"tm":8.85,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":2.04,"tp":null,"tm":8.85,"dir":167,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":2.02,"tp":null,"tm":8.85,"dir":167,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":1.98,"tp":null,"tm":8.85,"dir":167,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":1.96,"tp":null,"tm":8.8,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.92,"tp":null,"tm":8.75,"dir":166,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.9,"tp":null,"tm":8.65,"dir":165,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.9,"tp":null,"tm":8.55,"dir":165,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.88,"tp":null,"tm":8.45,"dir":164,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.84,"tp":null,"tm":8.45,"dir":163,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.82,"tp":null,"tm":8.5,"dir":163,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.78,"tp":null,"tm":8.55,"dir":162,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.74,"tp":null,"tm":8.6,"dir":162,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.72,"tp":null,"tm":8.7,"dir":161,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.68,"tp":null,"tm":8.8,"dir":161,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.66,"tp":null,"tm":8.85,"dir":160,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.66,"tp":null,"tm":8.95,"dir":160,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.64,"tp":null,"tm":9,"dir":159,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.64,"tp":null,"tm":9.05,"dir":158,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.64,"tp":null,"tm":9.1,"dir":158,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.64,"tp":null,"tm":9.15,"dir":157,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.64,"tp":null,"tm":9.2,"dir":157,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.66,"tp":null,"tm":9.3,"dir":156,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.66,"tp":null,"tm":9.35,"dir":156,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.66,"tp":null,"tm":9.4,"dir":156,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1.68,"tp":null,"tm":9.4,"dir":155,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":1.68,"tp":null,"tm":9.4,"dir":155,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Crowdy Head","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":1.66,"tp":null,"tm":9.4,"dir":155,"grid":{"lat":-31.791668,"lng":152.87502}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":1.26,"tp":null,"tm":6.75,"dir":60,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":1.28,"tp":null,"tm":6.55,"dir":57,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":1.26,"tp":null,"tm":6.5,"dir":56,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":1.26,"tp":null,"tm":6.55,"dir":56,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":1.24,"tp":null,"tm":6.6,"dir":55,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":1.22,"tp":null,"tm":6.6,"dir":54,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":1.22,"tp":null,"tm":6.55,"dir":53,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":1.2,"tp":null,"tm":6.55,"dir":52,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":1.2,"tp":null,"tm":6.6,"dir":52,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":1.18,"tp":null,"tm":6.65,"dir":53,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":1.18,"tp":null,"tm":6.7,"dir":53,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":1.16,"tp":null,"tm":6.8,"dir":56,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":1.14,"tp":null,"tm":6.95,"dir":58,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":1.12,"tp":null,"tm":7.05,"dir":61,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":1.1,"tp":null,"tm":7.15,"dir":63,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":1.06,"tp":null,"tm":7.25,"dir":65,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":1.04,"tp":null,"tm":7.3,"dir":67,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":1.04,"tp":null,"tm":7.35,"dir":73,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":1.02,"tp":null,"tm":7.35,"dir":80,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":1.02,"tp":null,"tm":7.2,"dir":86,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":1.1,"tp":null,"tm":6.85,"dir":104,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":1.18,"tp":null,"tm":6.35,"dir":122,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":1.26,"tp":null,"tm":6,"dir":140,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":1.32,"tp":null,"tm":5.95,"dir":144,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":1.4,"tp":null,"tm":6,"dir":147,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":1.46,"tp":null,"tm":6.05,"dir":151,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":1.52,"tp":null,"tm":6,"dir":150,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":1.56,"tp":null,"tm":5.95,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":1.62,"tp":null,"tm":5.95,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":1.68,"tp":null,"tm":6,"dir":147,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":1.72,"tp":null,"tm":6.1,"dir":147,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":1.78,"tp":null,"tm":6.2,"dir":146,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":1.8,"tp":null,"tm":6.3,"dir":145,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":1.82,"tp":null,"tm":6.45,"dir":145,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":1.84,"tp":null,"tm":6.55,"dir":144,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":1.84,"tp":null,"tm":6.65,"dir":144,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":1.82,"tp":null,"tm":6.75,"dir":143,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":1.82,"tp":null,"tm":6.85,"dir":143,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":1.8,"tp":null,"tm":6.95,"dir":144,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":1.76,"tp":null,"tm":7.1,"dir":144,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":1.74,"tp":null,"tm":7.2,"dir":145,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":1.72,"tp":null,"tm":7.3,"dir":145,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":1.68,"tp":null,"tm":7.4,"dir":146,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":1.66,"tp":null,"tm":7.45,"dir":146,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":1.62,"tp":null,"tm":7.5,"dir":146,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":1.6,"tp":null,"tm":7.55,"dir":147,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":1.56,"tp":null,"tm":7.6,"dir":147,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":1.54,"tp":null,"tm":7.65,"dir":147,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":1.5,"tp":null,"tm":7.75,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.48,"tp":null,"tm":7.8,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.46,"tp":null,"tm":7.85,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.44,"tp":null,"tm":7.9,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.42,"tp":null,"tm":7.95,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.4,"tp":null,"tm":8,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.38,"tp":null,"tm":8.05,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.36,"tp":null,"tm":8.1,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.34,"tp":null,"tm":8.15,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.32,"tp":null,"tm":8.25,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.3,"tp":null,"tm":8.3,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.28,"tp":null,"tm":8.35,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.26,"tp":null,"tm":8.4,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.24,"tp":null,"tm":8.45,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.22,"tp":null,"tm":8.5,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.2,"tp":null,"tm":8.5,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.18,"tp":null,"tm":8.55,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.16,"tp":null,"tm":8.65,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.16,"tp":null,"tm":8.7,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.14,"tp":null,"tm":8.75,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.14,"tp":null,"tm":8.7,"dir":149,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1.16,"tp":null,"tm":8.65,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":1.16,"tp":null,"tm":8.5,"dir":148,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Tweed Offshore","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":1.2,"tp":null,"tm":8.3,"dir":144,"grid":{"lat":-28.208336,"lng":153.70836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":1.04,"tp":null,"tm":7.5,"dir":87,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":1.04,"tp":null,"tm":7.35,"dir":86,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":1.04,"tp":null,"tm":7.2,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":1.04,"tp":null,"tm":7,"dir":83,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":1.04,"tp":null,"tm":6.9,"dir":81,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":1.04,"tp":null,"tm":6.85,"dir":81,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":1.02,"tp":null,"tm":6.85,"dir":81,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":1.02,"tp":null,"tm":6.9,"dir":81,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":0.98,"tp":null,"tm":7,"dir":82,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":0.96,"tp":null,"tm":7.2,"dir":83,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":0.92,"tp":null,"tm":7.3,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":0.9,"tp":null,"tm":7.35,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":0.9,"tp":null,"tm":7.35,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":0.88,"tp":null,"tm":7.35,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":0.86,"tp":null,"tm":7.35,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":0.86,"tp":null,"tm":7.35,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":0.84,"tp":null,"tm":7.35,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":0.82,"tp":null,"tm":7.4,"dir":84,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":0.8,"tp":null,"tm":7.45,"dir":85,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":0.78,"tp":null,"tm":7.5,"dir":85,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":0.76,"tp":null,"tm":7.55,"dir":86,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":0.76,"tp":null,"tm":7.65,"dir":87,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":0.74,"tp":null,"tm":7.7,"dir":88,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":0.74,"tp":null,"tm":7.85,"dir":89,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":0.72,"tp":null,"tm":8,"dir":90,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":0.72,"tp":null,"tm":7.9,"dir":91,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":0.78,"tp":null,"tm":7.35,"dir":99,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":0.82,"tp":null,"tm":6.55,"dir":108,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":0.88,"tp":null,"tm":5.95,"dir":116,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":1,"tp":null,"tm":5.65,"dir":123,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":1.14,"tp":null,"tm":5.55,"dir":129,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":1.26,"tp":null,"tm":5.5,"dir":136,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":1.3,"tp":null,"tm":5.5,"dir":136,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":1.36,"tp":null,"tm":5.6,"dir":136,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":1.4,"tp":null,"tm":5.7,"dir":136,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":1.42,"tp":null,"tm":5.75,"dir":135,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":1.44,"tp":null,"tm":5.75,"dir":134,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":1.46,"tp":null,"tm":5.8,"dir":133,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":1.52,"tp":null,"tm":5.85,"dir":133,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":1.58,"tp":null,"tm":5.85,"dir":132,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":1.64,"tp":null,"tm":5.9,"dir":132,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":1.68,"tp":null,"tm":6,"dir":131,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":1.7,"tp":null,"tm":6.05,"dir":131,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":1.74,"tp":null,"tm":6.15,"dir":130,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":1.72,"tp":null,"tm":6.2,"dir":130,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":1.68,"tp":null,"tm":6.25,"dir":129,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":1.66,"tp":null,"tm":6.25,"dir":129,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":1.62,"tp":null,"tm":6.25,"dir":128,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":1.56,"tp":null,"tm":6.3,"dir":127,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.52,"tp":null,"tm":6.3,"dir":126,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.48,"tp":null,"tm":6.3,"dir":125,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.46,"tp":null,"tm":6.35,"dir":125,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.42,"tp":null,"tm":6.35,"dir":124,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.4,"tp":null,"tm":6.35,"dir":123,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.36,"tp":null,"tm":6.3,"dir":121,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.34,"tp":null,"tm":6.3,"dir":120,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.32,"tp":null,"tm":6.3,"dir":119,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.28,"tp":null,"tm":6.3,"dir":119,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.26,"tp":null,"tm":6.35,"dir":118,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.22,"tp":null,"tm":6.4,"dir":117,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.2,"tp":null,"tm":6.45,"dir":117,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.16,"tp":null,"tm":6.5,"dir":116,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.14,"tp":null,"tm":6.55,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.12,"tp":null,"tm":6.55,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.1,"tp":null,"tm":6.6,"dir":114,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.08,"tp":null,"tm":6.65,"dir":114,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.06,"tp":null,"tm":6.7,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.04,"tp":null,"tm":6.75,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.02,"tp":null,"tm":6.8,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1,"tp":null,"tm":6.8,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":0.98,"tp":null,"tm":6.85,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"Wide Bay","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":0.96,"tp":null,"tm":6.9,"dir":115,"grid":{"lat":-25.791668,"lng":153.20836}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":2.68,"tp":null,"tm":8.4,"dir":246,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":2.88,"tp":null,"tm":8.4,"dir":244,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":3.04,"tp":null,"tm":8.5,"dir":242,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":3.2,"tp":null,"tm":8.75,"dir":241,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":3.36,"tp":null,"tm":8.95,"dir":239,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":3.4,"tp":null,"tm":9.1,"dir":238,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":3.46,"tp":null,"tm":9.25,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":3.5,"tp":null,"tm":9.4,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":3.44,"tp":null,"tm":9.5,"dir":234,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":3.4,"tp":null,"tm":9.55,"dir":233,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":3.34,"tp":null,"tm":9.65,"dir":232,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":3.28,"tp":null,"tm":9.75,"dir":231,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":3.22,"tp":null,"tm":9.85,"dir":231,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":3.16,"tp":null,"tm":9.95,"dir":230,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":3.08,"tp":null,"tm":10.05,"dir":230,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":3,"tp":null,"tm":10.2,"dir":231,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":2.92,"tp":null,"tm":10.35,"dir":231,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":2.84,"tp":null,"tm":10.5,"dir":232,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":2.76,"tp":null,"tm":10.65,"dir":232,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":2.68,"tp":null,"tm":10.85,"dir":233,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":2.62,"tp":null,"tm":11.05,"dir":233,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":2.54,"tp":null,"tm":11.25,"dir":234,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":2.48,"tp":null,"tm":11.45,"dir":234,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":2.44,"tp":null,"tm":11.65,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":2.38,"tp":null,"tm":11.8,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":2.34,"tp":null,"tm":11.95,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":2.3,"tp":null,"tm":12.1,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":2.28,"tp":null,"tm":12.2,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":2.24,"tp":null,"tm":12.25,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":2.22,"tp":null,"tm":12.25,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":2.18,"tp":null,"tm":12.25,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":2.16,"tp":null,"tm":12.2,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":2.14,"tp":null,"tm":12.15,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":2.1,"tp":null,"tm":12.15,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":2.08,"tp":null,"tm":12.1,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":2.04,"tp":null,"tm":12.1,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":2,"tp":null,"tm":12.1,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":1.96,"tp":null,"tm":12.1,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":1.92,"tp":null,"tm":12.1,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":1.88,"tp":null,"tm":12.15,"dir":238,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":1.84,"tp":null,"tm":12.15,"dir":238,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":1.8,"tp":null,"tm":12.15,"dir":238,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":1.76,"tp":null,"tm":12.15,"dir":239,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":1.72,"tp":null,"tm":12.2,"dir":239,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":1.68,"tp":null,"tm":12.3,"dir":240,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":1.64,"tp":null,"tm":12.4,"dir":240,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":1.6,"tp":null,"tm":12.5,"dir":241,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":1.56,"tp":null,"tm":12.6,"dir":241,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":1.52,"tp":null,"tm":12.65,"dir":241,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.48,"tp":null,"tm":12.65,"dir":241,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.46,"tp":null,"tm":12.5,"dir":240,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.46,"tp":null,"tm":12.25,"dir":240,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.44,"tp":null,"tm":12,"dir":239,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.44,"tp":null,"tm":11.7,"dir":238,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.42,"tp":null,"tm":11.35,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.42,"tp":null,"tm":11.15,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.38,"tp":null,"tm":11.1,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.36,"tp":null,"tm":11.15,"dir":234,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.32,"tp":null,"tm":11.25,"dir":234,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.3,"tp":null,"tm":11.4,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.26,"tp":null,"tm":11.55,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.24,"tp":null,"tm":11.75,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.22,"tp":null,"tm":11.9,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.2,"tp":null,"tm":12.05,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.18,"tp":null,"tm":12.2,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.18,"tp":null,"tm":12.25,"dir":237,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.16,"tp":null,"tm":12.3,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.16,"tp":null,"tm":12.35,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.16,"tp":null,"tm":12.5,"dir":236,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1.14,"tp":null,"tm":12.65,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":1.14,"tp":null,"tm":12.8,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"INVERLOCH","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":1.14,"tp":null,"tm":13,"dir":235,"grid":{"lat":-38.791668,"lng":145.79167}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T02:00Z","lead_h":0.2,"hs":1.9,"tp":null,"tm":11.25,"dir":246,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T03:00Z","lead_h":1.2,"hs":1.92,"tp":null,"tm":11.45,"dir":245,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T04:00Z","lead_h":2.2,"hs":1.94,"tp":null,"tm":11.6,"dir":245,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T05:00Z","lead_h":3.2,"hs":1.96,"tp":null,"tm":11.75,"dir":244,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T06:00Z","lead_h":4.2,"hs":1.98,"tp":null,"tm":11.85,"dir":244,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T07:00Z","lead_h":5.2,"hs":2,"tp":null,"tm":11.9,"dir":244,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T08:00Z","lead_h":6.2,"hs":2.02,"tp":null,"tm":11.9,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T09:00Z","lead_h":7.2,"hs":2.04,"tp":null,"tm":11.95,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T10:00Z","lead_h":8.2,"hs":2.04,"tp":null,"tm":12,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T11:00Z","lead_h":9.2,"hs":2.04,"tp":null,"tm":12.1,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T12:00Z","lead_h":10.2,"hs":2.04,"tp":null,"tm":12.15,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T13:00Z","lead_h":11.2,"hs":2.04,"tp":null,"tm":12.25,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T14:00Z","lead_h":12.2,"hs":2.02,"tp":null,"tm":12.3,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T15:00Z","lead_h":13.2,"hs":2.02,"tp":null,"tm":12.4,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T16:00Z","lead_h":14.2,"hs":2.02,"tp":null,"tm":12.5,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T17:00Z","lead_h":15.2,"hs":2.02,"tp":null,"tm":12.55,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T18:00Z","lead_h":16.2,"hs":2.02,"tp":null,"tm":12.6,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T19:00Z","lead_h":17.2,"hs":2.02,"tp":null,"tm":12.6,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T20:00Z","lead_h":18.2,"hs":2.04,"tp":null,"tm":12.6,"dir":241,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T21:00Z","lead_h":19.2,"hs":2.04,"tp":null,"tm":12.6,"dir":241,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T22:00Z","lead_h":20.2,"hs":2.04,"tp":null,"tm":12.55,"dir":241,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-06T23:00Z","lead_h":21.2,"hs":2.06,"tp":null,"tm":12.45,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T00:00Z","lead_h":22.2,"hs":2.06,"tp":null,"tm":12.4,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T01:00Z","lead_h":23.2,"hs":2.04,"tp":null,"tm":12.5,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T02:00Z","lead_h":24.2,"hs":2,"tp":null,"tm":12.65,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T03:00Z","lead_h":25.2,"hs":1.98,"tp":null,"tm":12.8,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T04:00Z","lead_h":26.2,"hs":1.96,"tp":null,"tm":12.95,"dir":242,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T05:00Z","lead_h":27.2,"hs":1.92,"tp":null,"tm":13.05,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T06:00Z","lead_h":28.2,"hs":1.9,"tp":null,"tm":13.15,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T07:00Z","lead_h":29.2,"hs":1.88,"tp":null,"tm":13.25,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T08:00Z","lead_h":30.2,"hs":1.86,"tp":null,"tm":13.3,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T09:00Z","lead_h":31.2,"hs":1.84,"tp":null,"tm":13.35,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T10:00Z","lead_h":32.2,"hs":1.82,"tp":null,"tm":13.35,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T11:00Z","lead_h":33.2,"hs":1.82,"tp":null,"tm":13.35,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T12:00Z","lead_h":34.2,"hs":1.8,"tp":null,"tm":13.3,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T13:00Z","lead_h":35.2,"hs":1.78,"tp":null,"tm":13.25,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T14:00Z","lead_h":36.2,"hs":1.76,"tp":null,"tm":13.15,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T15:00Z","lead_h":37.2,"hs":1.74,"tp":null,"tm":13.05,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T16:00Z","lead_h":38.2,"hs":1.7,"tp":null,"tm":13,"dir":243,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T17:00Z","lead_h":39.2,"hs":1.68,"tp":null,"tm":12.95,"dir":244,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T18:00Z","lead_h":40.2,"hs":1.64,"tp":null,"tm":12.9,"dir":244,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T19:00Z","lead_h":41.2,"hs":1.62,"tp":null,"tm":12.85,"dir":245,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T20:00Z","lead_h":42.2,"hs":1.58,"tp":null,"tm":12.8,"dir":245,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T21:00Z","lead_h":43.2,"hs":1.56,"tp":null,"tm":12.6,"dir":246,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T22:00Z","lead_h":44.2,"hs":1.56,"tp":null,"tm":12.25,"dir":250,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-07T23:00Z","lead_h":45.2,"hs":1.58,"tp":null,"tm":11.75,"dir":253,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T00:00Z","lead_h":46.2,"hs":1.58,"tp":null,"tm":11.3,"dir":257,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T01:00Z","lead_h":47.2,"hs":1.6,"tp":null,"tm":10.85,"dir":263,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T02:00Z","lead_h":48.2,"hs":1.6,"tp":null,"tm":10.45,"dir":268,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T03:00Z","lead_h":49.2,"hs":1.62,"tp":null,"tm":10.1,"dir":274,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T04:00Z","lead_h":50.2,"hs":1.6,"tp":null,"tm":9.95,"dir":276,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T05:00Z","lead_h":51.2,"hs":1.58,"tp":null,"tm":9.85,"dir":279,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T06:00Z","lead_h":52.2,"hs":1.56,"tp":null,"tm":9.8,"dir":281,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T07:00Z","lead_h":53.2,"hs":1.54,"tp":null,"tm":9.75,"dir":282,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T08:00Z","lead_h":54.2,"hs":1.52,"tp":null,"tm":9.75,"dir":282,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T09:00Z","lead_h":55.2,"hs":1.5,"tp":null,"tm":9.7,"dir":283,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T10:00Z","lead_h":56.2,"hs":1.52,"tp":null,"tm":9.5,"dir":290,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T11:00Z","lead_h":57.2,"hs":1.56,"tp":null,"tm":9.25,"dir":297,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T12:00Z","lead_h":58.2,"hs":1.58,"tp":null,"tm":9.1,"dir":304,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T13:00Z","lead_h":59.2,"hs":1.6,"tp":null,"tm":9.05,"dir":303,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T14:00Z","lead_h":60.2,"hs":1.62,"tp":null,"tm":9.1,"dir":302,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T15:00Z","lead_h":61.2,"hs":1.64,"tp":null,"tm":9.25,"dir":301,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T16:00Z","lead_h":62.2,"hs":1.62,"tp":null,"tm":9.5,"dir":295,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T17:00Z","lead_h":63.2,"hs":1.62,"tp":null,"tm":9.85,"dir":289,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T18:00Z","lead_h":64.2,"hs":1.6,"tp":null,"tm":10.15,"dir":283,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T19:00Z","lead_h":65.2,"hs":1.6,"tp":null,"tm":10.45,"dir":277,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T20:00Z","lead_h":66.2,"hs":1.6,"tp":null,"tm":10.75,"dir":271,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T21:00Z","lead_h":67.2,"hs":1.6,"tp":null,"tm":10.9,"dir":265,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T22:00Z","lead_h":68.2,"hs":1.64,"tp":null,"tm":10.85,"dir":266,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-08T23:00Z","lead_h":69.2,"hs":1.7,"tp":null,"tm":10.6,"dir":266,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-09T00:00Z","lead_h":70.2,"hs":1.74,"tp":null,"tm":10.5,"dir":267,"grid":{"lat":-35.541668,"lng":136.95836}}
+{"run_utc":"2026-10-06T01:46Z","site":"NORTH-KANGAROO-ISLAND","valid_utc":"2026-10-09T01:00Z","lead_h":71.2,"hs":1.74,"tp":null,"tm":10.55,"dir":266,"grid":{"lat":-35.541668,"lng":136.95836}}
