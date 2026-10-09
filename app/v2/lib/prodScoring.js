@@ -763,6 +763,21 @@ export const LEARNER_WIND_CAP = {
 // sont décalés depuis beginner pour garder l'ordre monotone
 // (first_timer <= beginner <= early_int), qui est un invariant testé.
 
+// ── Courant océanique : seuils "strong" / "dangerous" (m/s) ─────────────
+// Open-Meteo sert le courant sur une grille grossière (~9 km), très souvent
+// parallèle à la côte (boucle de courant de bord, pas un rip de plage).
+// Mesuré sur 11 jours x 26 spots AU : 77 % des heures >= 0.28 m/s sont
+// longshore, et The Pass (Byron) dépasse 0.28 m/s 74 % du temps.
+//  - Learners (first_timer / beginner) : 0.28 m/s, inchangé. L'erreur est
+//    dangereuse (SKIP dur sur les plages avec inside-reform), on garde la marge.
+//  - early_int : 0.40 m/s. Pour lui "strong" ne fait que plafonner le GO à
+//    MAYBE ; à 0.28 il restait plafonné sur des spots où la valeur modélisée
+//    n'est pas significative.
+//  - "dangerous" (SKIP pour les trois niveaux) : 0.56 m/s, inchangé.
+export const CURRENT_STRONG_LEARNER = 0.28;
+export const CURRENT_STRONG_EARLY_INT = 0.40;
+export const CURRENT_DANGEROUS = 0.56;
+
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la
   // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
@@ -862,14 +877,17 @@ export function classifyConditions(userLevel, h, spot) {
 
   // Ocean-current hazard for learners — a rip drains them faster than they
   // can paddle against it. Open-Meteo returns velocity in m/s;
-  // 0.28 m/s ≈ 1 km/h, 0.56 m/s ≈ 2 km/h. Covers early_int too : ils sont
+  // 0.28 m/s ≈ 1 km/h, 0.40 ≈ 1.4 km/h, 0.56 ≈ 2 km/h (see the
+  // CURRENT_* constants above for why "strong" differs by level).
+  // Covers early_int too : ils sont
   // sur un mid-length, pas encore le paddle pour remonter un vrai rip —
   // et les tips "courant" leur étaient déjà routés alors que le hazard
   // restait aveugle pour eux (trou relevé par l'audit).
   const hazardProne = isEarlyLearner || userLevel === "early_int";
   const curVel = h.currentVel || 0;
-  const currentHazard = hazardProne && curVel >= 0.56 ? "dangerous"
-                      : hazardProne && curVel >= 0.28 ? "strong"
+  const strongFrom = userLevel === "early_int" ? CURRENT_STRONG_EARLY_INT : CURRENT_STRONG_LEARNER;
+  const currentHazard = hazardProne && curVel >= CURRENT_DANGEROUS ? "dangerous"
+                      : hazardProne && curVel >= strongFrom ? "strong"
                       : "none";
   return { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard };
 }
