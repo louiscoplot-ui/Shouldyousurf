@@ -24,6 +24,7 @@ import {
   CURRENT_STRONG_LEARNER,
   CURRENT_STRONG_EARLY_INT,
   CURRENT_DANGEROUS,
+  SHORT_PERIOD_GO_FLOOR_S,
   FACE_BASE_GRID,
   USER_LEVEL_ZONES,
   levelBaseSize,
@@ -1406,6 +1407,91 @@ describe("intermediate keeps the metric size grid (PR #66 decision)", () => {
     // same swell height, different period -> same baseSize (period is ignored on the metric grid)
     expect(levelBaseSize(1.2, 7, "intermediate")).toBeCloseTo(lookupBaseSize(1.2, "intermediate"), 6);
     expect(levelBaseSize(1.2, 14, "intermediate")).toBeCloseTo(lookupBaseSize(1.2, "intermediate"), 6);
+  });
+});
+
+describe("short-period GO cap — early_int and intermediate only (10/10)", () => {
+  // Ideal swell direction, light offshore wind, no current: size and wind are
+  // "sweet" / "clean", so the only thing that can stop a GO is the period.
+  const hour = (swellHeight, swellPeriod) => mk({ swellHeight, swellPeriod, swellDir: spot.idealSwellDir, windSpeedKn: 3, windDir: spot.offshoreWindDir, currentVel: 0 });
+  // A swell height that is sweet+clean at BOTH 6.5 s and 7.5 s for the level.
+  const sweetAtBoth = (level) => {
+    for (let hs = 0.5; hs <= 2.6; hs += 0.05) {
+      const a = classifyConditions(level, hour(hs, 6.5), spot), b = classifyConditions(level, hour(hs, 7.5), spot);
+      if (a.size === "sweet" && b.size === "sweet" && a.wind === "clean" && b.wind === "clean") return +hs.toFixed(2);
+    }
+    return null;
+  };
+
+  it("the floor is 7 s", () => {
+    expect(SHORT_PERIOD_GO_FLOOR_S).toBe(7);
+  });
+
+  for (const level of ["early_int", "intermediate"]) {
+    it(`${level}: GO at 6.5 s becomes WORTH IT; at 7.5 s it stays GO`, () => {
+      const hs = sweetAtBoth(level);
+      expect(hs).not.toBeNull();
+      expect(classifyConditions(level, hour(hs, 6.5), spot).periodGoCap).toBe(true);
+      expect(getPersonalVerdict(level, hour(hs, 6.5), spot)).toBe("ok");
+      expect(classifyConditions(level, hour(hs, 7.5), spot).periodGoCap).toBe(false);
+      expect(getPersonalVerdict(level, hour(hs, 7.5), spot)).toBe("yes");
+    });
+    it(`${level}: the floor is strict (6.99 s capped, 7.0 s GO) and an unknown period is neutral`, () => {
+      const hs = sweetAtBoth(level);
+      expect(getPersonalVerdict(level, hour(hs, 6.99), spot)).toBe("ok");
+      expect(getPersonalVerdict(level, hour(hs, 7.0), spot)).toBe("yes");
+      expect(getPersonalVerdict(level, hour(hs, null), spot)).toBe("yes");
+    });
+    it(`${level}: the capped hour is never a SKIP and the advice says why`, () => {
+      const hs = sweetAtBoth(level);
+      const h = hour(hs, 6.5);
+      expect(getPersonalVerdict(level, h, spot)).toBe("ok");
+      expect(getPersonalAdviceKey(level, h, spot, "ok")).toBe(`tip_${level}_short_period`);
+      expect(getT("en")(`tip_${level}_short_period`)).toMatch(/short-period/);
+      expect(getT("fr")(`tip_${level}_short_period`)).toMatch(/courte/);
+      expect(getT("de")(`tip_${level}_short_period`)).toBe(getT("en")(`tip_${level}_short_period`)); // other languages fall back to EN
+    });
+    it(`${level}: no cliff on the score across the 7 s floor (0.05 s steps)`, () => {
+      const hs = sweetAtBoth(level);
+      let prev = null, worst = 0;
+      for (let p = 5; p <= 9.0001; p += 0.05) {
+        const sc = scoreForLevel(hour(hs, +p.toFixed(2)), spot, level).score;
+        if (prev != null) worst = Math.max(worst, Math.abs(sc - prev));
+        prev = sc;
+      }
+      expect(worst).toBeLessThanOrEqual(8);
+    });
+  }
+
+  it("beginner at 6.5 s stays GO (no period cap)", () => {
+    let found = 0;
+    for (let hs = 0.3; hs <= 1.2; hs += 0.05) {
+      const h = hour(hs, 6.5);
+      if (getPersonalVerdict("beginner", h, spot) !== "yes") continue;
+      found++;
+      expect(classifyConditions("beginner", h, spot).periodGoCap).toBe(false);
+    }
+    expect(found).toBeGreaterThan(0);
+  });
+
+  it("first_timer, beginner, advanced and expert: the cap never applies, whatever the period", () => {
+    for (const level of ["first_timer", "beginner", "advanced", "expert"]) {
+      let goAtShort = 0;
+      for (let hs = 0.3; hs <= 4; hs += 0.1) {
+        for (const period of [5, 6.5, 6.99, 7.5, 10]) {
+          const h = hour(hs, period);
+          expect(classifyConditions(level, h, spot).periodGoCap).toBe(false);
+          if (period < 7 && getPersonalVerdict(level, h, spot) === "yes") goAtShort++;
+        }
+      }
+      expect(goAtShort).toBeGreaterThan(0); // these levels still get GO on short-period swell
+    }
+  });
+
+  it("Crescent Head 8 Oct 13h/14h (7.7 s) is above the floor: early_int stays GO", () => {
+    const crescent = BREAKS.find((b) => b.id === "crescent");
+    const h13 = { hour: 13, swellHeight: 1.74, swellPeriod: 7.7, swellDir: 168, windSpeedKn: 4.5, windDir: 162, windGustKn: 14.2, tideM: -0.32, currentVel: 0.3611, secSwellH: 0.24, secSwellP: 4.5, secSwellDir: 199, windWaveHeight: 0.76, windWavePeriod: 3.65, windWaveDir: 182 };
+    expect(getPersonalVerdict("early_int", h13, crescent)).toBe("yes");
   });
 });
 

@@ -796,6 +796,18 @@ export const CURRENT_STRONG_LEARNER = 0.28;
 export const CURRENT_STRONG_EARLY_INT = 0.40;
 export const CURRENT_DANGEROUS = 0.56;
 
+// ── Houle courte : plafond GO -> WORTH IT pour early_int et intermediate ─
+// Sous 7 s la houle dominante est une mer de vent : peu de poussée, peu de
+// forme. Le verdict classait pourtant GO sur la seule taille de face + vent
+// propre, et le score (multiplicateur période 0.62-0.76) tombait à 20-35 :
+// GO à côté d'un chiffre bas. Mesuré sur 11 jours de prévisions sauvegardées
+// (26 spots AU) : 125 heures GO d'early_int et 66 d'intermediate sont sous 7 s,
+// et 56 sur 59 / 77 sur 83 des GO < 30 sont en houle courte. Même mécanisme
+// que les autres plafonds GO (courant "strong", reef) : WORTH IT, jamais SKIP.
+// Ne touche NI beginner / first_timer (sur la mousse la période compte peu),
+// NI advanced / expert. Période inconnue = pas de plafond (neutre).
+export const SHORT_PERIOD_GO_FLOOR_S = 7;
+
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la
   // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
@@ -907,7 +919,12 @@ export function classifyConditions(userLevel, h, spot) {
   const currentHazard = hazardProne && curVel >= CURRENT_DANGEROUS ? "dangerous"
                       : hazardProne && curVel >= strongFrom ? "strong"
                       : "none";
-  return { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard };
+  // Houle courte (cf. SHORT_PERIOD_GO_FLOOR_S) : early_int / intermediate seulement,
+  // sur la période de la partition DOMINANTE (celle que le score note).
+  const domForPeriod = getDominant(h, spot);
+  const periodGoCap = (userLevel === "early_int" || userLevel === "intermediate")
+    && !!domForPeriod.periodKnown && domForPeriod.swellPeriod < SHORT_PERIOD_GO_FLOOR_S;
+  return { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, faceFt, currentHazard };
 }
 
 // isFoamieFriendly — the subset of users who should literally be riding a
@@ -947,7 +964,7 @@ export function hasInsideReform(userLevel, faceFt, spot) {
 // of drift between this function and scoreForLevel's bounds. Falls back to
 // recomputing via getPersonalVerdict when the caller doesn't have the score.
 export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
-  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   const verdict = displayedVerdict || getPersonalVerdict(userLevel, h, spot);
   const foamie = hasInsideReform(userLevel, faceFt, spot);
   const { kmh, dir } = windContext(h, spot);
@@ -988,6 +1005,10 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // surface. Sans cette ligne le conseil "sweet_clean" disait "vas-y" sous
     // un label MAYBE.
     if (reefGoCap && wind === "clean" && (size === "sweet" || size === "upper")) return "tip_early_int_reef_pick";
+    // Houle courte : c'est le plafond période qui a retiré le GO (taille et vent
+    // sont bons) — sans cette ligne le conseil "sweet_clean" disait "vas-y"
+    // sous un label MAYBE.
+    if (periodGoCap && wind === "clean" && (size === "sweet" || size === "upper")) return "tip_" + userLevel + "_short_period";
     if (size === "too_big") return "tip_" + userLevel + "_too_big";
     if (size === "too_small") return "tip_" + userLevel + "_too_small";
     if (wind === "blown") return "tip_" + userLevel + "_blown_" + size;
@@ -1189,7 +1210,7 @@ function galeKills(userLevel, kmh, dir) {
 }
 
 export function getPersonalVerdict(userLevel, h, spot) {
-  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   // Current safety — overrides everything for learners who can't paddle
   // against a rip. "dangerous" = hard no; "strong" caps the verdict to
   // MAYBE below (never lets a learner see GO on a rippy day).
@@ -1252,7 +1273,7 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // "strong" current (early_int only past the hard-no above) never lets a
     // GO through — same downgrade the non-reform path applies below, kept
     // consistent so the two chemins can't diverge on a rippy sweet day.
-    const cap = currentHazard === "strong" ? "ok" : null;
+    const cap = (currentHazard === "strong" || periodGoCap) ? "ok" : null;
     const downgrade = (v) => (cap && v === "yes" ? cap : v);
     if (size === "sweet" && wind === "clean") return downgrade("yes");
     return "ok";
@@ -1312,8 +1333,9 @@ export function getPersonalVerdict(userLevel, h, spot) {
     }
     return "ok";
   }
-  // Plafond MAYBE : courant "strong" (early_int ici) ou reef pour early_int.
-  const cap = (currentHazard === "strong" || reefGoCap) ? "ok" : null;
+  // Plafond MAYBE : courant "strong" (early_int ici), reef pour early_int, ou
+  // houle courte (< SHORT_PERIOD_GO_FLOOR_S) pour early_int / intermediate.
+  const cap = (currentHazard === "strong" || reefGoCap || periodGoCap) ? "ok" : null;
   const downgrade = (v) => (cap && v === "yes" ? cap : v);
   if (size === "sweet") return downgrade(wind === "clean" ? "yes" : "ok");
   if (size === "upper") return downgrade(wind === "clean" ? "yes" : "ok");
@@ -1409,7 +1431,7 @@ const BAND_MAPS = {
 // Échelles de bruit heure-à-heure des entrées modèle (Open-Meteo) : si une
 // variation de CET ordre suffit à faire basculer le verdict, l'heure est
 // "au bord" et son score doit déjà avoir rejoint la bande d'en face.
-const FLIP_NOISE = { windKmh: 4, currentMs: 0.08, swellRel: 0.12 };
+const FLIP_NOISE = { windKmh: 4, currentMs: 0.08, swellRel: 0.12, periodRel: 0.10, mixRel: 0.20 };
 const VERDICT_ORDER = { no: 0, ok: 1, yes: 2 };
 
 // Évalue le verdict sur une copie perturbée de l'heure. Les caches posés
@@ -1463,6 +1485,31 @@ export function flipProximity(userLevel, h, spot, baseVerdict) {
     (t) => ({ ...windUp(t), ...swellScale(t, -1) }),
     (t) => ({ ...windUp(t), ...swellScale(t, +1) }),
   ];
+  // Plafond houle courte (early_int / intermediate) : le verdict bascule
+  // GO -> WORTH IT quand la période de la partition DOMINANTE passe sous
+  // SHORT_PERIOD_GO_FLOOR_S. Deux chemins y mènent, qu'aucun axe ci-dessus ne
+  // sonde : la période qui baisse, et le mélange des partitions qui change la
+  // partition dominante (windsea qui monte, houle principale qui retombe) ;
+  // swellScale, lui, bruite toutes les hauteurs du même facteur. Sans ces
+  // axes le score tombait d'un coup au plafond WORTH IT (falaise de 29 pts
+  // sur l'axe windswell, et au franchissement de 7 s).
+  if (userLevel === "early_int" || userLevel === "intermediate") {
+    const scalePeriods = (f) => {
+      const patch = {};
+      for (const k of ["swellPeriod", "secSwellP", "windWavePeriod"]) {
+        if (Number.isFinite(h[k])) patch[k] = h[k] * f;
+      }
+      return patch;
+    };
+    axes.push(
+      (t) => scalePeriods(1 - t * FLIP_NOISE.periodRel), // période qui baisse
+      (t) => (Number.isFinite(h.swellHeight) ? { swellHeight: h.swellHeight * (1 - t * FLIP_NOISE.mixRel) } : {}), // houle principale qui retombe
+      (t) => ({
+        ...(Number.isFinite(h.windWaveHeight) ? { windWaveHeight: h.windWaveHeight * (1 + t * FLIP_NOISE.mixRel) } : {}),
+        ...(Number.isFinite(h.secSwellH) ? { secSwellH: h.secSwellH * (1 + t * FLIP_NOISE.mixRel) } : {}),
+      }), // windsea / houle secondaire qui montent
+    );
+  }
   let best = { p: 0, to: null };
   // Proximité par BANDE CIBLE, pas seulement le meilleur axe. Plusieurs
   // axes peuvent mener à des bandes différentes en même temps (typique :
