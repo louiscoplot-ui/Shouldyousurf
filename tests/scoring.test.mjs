@@ -1340,7 +1340,7 @@ describe("advanced / expert : jour propre idéal au milieu de la zone sweet", ()
   });
 });
 
-describe("size grids read the FACE height — beginner, early_int, intermediate (10/10)", () => {
+describe("size grids read the FACE height — beginner, early_int (10/10)", () => {
   const crescent = BREAKS.find((b) => b.id === "crescent");
   // Hours frozen from the saved forecast of Thu 8 Oct (fetched Wed 7 Oct): 1.7 m @ 7.7 s
   // is 4.2-4.4 ft of face, "sweet" for early_int, but sat at the foot of the old
@@ -1361,11 +1361,9 @@ describe("size grids read the FACE height — beginner, early_int, intermediate 
   });
   it("Crescent Head hours: the verdict does not move (only the score does)", () => {
     expect(getPersonalVerdict("beginner", h13, crescent)).toBe("no");       // 4.4 ft is too big for a beginner
-    expect(getPersonalVerdict("intermediate", h13, crescent)).toBe("yes");
-    expect(getPersonalVerdict("intermediate", h14, crescent)).toBe("yes");
   });
 
-  for (const level of ["beginner", "early_int", "intermediate"]) {
+  for (const level of ["beginner", "early_int"]) {
     it(`${level}: the grid peaks inside the GO range and stays high from sweetLo to upperMax`, () => {
       const z = USER_LEVEL_ZONES[level];
       const grid = FACE_BASE_GRID[level];
@@ -1401,3 +1399,13 @@ describe("size grids read the FACE height — beginner, early_int, intermediate 
     });
   }
 });
+
+describe("intermediate keeps the metric size grid (PR #66 decision)", () => {
+  it("has no face-based entry and reads swell height in metres", () => {
+    expect(FACE_BASE_GRID.intermediate).toBeUndefined();
+    // same swell height, different period -> same baseSize (period is ignored on the metric grid)
+    expect(levelBaseSize(1.2, 7, "intermediate")).toBeCloseTo(lookupBaseSize(1.2, "intermediate"), 6);
+    expect(levelBaseSize(1.2, 14, "intermediate")).toBeCloseTo(lookupBaseSize(1.2, "intermediate"), 6);
+  });
+});
+

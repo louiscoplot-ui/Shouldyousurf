@@ -610,7 +610,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 12; // 12 : grilles beginner/early_int/intermediate sur la face (10/10) ; 11 : early_int courant "strong" 0.28 -> 0.40 m/s (09/10) ; 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
+const CACHE_V = 12; // 12 : grilles beginner/early_int sur la face (10/10) ; 11 : early_int courant "strong" 0.28 -> 0.40 m/s (09/10) ; 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
