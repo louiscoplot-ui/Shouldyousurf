@@ -24,6 +24,10 @@ import {
   CURRENT_STRONG_LEARNER,
   CURRENT_STRONG_EARLY_INT,
   CURRENT_DANGEROUS,
+  FACE_BASE_GRID,
+  USER_LEVEL_ZONES,
+  levelBaseSize,
+  levelPeakBaseSize,
   usableGustKmh,
   getPersonalAdviceKey,
 } from "../app/v2/lib/prodScoring.js";
@@ -1334,4 +1338,66 @@ describe("advanced / expert : jour propre idéal au milieu de la zone sweet", ()
       if (v === "yes") expect(s, `${level} ${ft}ft ${period}s GO`).toBeGreaterThanOrEqual(40);
     }
   });
+});
+
+describe("size grids read the FACE height — beginner, early_int, intermediate (10/10)", () => {
+  const crescent = BREAKS.find((b) => b.id === "crescent");
+  // Hours frozen from the saved forecast of Thu 8 Oct (fetched Wed 7 Oct): 1.7 m @ 7.7 s
+  // is 4.2-4.4 ft of face, "sweet" for early_int, but sat at the foot of the old
+  // metric grid (5/100 at 1.85 m) -> GO with a score of 12-14.
+  const h13 = { hour: 13, swellHeight: 1.74, swellPeriod: 7.7, swellDir: 168, windSpeedKn: 4.5, windDir: 162, windGustKn: 14.2, tideM: -0.32, currentVel: 0.3611, secSwellH: 0.24, secSwellP: 4.5, secSwellDir: 199, windWaveHeight: 0.76, windWavePeriod: 3.65, windWaveDir: 182 };
+  const h14 = { hour: 14, swellHeight: 1.68, swellPeriod: 7.7, swellDir: 169, windSpeedKn: 6.4, windDir: 150, windGustKn: 15.9, tideM: -0.18, currentVel: 0.3611, secSwellH: 0.28, secSwellP: 4.55, secSwellDir: 180, windWaveHeight: 0.86, windWavePeriod: 3.8, windWaveDir: 171 };
+
+  it("Crescent Head 8 Oct 13h/14h, early_int: GO no longer comes with a Skip/Poor score", () => {
+    for (const h of [h13, h14]) {
+      const cls = classifyConditions("early_int", h, crescent);
+      expect(cls.size).toBe("sweet");
+      expect(cls.wind).toBe("clean");
+      expect(getPersonalVerdict("early_int", h, crescent)).toBe("yes");
+      const score = scoreForLevel(h, crescent, "early_int").score;
+      expect(score).toBeGreaterThanOrEqual(40); // was 12 and 14
+      expect(["skip", "poor"]).not.toContain(getLevel(score).key);
+    }
+  });
+  it("Crescent Head hours: the verdict does not move (only the score does)", () => {
+    expect(getPersonalVerdict("beginner", h13, crescent)).toBe("no");       // 4.4 ft is too big for a beginner
+    expect(getPersonalVerdict("intermediate", h13, crescent)).toBe("yes");
+    expect(getPersonalVerdict("intermediate", h14, crescent)).toBe("yes");
+  });
+
+  for (const level of ["beginner", "early_int", "intermediate"]) {
+    it(`${level}: the grid peaks inside the GO range and stays high from sweetLo to upperMax`, () => {
+      const z = USER_LEVEL_ZONES[level];
+      const grid = FACE_BASE_GRID[level];
+      const peak = levelPeakBaseSize(level);
+      const [peakFt] = grid.reduce((best, p) => (p[1] > best[1] ? p : best));
+      expect(peakFt).toBeGreaterThanOrEqual(z.sweetLo);
+      expect(peakFt).toBeLessThanOrEqual(z.upperMax);
+      const at = (ft) => levelBaseSize(ft / 3.281, 10, level); // period 10 s -> face = swell height
+      expect(at(z.sweetHi)).toBeGreaterThanOrEqual(0.9 * peak);   // top of the sweet range is (nearly) the best size
+      expect(at(z.sweetLo)).toBeGreaterThanOrEqual(0.35 * peak);  // bottom of the sweet range is not a Skip
+      expect(at(z.upperMax)).toBeGreaterThanOrEqual(0.4 * peak);  // last GO size is still not a Skip
+    });
+    it(`${level}: same face = same baseSize, whatever the swell height / period mix`, () => {
+      // 1.4 m @ 10 s and 1.0 m @ 14 s are both 1.4 m of face at the break.
+      expect(levelBaseSize(1.4, 10, level)).toBeCloseTo(levelBaseSize(1.0, 14, level), 6);
+    });
+    it(`${level}: a clean sweet hour that is GO never scores below 35 with an ideal swell`, () => {
+      const z = USER_LEVEL_ZONES[level];
+      // Below this swell height the separate micro-swell cap (MICRO_CAP_NODES) is
+      // still ramping up; that is a different rule, not the size grid.
+      const microCapEnd = level === "beginner" ? 0.5 : 0.65;
+      let checked = 0;
+      for (let hs = microCapEnd; hs <= 2.2; hs += 0.02) {
+        for (const period of [10, 12, 14]) {
+          const h = mk({ swellHeight: hs, swellPeriod: period, swellDir: spot.idealSwellDir, windSpeedKn: 3, windDir: spot.offshoreWindDir, currentVel: 0 });
+          if (getPersonalVerdict(level, h, spot) !== "yes") continue;
+          expect(scoreForLevel(h, spot, level).score).toBeGreaterThanOrEqual(35);
+          checked++;
+        }
+      }
+      expect(checked).toBeGreaterThan(10);
+      expect(z.sweetHi).toBeGreaterThan(0);
+    });
+  }
 });
