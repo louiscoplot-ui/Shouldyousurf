@@ -21,6 +21,9 @@ import {
   USER_LEVELS,
   mToFt,
   LEARNER_WIND_CAP,
+  CURRENT_STRONG_LEARNER,
+  CURRENT_STRONG_EARLY_INT,
+  CURRENT_DANGEROUS,
   usableGustKmh,
   getPersonalAdviceKey,
 } from "../app/v2/lib/prodScoring.js";
@@ -294,6 +297,45 @@ describe("safety holes closed (audit bloc 4)", () => {
   });
   it("currents remain invisible for advanced+ (their call)", () => {
     expect(classifyConditions("advanced", mk({ currentVel: 0.7 }), spot).currentHazard).toBe("none");
+  });
+  it("current thresholds: 0.28 for learners, 0.40 for early_int, 0.56 dangerous for all three", () => {
+    expect(CURRENT_STRONG_LEARNER).toBe(0.28);
+    expect(CURRENT_STRONG_EARLY_INT).toBe(0.40);
+    expect(CURRENT_DANGEROUS).toBe(0.56);
+  });
+  it("early_int: 0.30 and 0.39 m/s are no longer capped — a clean sweet hour can be GO", () => {
+    const clean = { swellHeight: 0.9, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null };
+    expect(getPersonalVerdict("early_int", { ...clean, currentVel: 0 }, spot)).toBe("yes");
+    for (const currentVel of [0.30, 0.39]) {
+      const h = { ...clean, currentVel };
+      expect(classifyConditions("early_int", h, spot).currentHazard).toBe("none");
+      expect(getPersonalVerdict("early_int", h, spot)).toBe("yes");
+    }
+  });
+  it("early_int: 0.40 (boundary) and 0.41 m/s are still 'strong' — capped to WORTH IT, never GO", () => {
+    const clean = { swellHeight: 0.9, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null };
+    for (const currentVel of [0.40, 0.41]) {
+      const h = { ...clean, currentVel };
+      expect(classifyConditions("early_int", h, spot).currentHazard).toBe("strong");
+      expect(getPersonalVerdict("early_int", h, spot)).toBe("ok");
+    }
+  });
+  it("early_int: 0.56 m/s is 'dangerous' → SKIP, unchanged", () => {
+    const clean = { swellHeight: 0.9, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null };
+    const h = { ...clean, currentVel: 0.56 };
+    expect(classifyConditions("early_int", h, spot).currentHazard).toBe("dangerous");
+    expect(getPersonalVerdict("early_int", h, spot)).toBe("no");
+  });
+  it("first_timer and beginner keep the 0.28 m/s hard SKIP on inside-reform beaches", () => {
+    const clean = { swellHeight: 0.5, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null };
+    for (const level of ["first_timer", "beginner"]) {
+      expect(getPersonalVerdict(level, { ...clean, currentVel: 0.27 }, spot)).not.toBe("no");
+      for (const currentVel of [0.28, 0.30, 0.39]) {
+        const h = { ...clean, currentVel };
+        expect(classifyConditions(level, h, spot).currentHazard).toBe("strong");
+        expect(getPersonalVerdict(level, h, spot)).toBe("no");
+      }
+    }
   });
   it("skill case D: 2.0m/14s clean ≈9.2ft face → hard no for early_int & intermediate", () => {
     const h = mk({ swellHeight: 2.0, swellPeriod: 14, windSpeedKn: 5 });
