@@ -260,7 +260,22 @@ const BASE_SIZE_GRID = {
 // le multiplicateur combiné sature à 1.35) :
 //   advanced : 3-4 ft ≈ 55-65 (Good), Unreal (≥ 75) seulement vers 6-7 ft
 //   expert   : décalé vers le haut, Good vers 4-5 ft, Unreal vers 8-10 ft
-// Les 4 niveaux inférieurs gardent leur grille métrique, inchangée.
+// (10/10) beginner / early_int rejoignent les trois autres :
+// leur grille métrique (BASE_SIZE_GRID, en mètres de houle SANS période)
+// décrochait avant la fin de la zone où le verdict dit GO. Cas terrain
+// Crescent Head 08/10 13-14h, early_int : 1.7 m @ 7.7 s = 4.2-4.4 ft de face,
+// "sweet" (2-4.5 ft) donc GO, mais 12-14/100 côté score parce que 1.7 m est
+// déjà au pied de la grille métrique (5/100 à 1.85 m). 37 heures GO d'early_int
+// sous 30 sur 11 jours de prévisions sauvegardées. Ces grilles lisent la
+// face, comme USER_LEVEL_ZONES, et culminent DANS la zone sweet du niveau
+// (pics inchangés : beginner 65, early_int 78), avec ≥ 38-42 jusqu'à upperMax
+// (limite haute du GO propre).
+//   beginner     sweet 1-2 ft, upperMax 3   : pic 2 ft
+//   early_int    sweet 2-4.5 ft, upperMax 6 : plateau 3.5-4 ft
+// intermediate RESTE sur la grille métrique : la passer sur la face le faisait
+// perdre 6 points en moyenne et faisait passer ses GO < 30 de 5 à 43 heures
+// (houles courtes de Hs moyen surnotées jusque-là), cf. PR #66.
+// BASE_SIZE_GRID reste en place (lookupBaseSize, intermediate, repli inconnu).
 export const FACE_BASE_GRID = {
   // first_timer (29/09) : la grille métrique culminait à 0.3 m de houle PILE
   // (50) et retombait à 12 dès 0.6 m, période ignorée. 1.4 % des heures
@@ -270,12 +285,15 @@ export const FACE_BASE_GRID = {
   // verdict : pic 1-2 ft (session idéale), encore bon à 2.5 ft (mousse),
   // retombe vers 3.5-4 ft où le verdict coupe de toute façon.
   first_timer: [[0, 5], [0.4, 10], [0.7, 35], [1, 50], [1.5, 58], [2, 56], [2.5, 42], [3, 26], [3.5, 15], [4.5, 7], [6, 5]],
+  beginner:     [[0, 5], [0.3, 12], [0.6, 28], [1, 48], [1.5, 60], [2, 65], [2.5, 55], [3, 42], [3.5, 25], [4, 12], [5, 6], [6, 5]],
+  early_int:    [[0, 5], [1, 10], [1.5, 22], [2, 40], [2.5, 54], [3, 66], [3.5, 76], [4, 78], [4.5, 76], [5, 62], [6, 44], [7, 20], [8, 8], [10, 5]],
   advanced: [[0, 6], [1.5, 10], [2, 18], [3, 41], [4, 46], [5, 52], [6, 58], [7, 66], [8.5, 62], [10, 52], [13, 42], [20, 36]],
   expert:   [[0, 8], [2, 12], [2.5, 18], [4, 40], [5, 46], [6.5, 52], [8, 58], [9, 64], [10, 70], [12, 66], [16, 55], [25, 50]],
 };
 
-// baseSize d'une partition pour un niveau : face (ft) pour advanced/expert,
-// grille métrique historique pour les autres. Source UNIQUE (score, chips,
+// baseSize d'une partition pour un niveau : face (ft) pour first_timer,
+// beginner, early_int, advanced et expert ; grille métrique historique
+// (BASE_SIZE_GRID) pour intermediate et en repli pour un niveau inconnu. Source UNIQUE (score, chips,
 // pic affiché) — sinon la fiche "How this score is built" contredirait le score.
 export function levelBaseSize(swellH, swellPeriod, userLevel, attenuation = 1) {
   const face = FACE_BASE_GRID[userLevel];
