@@ -492,9 +492,20 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
       const pGate = 1 - Math.max(0, Math.min(1, (part.swellPeriod - 9.5) / 1.5));
       chopMult = 1 - (1 - ratioPenalty) * pGate;
     }
+    // Plafond de confort (FACE_COMFORT) : au-delà du GO max le score s'effondre
+    // en rampe continue (1 -> 0.55 jusqu'au SKIP max, puis 0.3 deux pieds plus
+    // loin). Aucun palier : le verdict qui bascule est lissé par flipProximity.
+    let comfortMult = 1.0;
+    const cmf = faceComfort(level, spot);
+    if (cmf) {
+      const pf = mToFt(estimateFaceHeight(part.swellHeight, Number.isFinite(part.swellPeriod) ? part.swellPeriod : 10, att));
+      const t0 = cmf.taperFrom ?? cmf.goMax;
+      const t1 = Math.max(cmf.okMax, t0 + 0.01); // okMax <= goMax : rampe quasi verticale
+      comfortMult = lerpTable(pf, [[t0, 1], [t1, cmf.taperMin ?? 0.55], [t1 + 2, 0.3]]);
+    }
     const rawCombined = periodMult * windMult * dirMult * tideMult;
     const finalMult = Math.max(FINAL_MULT_MIN, Math.min(FINAL_MULT_MAX, rawCombined));
-    let s = baseSize * finalMult * gustMult * chopMult;
+    let s = baseSize * finalMult * gustMult * chopMult * comfortMult;
     // Micro-swell : plafond en RAMPE, domaine par niveau (cf. MICRO_CAP_NODES).
     const capNodes = MICRO_CAP_NODES[level] || MICRO_CAP_DEFAULT;
     const capEnd = capNodes[capNodes.length - 1][0];
@@ -643,8 +654,13 @@ export const USER_LEVEL_ZONES = {
   // plus petites) + l'accès inside-reform que intermediate n'a pas.
   early_int:    { min: 1.5, sweetLo: 2,   sweetHi: 4.5, upperMax: 6 },
   intermediate: { min: 1.5, sweetLo: 2.5, sweetHi: 4.5, upperMax: 6 },
-  advanced:     { min: 2,   sweetLo: 3,   sweetHi: 7,   upperMax: 10 },
-  expert:       { min: 2.5, sweetLo: 4,   sweetHi: 10,  upperMax: 16 },
+  // advanced / expert : le bas de la zone est relevé (PR face-comfort). Avant,
+  // un Advanced avait GO dès 3 ft (2-4 ft affiché) et un Expert WORTH IT dès
+  // 2.5 ft : trop petit pour le trajet. Maintenant SKIP sous 2.5 / 3.5 ft,
+  // WORTH IT jusqu'à 3.5 / 4.5 ft, GO au-dessus. Demi-pieds : jamais pile sur
+  // un bord de fourchette affichée. NON SOURCÉ (jugement terrain), cf. CLAUDE.md.
+  advanced:     { min: 2.5, sweetLo: 3.5, sweetHi: 7,   upperMax: 10 },
+  expert:       { min: 3.5, sweetLo: 4.5, sweetHi: 10,  upperMax: 16 },
 };
 
 // ── Rafale : utilisable seulement si elle est PLAUSIBLE ──────────────
@@ -808,6 +824,33 @@ export const CURRENT_DANGEROUS = 0.56;
 // NI advanced / expert. Période inconnue = pas de plafond (neutre).
 export const SHORT_PERIOD_GO_FLOOR_S = 7;
 
+// ── Face maximale CONFORTABLE par niveau et par type de break ──────────
+// goMax : au-delà, le GO est plafonné à WORTH IT. okMax : au-delà, SKIP (si
+// okMax <= goMax il n'y a pas de bande WORTH IT : GO puis SKIP). Même échelle
+// que USER_LEVEL_ZONES (ft de face). Source UNIQUE du plafond de taille par
+// type de break, comme LEARNER_WIND_CAP pour le vent. Un reef ne pardonne pas
+// (fond dur) : seule règle SOURCÉE = « reef breaks : Advanced » (Dept of
+// Education WA, Appendix R Surf Riding v3.1, 21/07/2025). TOUS les chiffres
+// ci-dessous sont NON SOURCÉS (jugement, validé par Louis le 12/10/2026).
+// Demi-pieds exprès : "3-5 ft" affiché = face 3.5-4.5, "4-6" = 4.5-5.5,
+// "5-7" = 5.5-6.5. Absent = pas de plafond propre : first_timer / beginner ont
+// reefTooMuch et upperMax x 1.3, early_int / intermediate heavy ont
+// heavyTooMuch, advanced / expert gardent leur jugement (décision Louis).
+//   early_int    plage : GO <= 4.5 ("3-5"), WORTH IT <= 5.5 ("4-6"), SKIP "5-7"+
+//   early_int    reef  : jamais GO, WORTH IT <= 3.5 ("2-4"), SKIP "3-5"+
+//   intermediate plage : GO <= 5.5 ("4-6"), SKIP "5-7"+ (pas de bande WORTH IT)
+//   intermediate reef  : GO <= 4.5 ("3-5"), WORTH IT <= 5.5 ("4-6"), SKIP "5-7"+
+export const FACE_COMFORT = {
+  early_int:    { beach: { goMax: 4.5, okMax: 5.5 }, reef: { goMax: 0, taperFrom: 2.5, okMax: 3.5 } },
+  intermediate: { beach: { goMax: 5.5, taperFrom: 4.5, taperMin: 0.9, okMax: 5.5 }, reef: { goMax: 4.5, okMax: 5.5 } },
+};
+export function faceComfort(userLevel, spot) {
+  const t = FACE_COMFORT[userLevel];
+  if (!t || !spot) return null;
+  const key = spot.heavy ? "heavy" : spot.type === "reef" ? "reef" : "beach";
+  return t[key] || null; // heavy early_int / intermediate : déjà heavyTooMuch
+}
+
 export function classifyConditions(userLevel, h, spot) {
   // Même partition dominante que scoreV2 — sinon le verdict jugerait la
   // primaire (chop 0.4m) pendant que le score note la secondaire (1.5m
@@ -836,6 +879,16 @@ export function classifyConditions(userLevel, h, spot) {
   else if (faceFt <= z.sweetHi) size = "sweet";
   else if (faceFt <= z.upperMax) size = "upper";
   else size = "too_big";
+
+  // Plafond de confort par niveau et type de break (FACE_COMFORT).
+  // comfortSkipOnly : SKIP dû à ce plafond SEUL (en dessous de l'ancien
+  // plafond dur upperMax x 1.3) : pas de bandeau rouge "Dangerous" (décision
+  // Louis 12/10) — un SKIP simple avec le conseil "too big" existant.
+  const comfort = faceComfort(userLevel, spot);
+  const comfortSkip = !!comfort && faceFt > comfort.okMax;
+  const comfortGoCap = !!comfort && faceFt > comfort.goMax;
+  const comfortSkipOnly = comfortSkip && faceFt <= z.upperMax * 1.3;
+  if (!comfortSkip && comfortGoCap && comfort.goMax > 0 && size === "sweet") size = "upper";
 
   const isEarlyLearner = userLevel === "first_timer" || userLevel === "beginner";
 
@@ -924,7 +977,7 @@ export function classifyConditions(userLevel, h, spot) {
   const domForPeriod = getDominant(h, spot);
   const periodGoCap = (userLevel === "early_int" || userLevel === "intermediate")
     && !!domForPeriod.periodKnown && domForPeriod.swellPeriod < SHORT_PERIOD_GO_FLOOR_S;
-  return { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, faceFt, currentHazard };
+  return { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, comfortSkip, comfortGoCap, comfortSkipOnly, faceFt, currentHazard };
 }
 
 // isFoamieFriendly — the subset of users who should literally be riding a
@@ -964,7 +1017,7 @@ export function hasInsideReform(userLevel, faceFt, spot) {
 // of drift between this function and scoreForLevel's bounds. Falls back to
 // recomputing via getPersonalVerdict when the caller doesn't have the score.
 export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
-  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, comfortSkip, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   const verdict = displayedVerdict || getPersonalVerdict(userLevel, h, spot);
   const foamie = hasInsideReform(userLevel, faceFt, spot);
   const { kmh, dir } = windContext(h, spot);
@@ -987,6 +1040,8 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // OR a true offshore-gale floor (≥50 km/h cross/offshore).
     if ((dir !== "offshore" && kmh >= 35) || kmh >= 50) return "tip_" + userLevel + "_gale";
     if (faceFt < 0.3) return "tip_" + userLevel + "_too_small";
+    // Plafond de confort (FACE_COMFORT) : le conseil existant « trop gros pour ce niveau ».
+    if (comfortSkip) return "tip_" + userLevel + "_too_big";
     if (size === "too_big") return "tip_" + userLevel + "_too_big";
     if (size === "too_small") return "tip_" + userLevel + "_too_small";
     if (wind === "blown") return "tip_" + userLevel + "_blown_" + (size === "too_small" ? "small" : size === "too_big" ? "upper" : size);
@@ -1210,13 +1265,15 @@ function galeKills(userLevel, kmh, dir) {
 }
 
 export function getPersonalVerdict(userLevel, h, spot) {
-  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
+  const { size, wind, reefTooMuch, heavyTooMuch, reefGoCap, periodGoCap, comfortSkip, comfortGoCap, faceFt, currentHazard } = classifyConditions(userLevel, h, spot);
   // Current safety — overrides everything for learners who can't paddle
   // against a rip. "dangerous" = hard no; "strong" caps the verdict to
   // MAYBE below (never lets a learner see GO on a rippy day).
   if (currentHazard === "dangerous") return "no";
   if (reefTooMuch) return "no";
   if (heavyTooMuch) return "no";
+  // Trop gros pour CE niveau sur CE type de break (FACE_COMFORT).
+  if (comfortSkip) return "no";
 
   const { kmh, dir } = windContext(h, spot);
   // Universal gale cap — applies to all levels. Even advanced/expert
@@ -1273,7 +1330,7 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // "strong" current (early_int only past the hard-no above) never lets a
     // GO through — same downgrade the non-reform path applies below, kept
     // consistent so the two chemins can't diverge on a rippy sweet day.
-    const cap = (currentHazard === "strong" || periodGoCap) ? "ok" : null;
+    const cap = (currentHazard === "strong" || periodGoCap || comfortGoCap) ? "ok" : null;
     const downgrade = (v) => (cap && v === "yes" ? cap : v);
     if (size === "sweet" && wind === "clean") return downgrade("yes");
     return "ok";
@@ -1335,7 +1392,7 @@ export function getPersonalVerdict(userLevel, h, spot) {
   }
   // Plafond MAYBE : courant "strong" (early_int ici), reef pour early_int, ou
   // houle courte (< SHORT_PERIOD_GO_FLOOR_S) pour early_int / intermediate.
-  const cap = (currentHazard === "strong" || reefGoCap || periodGoCap) ? "ok" : null;
+  const cap = (currentHazard === "strong" || reefGoCap || periodGoCap || comfortGoCap) ? "ok" : null;
   const downgrade = (v) => (cap && v === "yes" ? cap : v);
   if (size === "sweet") return downgrade(wind === "clean" ? "yes" : "ok");
   if (size === "upper") return downgrade(wind === "clean" ? "yes" : "ok");
