@@ -622,7 +622,7 @@ function Loaded({
     // sort sur un vrai rip, elle ne sera plus lue.
     const bigEnoughToHurt = cls.size !== "too_small" && cls.size !== "small";
     return cls.currentHazard !== "none"
-        || cls.size === "too_big"
+        || (cls.size === "too_big" && !cls.comfortSkipOnly)
         || cls.reefTooMuch
         || cls.heavyTooMuch
         || (cls.wind === "blown" && bigEnoughToHurt);

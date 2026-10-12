@@ -31,6 +31,8 @@ import {
   levelPeakBaseSize,
   usableGustKmh,
   getPersonalAdviceKey,
+  FACE_COMFORT,
+  faceComfort,
 } from "../app/v2/lib/prodScoring.js";
 import { getT } from "../app/i18n.js";
 import { BREAKS } from "../app/breaks.js";
@@ -202,6 +204,8 @@ describe("secondary swell as dominant partition", () => {
     expect(dom.swellHeight).toBe(1.5);
   });
   it("scores the day as surfable instead of flat", () => {
+    // 1.0 m / 15 s ≈ 4.9 ft : dans le confort intermediate (le 1.5 m = 7.4 ft est SKIP depuis FACE_COMFORT)
+    const h = mk({ swellHeight: 0.4, swellDir: 100, secSwellH: 1.0, secSwellP: 15, secSwellDir: 240 });
     const withSec = scoreV2(h, spot, "intermediate").score;
     const without = scoreV2(mk({ swellHeight: 0.4, swellDir: 100 }), spot, "intermediate").score;
     expect(withSec).toBeGreaterThan(40);
@@ -272,10 +276,12 @@ describe("safety holes closed (audit bloc 4)", () => {
     // advanced garde son jugement (MAYBE, pas d'interdiction)
     expect(getPersonalVerdict("advanced", big, spot)).toBe("ok");
   });
-  it("upperMax +25% (≈7.5 ft) clean stays MAYBE for intermediate", () => {
+  it("upperMax +25% (≈7.5 ft) clean is SKIP for intermediate (FACE_COMFORT : SKIP au-dessus de 5.5 ft)", () => {
     const edge = mk({ swellHeight: 1.6, swellPeriod: 14 }); // face ~7.4 ft
     expect(classifyConditions("intermediate", edge, spot).size).toBe("too_big");
-    expect(getPersonalVerdict("intermediate", edge, spot)).toBe("ok");
+    expect(getPersonalVerdict("intermediate", edge, spot)).toBe("no");
+    // advanced garde son jugement : même heure, toujours jouable
+    expect(getPersonalVerdict("advanced", edge, spot)).not.toBe("no");
   });
   it("dangerous rip → hard no for early_int; strong rip → never GO", () => {
     const ripDanger = mk({ swellHeight: 0.9, currentVel: 0.6 });
@@ -469,10 +475,22 @@ describe("frontières de bande continues (plafond verdict sans falaise)", () => 
     }
   });
   it("houle qui monte à travers upperMax : plus de 100→70 sec (intermediate)", () => {
+    // Départ à 1.7 m (≈5.6 ft) : en dessous, la bascule GO→SKIP de FACE_COMFORT
+    // à 5.5 ft a son propre test de pente, juste après.
     let prev = null;
-    for (let sw = 1.5; sw <= 2.1001; sw += 0.01) {
+    for (let sw = 1.7; sw <= 2.1001; sw += 0.01) {
       const s = scoreForLevel(mk({ swellHeight: sw, swellPeriod: 10 }), spot, "intermediate").score;
       if (prev != null) expect(Math.abs(s - prev)).toBeLessThanOrEqual(4);
+      prev = s;
+    }
+  });
+  it("houle qui monte à travers le plafond de confort 5.5 ft (intermediate plage) : glisse, ≤ 8 pts par cm", () => {
+    // GO direct vers SKIP, sans palier WORTH IT : la pente est forte (flipProximity
+    // glisse ~0.6 ft avant la bascule) mais jamais une falaise.
+    let prev = null;
+    for (let sw = 1.3; sw <= 1.8001; sw += 0.01) {
+      const s = scoreForLevel(mk({ swellHeight: sw, swellPeriod: 10 }), spot, "intermediate").score;
+      if (prev != null) expect(Math.abs(s - prev)).toBeLessThanOrEqual(8);
       prev = s;
     }
   });
@@ -806,8 +824,10 @@ describe("windswell — une vague, pas seulement du bruit", () => {
   it("sa période courte le pénalise — il ne vaut jamais une houle longue à taille égale", () => {
     const houle = mk({ swellHeight: 1.2, swellPeriod: 15 });
     const windsea = mk({ swellHeight: 0.2, windWaveHeight: 1.2, windWavePeriod: 6, windWaveDir: 240 });
-    expect(scoreV2(windsea, spot, "intermediate").score)
-      .toBeLessThan(scoreV2(houle, spot, "intermediate").score);
+    // advanced : la houle de 5.9 ft dépasse le confort intermediate (FACE_COMFORT) et
+    // fausserait la comparaison. On teste ici la période, pas le plafond de taille.
+    expect(scoreV2(windsea, spot, "advanced").score)
+      .toBeLessThan(scoreV2(houle, spot, "advanced").score);
   });
 
   it("pas de double pénalité : le chop ne s'applique pas au windswell contre lui-même", () => {
@@ -1266,13 +1286,13 @@ describe("heavy / reef : plafonds de verdict par niveau", () => {
     for (const lvl of ["early_int", "intermediate"]) expect(scoreForLevel(perfect(heavy), heavy, lvl).score, lvl).toBeLessThanOrEqual(29);
   });
   it("reef non heavy : early_int jamais GO (MAYBE au mieux), intermediate peut être GO", () => {
-    const h = { ...perfect(reef), swellHeight: 0.9 };
+    const h = { ...perfect(reef), swellHeight: 0.8 }; // face ~3.1 ft
     expect(getPersonalVerdict("early_int", h, reef)).toBe("ok");
     expect(getPersonalVerdict("early_int", h, beach)).toBe("yes"); // même heure sur un beach break : GO
     expect(getPersonalVerdict("intermediate", h, reef)).toBe("yes");
   });
   it("reef non heavy : early_int en MAYBE reçoit un conseil reef, pas le conseil GO", () => {
-    const h = { ...perfect(reef), swellHeight: 0.9 };
+    const h = { ...perfect(reef), swellHeight: 0.8 };
     expect(getPersonalAdviceKey("early_int", h, reef, "ok")).toBe("tip_early_int_reef_pick");
   });
   it("heavy : conseil dédié pour early_int / intermediate, clé traduite en EN et FR", () => {
@@ -1495,3 +1515,77 @@ describe("short-period GO cap — early_int and intermediate only (10/10)", () =
   });
 });
 
+
+describe("FACE_COMFORT — taille maximale confortable par niveau et type de spot", () => {
+  const beachSp = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid", type: "beach" };
+  const reefSp = { ...beachSp, type: "reef" };
+  const heavySp = { ...beachSp, type: "reef", heavy: true };
+  // houle de période 10 s propre, vent offshore léger ; on règle la face par la hauteur de houle
+  const clean = (m) => ({ hour: 8, swellHeight: m, swellPeriod: 10, swellDir: 240, windSpeedKn: 4, windDir: 90, currentVel: 0, tideM: null });
+  const atFace = (ft, sp) => { // houle dont la face estimée vaut ~ft
+    let lo = 0.1, hi = 4;
+    for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; (faceFtOf(clean(mid), sp) < ft ? (lo = mid) : (hi = mid)); }
+    return clean((lo + hi) / 2);
+  };
+  const v = (lvl, ft, sp) => getPersonalVerdict(lvl, atFace(ft, sp), sp);
+
+  it("la table ne couvre que early_int et intermediate (advanced/expert : aucun plafond haut)", () => {
+    expect(Object.keys(FACE_COMFORT).sort()).toEqual(["early_int", "intermediate"]);
+    expect(faceComfort("advanced", reefSp)).toBeNull();
+    expect(faceComfort("expert", heavySp)).toBeNull();
+    expect(faceComfort("beginner", beachSp)).toBeNull();
+  });
+  it("intermediate plage : GO jusqu'à 5.4 ft, SKIP dès 5.6 ft (\"5-7 ft\" = SKIP)", () => {
+    expect(v("intermediate", 4.0, beachSp)).toBe("yes");
+    expect(v("intermediate", 5.4, beachSp)).toBe("yes");
+    expect(v("intermediate", 5.6, beachSp)).toBe("no");
+    expect(v("intermediate", 7.0, beachSp)).toBe("no");
+  });
+  it("intermediate reef : GO ≤ 4.5, WORTH IT ≤ 5.5, SKIP au-dessus", () => {
+    expect(v("intermediate", 4.4, reefSp)).toBe("yes");
+    expect(v("intermediate", 5.0, reefSp)).toBe("ok");
+    expect(v("intermediate", 5.6, reefSp)).toBe("no");
+  });
+  it("early_int plage : GO ≤ 4.5, WORTH IT ≤ 5.5, SKIP au-dessus", () => {
+    expect(v("early_int", 4.4, beachSp)).toBe("yes");
+    expect(v("early_int", 5.0, beachSp)).toBe("ok");
+    expect(v("early_int", 5.6, beachSp)).toBe("no");
+  });
+  it("early_int reef : jamais GO, SKIP au-dessus de 3.5 ft", () => {
+    expect(v("early_int", 3.0, reefSp)).toBe("ok");
+    expect(v("early_int", 3.7, reefSp)).toBe("no");
+  });
+  it("échelle monotone : à taille et type égaux, un niveau supérieur n'est jamais plus prudent", () => {
+    const rank = { no: 0, ok: 1, yes: 2 };
+    for (const sp of [beachSp, reefSp]) for (const ft of [3, 4, 5, 6, 7]) {
+      expect(rank[v("intermediate", ft, sp)], `${sp.type} ${ft}`).toBeGreaterThanOrEqual(rank[v("early_int", ft, sp)]);
+    }
+  });
+  it("advanced / expert : aucun plafond haut ajouté (7 ft reef reste jouable pour advanced)", () => {
+    expect(v("advanced", 7, reefSp)).not.toBe("no");
+    expect(v("expert", 9, reefSp)).not.toBe("no");
+  });
+  it("le SKIP de confort reçoit le conseil 'too big' et la raison courte", () => {
+    const h = atFace(6.5, beachSp);
+    expect(getPersonalAdviceKey("intermediate", h, beachSp, "no")).toBe("tip_intermediate_too_big");
+    expect(getPersonalAdviceKey("early_int", h, beachSp, "no")).toBe("tip_early_int_too_big");
+  });
+  it("pas de bandeau rouge 'Dangerous conditions' pour un simple SKIP de confort early_int (5.6-7.8 ft)", () => {
+    const c = classifyConditions("early_int", atFace(6.5, beachSp), beachSp);
+    expect(c.comfortSkip).toBe(true);
+    expect(c.comfortSkipOnly).toBe(true);
+    // au-delà de upperMax × 1.3 le bandeau garde son rôle
+    const huge = classifyConditions("early_int", atFace(11, beachSp), beachSp);
+    expect(huge.comfortSkipOnly).toBe(false);
+  });
+  it("jamais de saut > 12 pts par pas de 0.05 ft sur 2→9 ft (tous niveaux, plage et reef)", () => {
+    for (const lvl of USER_LEVELS) for (const sp of [beachSp, reefSp]) {
+      let prev = null;
+      for (let ft = 2; ft <= 9.001; ft += 0.05) {
+        const s = scoreForLevel(atFace(ft, sp), sp, lvl).score;
+        if (prev != null) expect(Math.abs(s - prev), `${lvl} ${sp.type} ${ft.toFixed(2)}`).toBeLessThanOrEqual(12);
+        prev = s;
+      }
+    }
+  });
+});
