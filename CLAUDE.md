@@ -281,7 +281,7 @@ Body explique le POURQUOI, pas le quoi.
 
 ---
 
-## ÉTAT ACTUEL (mis à jour au sprint réparation 2026-07, cf. AUDIT-PLATFORM-2026-07.md)
+## ÉTAT ACTUEL (mis à jour au sprint réparation 2026-07, cf. docs/AUDIT-PLATFORM-2026-07.md)
 
 - Tracking PostHog complet + Session Replay actif (events spot/custom gardés contre l'inflation au mount)
 - Auto-update 20s + visibilitychange ; kill-switch layout.js à 20s, `__appReady` posé dès le seed mock
