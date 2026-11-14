@@ -37,8 +37,8 @@ import { BREAKS } from "../app/breaks.js";
 import { marineSamplePoint, offsetPoint, probeOffshoreBearing } from "../app/v2/lib/realFetch.js";
 import { levelMatrixFor, LEVEL_TO_MATRIX_IDX, getLevel, SCORE_SCALE, scoreBreakdown, drivingChipsFor } from "../app/v2/lib/verdict.js";
 
-const spot = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
-const reef = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid", type: "reef", heavy: true };
+const spot = { swellAttenuation: 1, idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
+const reef = { swellAttenuation: 1, idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid", type: "reef", heavy: true };
 const mk = (o) => ({ swellHeight: 1.2, swellPeriod: 12, swellDir: 240, windSpeedKn: 5, windDir: 90, tideM: null, ...o });
 
 describe("estimateFaceHeight", () => {
@@ -59,15 +59,15 @@ describe("estimateFaceHeight", () => {
 });
 
 describe("swellAttenuation", () => {
-  it("default (absent or 1.0) is a bit-for-bit non-regression", () => {
+  it("absent field = DEFAULT_SWELL_ATTENUATION (0.6 since 14/11), bit for bit", () => {
     const spotNoField = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "mid-high", type: "beach" };
-    const spotOne = { ...spotNoField, swellAttenuation: 1.0 };
+    const spotOne = { ...spotNoField, swellAttenuation: 0.6 };
     for (const h of [0, 0.4, 1, 3, 8]) {
       for (const p of [4, 8, 12, 18]) {
         for (const w of [0, 15, 40]) {
           const hr = mk({ swellHeight: h, swellPeriod: p, windSpeedKn: w });
           expect(scoreV2(hr, spotOne, "advanced").score).toBe(scoreV2(hr, spotNoField, "advanced").score);
-          expect(estimateFaceHeight(h, p, 1)).toBe(estimateFaceHeight(h, p));
+          expect(estimateFaceHeight(h, p, 1)).toBe(estimateFaceHeight(h, p)); // the function's own default stays 1
         }
       }
     }
@@ -85,7 +85,7 @@ describe("swellAttenuation", () => {
       prev = f;
     }
   });
-  it("Trigg 2.5m @ 16s reads 6-9 ft face (sheltered corridor), exposed spot unchanged", () => {
+  it("Trigg 2.5m @ 16s reads 6-9 ft face; a spot without the field uses the 0.6 default", () => {
     const trigg = BREAKS.find((b) => b.id === "trigg");
     const margs = BREAKS.find((b) => b.id === "margaret");
     const h = mk({ swellHeight: 2.5, swellPeriod: 16 });
@@ -93,11 +93,12 @@ describe("swellAttenuation", () => {
     const faceMargs = classifyConditions("advanced", h, margs).faceFt;
     expect(faceTrigg).toBeGreaterThanOrEqual(6);
     expect(faceTrigg).toBeLessThanOrEqual(9);
-    expect(faceMargs).toBeCloseTo(mToFt(estimateFaceHeight(2.5, 16)), 5);
+    expect(faceMargs).toBeCloseTo(mToFt(estimateFaceHeight(2.5, 16, 0.6)), 5);
   });
   it("spotAttenuation clamps and defaults", () => {
-    expect(spotAttenuation(null)).toBe(1);
-    expect(spotAttenuation({})).toBe(1);
+    expect(spotAttenuation(null)).toBe(0.6);
+    expect(spotAttenuation({})).toBe(0.6);
+    expect(spotAttenuation({ swellAttenuation: 1 })).toBe(1);
     expect(spotAttenuation({ swellAttenuation: 1.4 })).toBe(1);
     expect(spotAttenuation({ swellAttenuation: -0.2 })).toBe(0);
     expect(spotAttenuation({ swellAttenuation: 0.6 })).toBe(0.6);
@@ -287,15 +288,16 @@ describe("safety holes closed (audit bloc 4)", () => {
   it("strong (not dangerous) current → early_int MAYBE, not SKIP cliff", () => {
     // Repro du bug terrain : clean sweet-size day, le courant passe juste le
     // palier bas "strong". early_int doit rester MAYBE (pas de SKIP rouge
-    // 100→38). first_timer/beginner gardent leur SKIP dur (foamie).
+    // 100→38). Depuis le 14/11, même règle pour first_timer/beginner.
     const clean = { swellHeight: 0.9, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null, currentVel: 0.4 };
     expect(classifyConditions("early_int", clean, spot).currentHazard).toBe("strong");
     expect(getPersonalVerdict("early_int", clean, spot)).toBe("ok");
     // le score ne s'effondre plus dans la bande SKIP (≤38) — reste MAYBE (≥45)
     expect(scoreForLevel(clean, spot, "early_int").score).toBeGreaterThan(45);
-    // vrais foamie : SKIP dur préservé
-    expect(getPersonalVerdict("first_timer", clean, spot)).toBe("no");
-    expect(getPersonalVerdict("beginner", clean, spot)).toBe("no");
+    // first_timer / beginner : plafond MAYBE aussi (le courant modélisé ne
+    // voit pas une baïne, cf. getPersonalVerdict 14/11) — jamais GO
+    expect(getPersonalVerdict("first_timer", clean, spot)).not.toBe("yes");
+    expect(getPersonalVerdict("beginner", clean, spot)).not.toBe("yes");
     // le palier haut "dangerous" reste un SKIP dur pour early_int
     const danger = { ...clean, currentVel: 0.6 };
     expect(getPersonalVerdict("early_int", danger, spot)).toBe("no");
@@ -331,15 +333,16 @@ describe("safety holes closed (audit bloc 4)", () => {
     expect(classifyConditions("early_int", h, spot).currentHazard).toBe("dangerous");
     expect(getPersonalVerdict("early_int", h, spot)).toBe("no");
   });
-  it("first_timer and beginner keep the 0.28 m/s hard SKIP on inside-reform beaches", () => {
+  it("first_timer and beginner: 0.28 m/s caps the verdict at MAYBE, never GO, never a hard SKIP (14/11)", () => {
     const clean = { swellHeight: 0.5, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null };
     for (const level of ["first_timer", "beginner"]) {
       expect(getPersonalVerdict(level, { ...clean, currentVel: 0.27 }, spot)).not.toBe("no");
       for (const currentVel of [0.28, 0.30, 0.39]) {
         const h = { ...clean, currentVel };
         expect(classifyConditions(level, h, spot).currentHazard).toBe("strong");
-        expect(getPersonalVerdict(level, h, spot)).toBe("no");
+        expect(getPersonalVerdict(level, h, spot)).toBe("ok");
       }
+      expect(getPersonalVerdict(level, { ...clean, currentVel: 0.56 }, spot)).toBe("no"); // "dangerous" stays a hard SKIP
     }
   });
   it("skill case D: 2.0m/14s clean ≈9.2ft face → hard no for early_int & intermediate", () => {
@@ -1032,6 +1035,24 @@ describe("NaN guards", () => {
 // ajuster : c'est que le moteur s'est remis à mentir sur une journée dont
 // on connaît la réponse.
 // ─────────────────────────────────────────────────────────────────────
+// Cas terrain hors Perth. Ne contient QUE la mesure (houle Open-Meteo au point
+// marin du spot, récupérée après coup) et ce qui a été vu.
+describe("cas terrain Bali", () => {
+  // Uluwatu, vendredi 14/11/2026, 8h-14h heure de Bali. Open-Meteo au point
+  // marin (-8.875 / 115.042) : 1.30 m @ 9.35 s à 8h, 1.22 m @ 9.2 s à 14h,
+  // houle 203-204°. Vu par Louis sur la webcam : 1-3 ft (taille à épaule). Avant le défaut 0.6,
+  // l'app affichait 3-5 ft (environ 4 ft) : une taille de trop.
+  const ULU = BREAKS.find((b) => b.id === "uluwatu");
+  for (const [label, h, p] of [["8h", 1.3, 9.35], ["14h", 1.22, 9.2]]) {
+    it(`Uluwatu 14/11 ${label} : la face tombe dans les 1-3 ft vus`, () => {
+      const hr = mk({ swellHeight: h, swellPeriod: p, swellDir: 204 });
+      const ft = classifyConditions("intermediate", hr, ULU).faceFt;
+      expect(ft).toBeGreaterThanOrEqual(1);
+      expect(ft).toBeLessThanOrEqual(3);
+    });
+  }
+});
+
 describe("cas terrain Trigg", () => {
   const TRIGG_REEL = {
     id: "trigg", lat: -31.8826, lng: 115.7519, idealSwellDir: 240,
@@ -1251,9 +1272,9 @@ describe("heavy / reef : plafonds de verdict par niveau", () => {
   const LEARN_TO_INT = ["first_timer", "beginner", "early_int", "intermediate"];
   // Heure "parfaite" : 1.2 m @ 12 s, houle dans l'axe, 5 km/h offshore.
   const perfect = (s) => ({ hour: 8, swellHeight: 1.2, swellPeriod: 12, swellDir: s.idealSwellDir, windSpeedKn: 5 / 1.852, windDir: s.offshoreWindDir, currentVel: 0, tideM: 0 });
-  const heavy = { idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true };
-  const reef = { idealSwellDir: 225, offshoreWindDir: 45, type: "reef" };
-  const beach = { idealSwellDir: 225, offshoreWindDir: 45 };
+  const heavy = { swellAttenuation: 1, idealSwellDir: 225, offshoreWindDir: 45, type: "reef", heavy: true };
+  const reef = { swellAttenuation: 1, idealSwellDir: 225, offshoreWindDir: 45, type: "reef" };
+  const beach = { swellAttenuation: 1, idealSwellDir: 225, offshoreWindDir: 45 };
 
   it("heavy : SKIP de first_timer à intermediate, même par conditions parfaites", () => {
     for (const lvl of LEARN_TO_INT) expect(getPersonalVerdict(lvl, perfect(heavy), heavy), lvl).toBe("no");
@@ -1305,7 +1326,7 @@ describe("heavy / reef : plafonds de verdict par niveau", () => {
 // Ces deux tests verrouillent le cas qui mentait, sans comparer les niveaux
 // entre eux (les grilles des autres niveaux ne sont pas touchées).
 describe("advanced / expert : jour propre idéal au milieu de la zone sweet", () => {
-  const ideal = { idealSwellDir: 240, offshoreWindDir: 90, idealTide: "any" };
+  const ideal = { swellAttenuation: 1, idealSwellDir: 240, offshoreWindDir: 90, idealTide: "any" };
   const MID = { advanced: 5, expert: 7 }; // milieu de USER_LEVEL_ZONES.sweetLo..sweetHi (3-7 / 4-10)
   // Houle qui donne `ft` de face à cette période (estimateFaceHeight inversé).
   const swellFor = (ft, period) => {
@@ -1361,7 +1382,9 @@ describe("size grids read the FACE height — beginner, early_int (10/10)", () =
     }
   });
   it("Crescent Head hours: the verdict does not move (only the score does)", () => {
-    expect(getPersonalVerdict("beginner", h13, crescent)).toBe("no");       // 4.4 ft is too big for a beginner
+    // 14/11 : 1.74 m @ 7.7 s reads ~2.6 ft with the 0.6 default (was 4.4 ft,
+    // too big), and the 0.36 m/s modelled current now caps at MAYBE.
+    expect(getPersonalVerdict("beginner", h13, crescent)).toBe("ok");
   });
 
   for (const level of ["beginner", "early_int"]) {

@@ -34,6 +34,8 @@ import { startVersionCheck } from "../../lib/versionCheck";
 import { coherentVerdict } from "../lib/verdict";
 import { makeForecast } from "../lib/mock";
 import { fetchRealForecast, readCachedPayload, writeCachedPayload } from "../lib/realFetch";
+import { useSpotProfile } from "../lib/useSpotProfile";
+import { applyProfileToSpot } from "../../lib/spotProfile";
 import {
   classifyConditions,
   getPersonalAdviceKey,
@@ -63,6 +65,9 @@ async function showLocalNotification(title, opts) {
 
 export default function MainScreen({ theme, setTheme }) {
   const [spot, setSpot] = useState(DEFAULT_SPOT);
+  // AI profile of a SEARCHED spot (null for curated spots, or while it loads,
+  // or when the server feature is off). See app/v2/lib/useSpotProfile.js.
+  const agentProfile = useSpotProfile(spot);
   const [payload, setPayload] = useState(null); // { days, sunByDay, effectiveSpot }
   const [dataSource, setDataSource] = useState("loading");
   const [fetchError, setFetchError] = useState(null);
@@ -411,7 +416,7 @@ export default function MainScreen({ theme, setTheme }) {
     // pas les scores baseline intermediate du payload raw. Sinon un user
     // early_int est notifié pour une heure scorée 67 baseline mais 38
     // adapted (verdict no → cap) pour son niveau (audit CONTRADICTION #2).
-    const effectiveSpotForNotif = payload.effectiveSpot || spot;
+    const effectiveSpotForNotif = applyProfileToSpot(payload.effectiveSpot || spot, agentProfile);
     const effectiveLevel = userLevel || "intermediate";
     const adapted = adaptForecastToLevel(payload, effectiveLevel, effectiveSpotForNotif);
     const now = Date.now();
@@ -446,6 +451,7 @@ export default function MainScreen({ theme, setTheme }) {
     <>
       <Loaded
         spot={spot}
+        agentProfile={agentProfile}
         payload={payload}
         dataSource={dataSource}
         fetchError={fetchError}
@@ -501,14 +507,21 @@ export default function MainScreen({ theme, setTheme }) {
 }
 
 function Loaded({
-  spot, payload: rawPayload, dataSource, fetchError, lastFetchAt,
+  spot, agentProfile, payload: rawPayload, dataSource, fetchError, lastFetchAt,
   theme, setTheme, t, lang,
   userLevel, setUserLevel,
   favorites, toggleFav,
   notifOptIn, toggleNotifications,
   onOpenPicker, onOpenLevel, onOpenLang, onOpenFaq,
 }) {
-  const effectiveSpot = rawPayload.effectiveSpot || spot;
+  // Searched spots: the AI spot agent may correct the bottom (sand/reef) and
+  // `heavy` once its research passes the high-confidence gate
+  // (app/lib/spotProfile.js). Applied HERE, not on `spot`, so a profile
+  // arriving late re-scores the hours without refetching the forecast.
+  const effectiveSpot = useMemo(
+    () => applyProfileToSpot(rawPayload.effectiveSpot || spot, agentProfile),
+    [rawPayload.effectiveSpot, spot, agentProfile],
+  );
 
   // User level — comes from the sheet picker. Defaults to intermediate so the
   // per-level score adaptation always has a level to work with, even before
@@ -820,7 +833,7 @@ function Loaded({
             <span className="spot-chev">▾</span>
           </button>
           <div className="spot-region">
-            {spot.region} · {t(spot.type || "beach")}
+            {spot.region} · {t(effectiveSpot.type || "beach")}
           </div>
           {/* Bannière rouge UNIQUEMENT après un vrai échec sans cache. Pendant
               le chargement ("loading", visible seulement au changement de spot

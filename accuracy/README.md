@@ -22,6 +22,7 @@ Tools to measure how accurate the forecast is, break by break.
 | `scripts/break-audit.mjs` | Builds the audit: reads `app/breaks.js`, analyses the coastline around each break, writes `break-audit.md` + `data/break-audit.json`. |
 | `scripts/buoy-inventory.mjs` | Lists every AU buoy in the AODN real-time dataset (position, operator, WMO id, last report, fields) → `data/buoys-au.json`. |
 | `scripts/map-breaks.mjs` | Picks an offshore and a nearshore buoy for each break → `data/break-buoys.json` + `data/break-buoys.md`. |
+| `scripts/terrain-gap.mjs`, `lib/terrain-gap.mjs` | **Terrain gap.** Model vs buoy offshore (median ratio, bias, error per buoy) and app face range vs hand-written field reports (`data/field-reports.jsonl`, example in `data/field-reports.example.jsonl`). `npm run gap -- --log <accuracy-data>/log`. |
 | `lib/geo.mjs` | Coastline geometry: facing direction, swell window, fetch, point-on-land test. Rays over OpenStreetMap land polygons. |
 | `lib/aodn.mjs` | Read-only client for the AODN wave-buoy bucket on AWS (S3 listing + Parquet reading). |
 | `data/*.json`, `data/*.md` | Snapshots from 26/09/2026, committed so the reports can be read without re-running anything. |

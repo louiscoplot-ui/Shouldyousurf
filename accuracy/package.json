@@ -9,7 +9,8 @@
     "buoys": "node scripts/buoy-inventory.mjs",
     "map": "node scripts/map-breaks.mjs",
     "log": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./lib/register-esm.mjs scripts/daily-log.mjs",
-    "test": "node --test test/*.nodetest.mjs"
+    "test": "node --test test/*.nodetest.mjs",
+    "gap": "node scripts/terrain-gap.mjs"
   },
   "dependencies": {
     "hyparquet": "1.31.1"
