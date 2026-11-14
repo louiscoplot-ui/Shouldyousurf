@@ -1009,6 +1009,11 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // sont bons) — sans cette ligne le conseil "sweet_clean" disait "vas-y"
     // sous un label MAYBE.
     if (periodGoCap && wind === "clean" && (size === "sweet" || size === "upper")) return "tip_" + userLevel + "_short_period";
+    // Courant "strong" (early_int) : c'est le courant qui a retiré le GO.
+    // Sans cette ligne le conseil "sweet_clean" disait "go score some waves"
+    // sous un WORTH IT (Thomas Beach, Bali, 14/11). Attrapé par
+    // tests/coherence.test.mjs (règle tip_tone).
+    if (currentHazard === "strong" && userLevel === "early_int" && wind === "clean" && (size === "sweet" || size === "upper")) return "tip_early_int_current_caution";
     if (size === "too_big") return "tip_" + userLevel + "_too_big";
     if (size === "too_small") return "tip_" + userLevel + "_too_small";
     if (wind === "blown") return "tip_" + userLevel + "_blown_" + size;

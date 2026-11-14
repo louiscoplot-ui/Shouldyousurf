@@ -10,10 +10,12 @@
     "lint:undef": "eslint --config eslint.undef.config.mjs app/"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@vercel/analytics": "^2.0.1",
     "next": "14.2.35",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "playwright-core": "^1.61.1",

@@ -202,6 +202,17 @@ Tip selector : `currentHazard !== "none"` pour learner en SKIP → `tip_<level>_
 
 ---
 
+## AGENT IA + CONTRÔLES AUTOMATIQUES (branche feature/spot-profile-agent, 14/11)
+
+Déclencheur : Thomas Beach (spot cherché, Bali) affiché « 3-5 ft · Good 59 · WORTH IT » + conseil « go score some waves ». Trois rôles :
+
+- **Profil du spot = IA** (`app/lib/spotAgent.server.js`, route `POST /api/spot-profile`, hook `app/v2/lib/useSpotProfile.js`). Spots CHERCHÉS uniquement (id `custom-`). Claude + recherche web dit sable ou reef, heavy ou non, avec sources. Appliqué seulement si `isHighConfidence` (`app/lib/spotProfile.js`) : confiance "high" + 2 sites distincts en https **réellement renvoyés par la recherche** (un lien cité mais non cherché est jeté) + fond connu du moteur. Ne change QUE `type` et `heavy`, jamais `swellAttenuation` ni coordonnées (règles n°0/n°1 : un chiffre lu sur une page n'est pas une mesure). Appliqué sur `effectiveSpot` dans `Loaded`, pas sur `spot` → pas de refetch. Cache 30 j par appareil (`ssurf-spot-profile-v1:<id>`).
+  - ⚠️ **OFF par défaut.** S'allume avec deux variables Vercel : `ANTHROPIC_API_KEY` (secret) et `SPOT_AGENT_ENABLED=1`. Sinon 503 et l'app est identique à avant.
+  - Modèle `claude-opus-5-5`, repli serveur activé (`fallbacks: "default"`, le modèle qui a répondu est stocké dans `profile.model`). `maxDuration` 60 s non vérifié sur ce projet.
+  - Hors-ligne pour le catalogue : `node scripts/spot-agent.mjs --ids a,b | --country XX [--max N] [--apply] [--out f.md]`. `--apply` n'écrit que les désaccords haute confiance dans `breaks.js` ; relire le diff.
+- **Cohérence de l'affichage = règles fixes, PAS d'IA** (`app/v2/lib/coherence.js`, `tests/coherence.test.mjs`, tourne à chaque `npm test` donc en CI). Balaye 233 280 heures synthétiques (6 niveaux × sable/reef/heavy × taille × période × vent × direction × courant) : conseil « go » sous MAYBE/SKIP, libellé de score au-dessus de la bande du verdict. A trouvé exactement le cas Thomas Beach : early_int + courant "strong" → WORTH IT mais conseil `sweet_clean`. Corrigé par `tip_early_int_current_caution` (EN+FR). Si tu ajoutes un plafond de GO, ce test te dira s'il manque un conseil.
+- **Écart terrain = arithmétique** (`accuracy/lib/terrain-gap.mjs`, `npm run gap -- --log <accuracy-data>/log`). A : modèle vs bouée au large (ratio médian, biais). B : fourchette affichée vs rapport terrain (`accuracy/data/field-reports.jsonl`, écrit à la main, format dans `field-reports.example.jsonl`). Ne marche que pour les spots du catalogue (les spots cherchés ne sont pas loggés).
+
 ## RÈGLES DE TRAVAIL
 
 ### ⚠️ L'APP EST MONDIALE — règle n°0

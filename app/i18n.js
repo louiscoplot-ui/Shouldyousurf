@@ -136,6 +136,7 @@ const T = {
     tip_beginner_inside: "The main break further out isn't for you today — too big, windy or messy. But smaller waves keep re-forming closer to the beach — on a foamie you'll still get rides. Stay close to shore and pick the smaller ones.",
     tip_early_int_gale: "Gale-force wind — the whole ocean surface is shredded. Even the inside reform loses its shape. Save your energy for a calmer day.",
     tip_early_int_current: "Strong rip today — it will drain your arms fast if you fight it. Only paddle out if you know the spot's channels, otherwise skip.",
+    tip_early_int_current_caution: "Clean and the right size, but there's a real current today. Stay near the flags or the channel, check where you've drifted every few waves, and come in before your arms are done.",
     tip_early_int_inside: "The outside peak is a lot for your level right now — too big to sit comfortably out the back. But the inside reform keeps pushing smaller clean walls to the beach. Bail the peak, paddle inside, take the cleaner smaller sets. Still a real session, just safer and simpler.",
 
     tip_early_int_too_small: "Nothing much to ride — save your energy for a better day.",
@@ -480,6 +481,7 @@ const T = {
     tip_beginner_inside: "Les vagues principales sont trop pour toi aujourd'hui — trop grosses, venteuses ou désordonnées. Mais les plus petites, re-formées près du bord, continuent d'arriver. Sur une planche en mousse tu peux toujours en prendre plein — reste près de la plage et choisis les plus petites.",
     tip_early_int_gale: "Vent de tempête — toute la surface de l'océan est hachée. Même les plus petites vagues près de la plage perdent leur forme. Garde l'énergie pour un jour plus calme.",
     tip_early_int_current: "Courant fort aujourd'hui — ça va pomper tes bras si tu luttes contre. Vas-y seulement si tu connais bien les chenaux du spot, sinon passe.",
+    tip_early_int_current_caution: "Propre et à ta taille, mais il y a du courant aujourd'hui. Reste près des drapeaux ou du chenal, regarde où tu as dérivé toutes les quelques vagues, et sors avant d'avoir les bras cuits.",
     tip_early_int_inside: "Le pic principal est trop pour toi aujourd'hui, mais des petites vagues re-formées continuent d'arriver près de la plage. Rame à l'intérieur et prends les plus petites, plus propres — toujours une vraie session, juste plus safe et plus simple.",
 
     tip_early_int_too_small: "Rien à surfer — garde l'énergie pour un meilleur jour.",
