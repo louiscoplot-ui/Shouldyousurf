@@ -19,6 +19,7 @@ import {
   degToCompass,
   offsetDate,
   inferSpotProfile,
+  pickBestHour,
 } from "./prodScoring";
 import { getLevel as getV2Level } from "./verdict";
 
@@ -610,7 +611,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 14; // 14 : atténuation par défaut 1.0 -> 0.6 (14/11) ; 13 : early_int / intermediate, houle < 7 s = plafond WORTH IT (10/10) ; 12 : grilles beginner/early_int sur la face (10/10) ; 11 : early_int courant "strong" 0.28 -> 0.40 m/s (09/10) ; 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
+const CACHE_V = 15; // 15 : courant "strong" = MAYBE pour tous les learners, plus de SKIP (14/11) ; 14 : atténuation par défaut 1.0 -> 0.6 (14/11) ; 13 : early_int / intermediate, houle < 7 s = plafond WORTH IT (10/10) ; 12 : grilles beginner/early_int sur la face (10/10) ; 11 : early_int courant "strong" 0.28 -> 0.40 m/s (09/10) ; 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
@@ -976,7 +977,7 @@ export async function fetchRealForecast(spot, signal) {
     const shaped = rawSurf.map((r) => shapeHour(r, tideCtx));
     const meta = formatDayLabel(dateStr, spotTodayStr);
     const [y, mo, d] = dateStr.split("-").map(Number);
-    const bestHour = shaped.reduce((b, h) => (h.score > (b?.score ?? -1) ? h : b), null) || shaped[0];
+    const bestHour = pickBestHour(shaped, sunByDay[dateStr]) || shaped[0];
     days.push({
       dateStr,
       label: meta.label,

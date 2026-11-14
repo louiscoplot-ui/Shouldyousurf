@@ -288,15 +288,16 @@ describe("safety holes closed (audit bloc 4)", () => {
   it("strong (not dangerous) current → early_int MAYBE, not SKIP cliff", () => {
     // Repro du bug terrain : clean sweet-size day, le courant passe juste le
     // palier bas "strong". early_int doit rester MAYBE (pas de SKIP rouge
-    // 100→38). first_timer/beginner gardent leur SKIP dur (foamie).
+    // 100→38). Depuis le 14/11, même règle pour first_timer/beginner.
     const clean = { swellHeight: 0.9, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null, currentVel: 0.4 };
     expect(classifyConditions("early_int", clean, spot).currentHazard).toBe("strong");
     expect(getPersonalVerdict("early_int", clean, spot)).toBe("ok");
     // le score ne s'effondre plus dans la bande SKIP (≤38) — reste MAYBE (≥45)
     expect(scoreForLevel(clean, spot, "early_int").score).toBeGreaterThan(45);
-    // vrais foamie : SKIP dur préservé
-    expect(getPersonalVerdict("first_timer", clean, spot)).toBe("no");
-    expect(getPersonalVerdict("beginner", clean, spot)).toBe("no");
+    // first_timer / beginner : plafond MAYBE aussi (le courant modélisé ne
+    // voit pas une baïne, cf. getPersonalVerdict 14/11) — jamais GO
+    expect(getPersonalVerdict("first_timer", clean, spot)).not.toBe("yes");
+    expect(getPersonalVerdict("beginner", clean, spot)).not.toBe("yes");
     // le palier haut "dangerous" reste un SKIP dur pour early_int
     const danger = { ...clean, currentVel: 0.6 };
     expect(getPersonalVerdict("early_int", danger, spot)).toBe("no");
@@ -332,15 +333,16 @@ describe("safety holes closed (audit bloc 4)", () => {
     expect(classifyConditions("early_int", h, spot).currentHazard).toBe("dangerous");
     expect(getPersonalVerdict("early_int", h, spot)).toBe("no");
   });
-  it("first_timer and beginner keep the 0.28 m/s hard SKIP on inside-reform beaches", () => {
+  it("first_timer and beginner: 0.28 m/s caps the verdict at MAYBE, never GO, never a hard SKIP (14/11)", () => {
     const clean = { swellHeight: 0.5, swellPeriod: 12, swellDir: 240, windSpeedKn: 4, windDir: 90, tideM: null };
     for (const level of ["first_timer", "beginner"]) {
       expect(getPersonalVerdict(level, { ...clean, currentVel: 0.27 }, spot)).not.toBe("no");
       for (const currentVel of [0.28, 0.30, 0.39]) {
         const h = { ...clean, currentVel };
         expect(classifyConditions(level, h, spot).currentHazard).toBe("strong");
-        expect(getPersonalVerdict(level, h, spot)).toBe("no");
+        expect(getPersonalVerdict(level, h, spot)).toBe("ok");
       }
+      expect(getPersonalVerdict(level, { ...clean, currentVel: 0.56 }, spot)).toBe("no"); // "dangerous" stays a hard SKIP
     }
   });
   it("skill case D: 2.0m/14s clean ≈9.2ft face → hard no for early_int & intermediate", () => {
@@ -1380,7 +1382,9 @@ describe("size grids read the FACE height — beginner, early_int (10/10)", () =
     }
   });
   it("Crescent Head hours: the verdict does not move (only the score does)", () => {
-    expect(getPersonalVerdict("beginner", h13, crescent)).toBe("no");       // 4.4 ft is too big for a beginner
+    // 14/11 : 1.74 m @ 7.7 s reads ~2.6 ft with the 0.6 default (was 4.4 ft,
+    // too big), and the 0.36 m/s modelled current now caps at MAYBE.
+    expect(getPersonalVerdict("beginner", h13, crescent)).toBe("ok");
   });
 
   for (const level of ["beginner", "early_int"]) {

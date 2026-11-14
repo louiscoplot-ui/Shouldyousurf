@@ -987,7 +987,10 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // strong rip needs to hear about the rip first, even if the wind is
     // also blowing the surface up. Both "dangerous" and "strong" route
     // here since both now cap a learner to SKIP.
-    if (currentHazard !== "none" && isLearner) return "tip_" + userLevel + "_current";
+    // Depuis le 14/11 "strong" ne fait plus SKIP : seul "dangerous" peut être
+    // LA raison du SKIP. Un "strong" sur un reef parlait de courant alors que
+    // c'est le reef qui disait non (Echo Beach, Balangan).
+    if (currentHazard === "dangerous" && isLearner) return "tip_" + userLevel + "_current";
     if (reefTooMuch) return "tip_" + userLevel + "_reef";
     if (heavyTooMuch) return "tip_" + userLevel + "_heavy";
     // Gale tip — only fire when wind is actually shredding the face.
@@ -1024,7 +1027,7 @@ export function getPersonalAdviceKey(userLevel, h, spot, displayedVerdict) {
     // Sans cette ligne le conseil "sweet_clean" disait "go score some waves"
     // sous un WORTH IT (Thomas Beach, Bali, 14/11). Attrapé par
     // tests/coherence.test.mjs (règle tip_tone).
-    if (currentHazard === "strong" && userLevel === "early_int" && wind === "clean" && (size === "sweet" || size === "upper")) return "tip_early_int_current_caution";
+    if (currentHazard === "strong" && isLearner && wind === "clean" && (size === "sweet" || size === "upper" || size === "small")) return "tip_" + userLevel + "_current_caution";
     if (size === "too_big") return "tip_" + userLevel + "_too_big";
     if (size === "too_small") return "tip_" + userLevel + "_too_small";
     if (wind === "blown") return "tip_" + userLevel + "_blown_" + size;
@@ -1251,7 +1254,17 @@ export function getPersonalVerdict(userLevel, h, spot) {
     // used to flip an early_int's whole clean morning from Unreal-GO to
     // Fair-SKIP. "strong" stays surfaced as a caveat (session note +
     // GO→MAYBE downgrade), not a false alarm.
-    if (currentHazard === "strong" && userLevel !== "early_int") return "no";
+    // 14/11 : plus de SKIP dur sur le palier "strong", pour PERSONNE. Le
+    // courant d'Open-Meteo vient d'un modèle océanique sur une grille de
+    // ~9 km, au large : il ne voit pas une baïne de plage. Mesuré le 14/11
+    // sur 8 jours : >= 0.28 m/s 100 % des heures à Thomas Beach, 82 % à Kuta
+    // Beach et Batu Bolong, 0 % à Trigg ou Pipeline. Le sud de Bali (détroit
+    // de Badung, courant de marée et de transit indonésien) est TOUJOURS
+    // au-dessus : un beginner y lisait SKIP en permanence, y compris à Kuta,
+    // la plage d'apprentissage de l'île. "strong" plafonne donc au MAYBE
+    // (downgrade ci-dessous) pour first_timer / beginner comme pour early_int,
+    // avec un conseil courant. Le palier "dangerous" (0.56) reste un SKIP
+    // dur pour tous, plus haut.
     // Wind === "blown" already means the surface is shredded enough
     // that the score collapses to ~0; the inside is just as choppy as
     // the outside in those conditions. Don't promise a learner an
@@ -1581,6 +1594,30 @@ function scoreBandFromScore(s) {
   return           { color: "#b54c3f" };     // skip
 }
 
+// Best hour of a day, chosen among DAYLIGHT hours. Hours are kept from 4h to
+// 20h whatever the latitude, so the best window could land in the dark:
+// "Around 4:00am" at Thomas Beach, Bali, 14/11 (sunrise ~05:45). An hour
+// counts as daylight when it starts no earlier than 30 min before sunrise
+// and no later than 30 min before sunset. Without sun times (or if no hour
+// qualifies) it falls back to every hour, as before.
+const minutesOf = (iso) => {
+  const m = typeof iso === "string" ? iso.match(/T(\d{2}):(\d{2})/) : null;
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+export function pickBestHour(hours, sun) {
+  if (!hours || !hours.length) return null;
+  const rise = minutesOf(sun?.sunrise);
+  const set = minutesOf(sun?.sunset);
+  let pool = hours;
+  if (rise != null && set != null) {
+    const lit = hours.filter((h) => h.hour * 60 >= rise - 30 && h.hour * 60 <= set - 30);
+    if (lit.length) pool = lit;
+  }
+  let best = pool[0];
+  for (const h of pool) if (h.score > best.score) best = h;
+  return best;
+}
+
 export function adaptForecastToLevel(payload, userLevel, spot) {
   if (!payload || !payload.days) return payload;
   if (!userLevel) return payload;
@@ -1595,8 +1632,7 @@ export function adaptForecastToLevel(payload, userLevel, spot) {
     // pour les jours d'archive partiellement disponibles), on évite le
     // crash hours[0].score sur undefined (audit SILENCIEUX #15).
     if (!hours.length) return { ...d, hours, bestHour: null, bestLevel: scoreBandFromScore(0) };
-    let best = hours[0];
-    for (const hh of hours) if (hh.score > best.score) best = hh;
+    const best = pickBestHour(hours, payload.sunByDay?.[d.dateStr]);
     const bestLevel = scoreBandFromScore(best.score);
     return { ...d, hours, bestHour: best, bestLevel };
   });
