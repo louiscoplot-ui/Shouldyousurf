@@ -24,13 +24,24 @@ export function currentVelToMs(v, unit) {
   return v; // "m/s", vide ou inconnue → tel quel (comportement historique)
 }
 
-// Per-spot swell attenuation — offshore Hs is what the wave model sees at
-// the grid cell; sheltered spots (offshore banks, islands, headlands) only
-// receive a fraction of it. 1.0 = fully exposed (default, non-regression).
-// Values live on the spot in breaks.js (`swellAttenuation`).
+// Per-spot swell attenuation: fraction of the Hs read 5 km offshore that the
+// face-height conversion uses. Values on the spot in breaks.js win
+// (`swellAttenuation`, Perth metro 0.55-0.60).
+//
+// DEFAULT 0.6 since 14/11 (was 1.0). The 1.0 default had never been checked
+// against a single real session anywhere: the only field cases (Trigg,
+// 09/2026) pass BECAUSE Perth carries a hand-set 0.6, and without it the
+// formula reads 4-6 ft on a day seen at 2-4 ft. That 0.6 was explained by the
+// Five Fathom Bank, but the model value at 5 km already includes the shelter
+// (decay profile of 17/09 in CLAUDE.md), so it was mostly correcting a
+// generous conversion. Bali, 14/11 (Uluwatu, 1.2-1.3 m @ 9.2-9.4 s): 3-5 ft
+// with 1.0, about 1-3 ft reported, 1-3 ft with 0.6. Same factor, two oceans.
+// Evidence = 2 regions: add a field case (tests/scoring.test.mjs) for every
+// session reported elsewhere, and revisit if one disagrees.
+export const DEFAULT_SWELL_ATTENUATION = 0.6;
 export function spotAttenuation(spot) {
   const a = spot ? spot.swellAttenuation : null;
-  return Number.isFinite(a) ? Math.min(1, Math.max(0, a)) : 1.0;
+  return Number.isFinite(a) ? Math.min(1, Math.max(0, a)) : DEFAULT_SWELL_ATTENUATION;
 }
 
 export function estimateFaceHeight(swellHeight, swellPeriod, attenuation = 1) {
