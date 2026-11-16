@@ -6,6 +6,7 @@ import {
   currentVelToMs,
   estimateFaceHeight,
   spotAttenuation,
+  exposureFactor,
   pickDominantSwell,
   faceFtOf,
   getBoardRec,
@@ -1051,6 +1052,52 @@ describe("cas terrain Bali", () => {
       expect(ft).toBeLessThanOrEqual(3);
     });
   }
+});
+
+describe("exposition houle / orientation de la plage (spots cherchés)", () => {
+  it("sans shoreNormal (spots curés) : 1, aucun effet", () => {
+    expect(exposureFactor({}, 200)).toBe(1);
+    expect(exposureFactor({ idealSwellDir: 240 }, 20)).toBe(1);
+  });
+  it("1 jusqu'à 60°, 0.5 à 120° et au-delà, sans marche", () => {
+    const sp = { shoreNormal: 270 };
+    expect(exposureFactor(sp, 270)).toBe(1);
+    expect(exposureFactor(sp, 210)).toBe(1);
+    expect(exposureFactor(sp, 150)).toBeCloseTo(0.5, 10);
+    expect(exposureFactor(sp, 90)).toBeCloseTo(0.5, 10);
+    let prev = exposureFactor(sp, 270);
+    for (let d = 270; d >= 90; d -= 0.5) {
+      const f = exposureFactor(sp, d);
+      expect(Math.abs(f - prev)).toBeLessThan(0.01);
+      prev = f;
+    }
+  });
+});
+
+describe("cas terrain Thomas Beach (spot cherché)", () => {
+  // Dimanche 16/11/2026, 12h-15h heure de Bali, Louis dans l'eau. Plage
+  // orientée 320° (géométrie de la côte, probeShoreNormal). Open-Meteo au
+  // point marin : 1.44-1.46 m @ 9.7 s, houle 202-203°, soit 117° hors de
+  // l'axe de la plage (elle contourne le Bukit). Vent 11 km/h SSE.
+  // Vu : "jamais une vague de plus de 2 ft, une série de 3-4 toutes les 10 min,
+  // petites vagues only". L'app affichait 2-4 ft, Good 46, WORTH IT.
+  const THOMAS = { id: "custom--8.8123-115.0982", lat: -8.8123, lng: 115.0982, type: "beach",
+    idealSwellDir: 203, offshoreWindDir: 140, shoreNormal: 320 };
+  const h = (swellHeight) => ({ time: "2026-11-16T12:00", hour: 12, swellHeight, swellPeriod: 9.7, swellDir: 202,
+    windSpeedKn: 11 / 1.852, windGustKn: 15 / 1.852, windDir: 157, windWaveHeight: 0.1, windWavePeriod: 3,
+    windWaveDir: 157, tideM: 0.6, currentVel: 0.5 });
+  it("la face reste sous les 2 ft vus", () => {
+    for (const hs of [1.44, 1.46]) {
+      const ft = faceFtOf(h(hs), THOMAS);
+      expect(ft).toBeGreaterThan(0.5);
+      expect(ft).toBeLessThanOrEqual(2);
+    }
+  });
+  it("pas de GO pour qui cherche plus que de la mousse", () => {
+    for (const level of ["early_int", "intermediate", "advanced"]) {
+      expect(getPersonalVerdict(level, h(1.46), THOMAS)).not.toBe("yes");
+    }
+  });
 });
 
 describe("cas terrain Trigg", () => {

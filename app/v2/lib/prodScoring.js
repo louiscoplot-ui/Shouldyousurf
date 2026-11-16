@@ -44,6 +44,37 @@ export function spotAttenuation(spot) {
   return Number.isFinite(a) ? Math.min(1, Math.max(0, a)) : DEFAULT_SWELL_ATTENUATION;
 }
 
+// Exposure of the beach to a given swell direction. `shoreNormal` is the
+// beach's seaward bearing measured from the coastline geometry (elevation
+// ring, realFetch.probeShoreNormal). It is set only on SEARCHED spots, where
+// nothing else knows which way the beach faces; curated spots carry no
+// shoreNormal and this returns 1 (byte-identical).
+//
+// Why: the wave model's ~9 km grid does not resolve headlands. Thomas Beach,
+// Bali, 16/11: the beach faces 320° (NW); swell 1.42-1.46 m @ 9.7 s from 202°
+// (SSW), i.e. 117° off, wrapping round the Bukit. The model gave 1.42 m on
+// the NW side and 1.46 m on the S side, the same swell on both sides of the
+// peninsula. App: 2-4 ft. Seen by Louis in the water: never above 2 ft, a set
+// every 10 min. Swell within 60° of the beach's facing is untouched; beyond,
+// the height factor ramps (smoothstep, no step) down to 0.5 at 120° and more.
+// One field case so far: add every searched-spot session to the tests.
+export const EXPOSURE_FULL_DEG = 60;
+export const EXPOSURE_MIN_DEG = 120;
+export const EXPOSURE_MIN_FACTOR = 0.5;
+export function exposureFactor(spot, swellDir) {
+  const n = spot ? spot.shoreNormal : null;
+  if (!Number.isFinite(n) || !Number.isFinite(swellDir)) return 1;
+  const off = angDelta(swellDir, n);
+  const t = Math.max(0, Math.min(1, (off - EXPOSURE_FULL_DEG) / (EXPOSURE_MIN_DEG - EXPOSURE_FULL_DEG)));
+  return 1 - (1 - EXPOSURE_MIN_FACTOR) * t * t * (3 - 2 * t);
+}
+
+// Attenuation of ONE swell partition: the spot's own value times its
+// exposure to that partition's direction.
+export function partitionAttenuation(spot, swellDir) {
+  return spotAttenuation(spot) * exposureFactor(spot, swellDir);
+}
+
 export function estimateFaceHeight(swellHeight, swellPeriod, attenuation = 1) {
   // Period boost reflects how long-period swell builds at the break.
   // But this only matters when there's enough water mass to build with —
@@ -174,11 +205,10 @@ export function getDominant(h, spot) {
 // smoothstep que le score règle les deux d'un coup et garantit que la face
 // affichée et le score parlent toujours de la même vague.
 export function faceMOf(h, spot) {
-  const att = spotAttenuation(spot);
   const { pri, sec, w1, w2 } = swellPartitions(h, spot);
-  const fPri = estimateFaceHeight(pri.swellHeight, pri.swellPeriod, att);
+  const fPri = estimateFaceHeight(pri.swellHeight, pri.swellPeriod, partitionAttenuation(spot, pri.swellDir));
   if (!sec || w2 <= 0 || (w1 + w2) <= 0) return fPri;
-  const fSec = estimateFaceHeight(sec.swellHeight, sec.swellPeriod, att);
+  const fSec = estimateFaceHeight(sec.swellHeight, sec.swellPeriod, partitionAttenuation(spot, sec.swellDir));
   const t = w2 / (w1 + w2);
   const b = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
   const blend = b * b * (3 - 2 * b); // identique au blend de scoreV2
@@ -483,10 +513,14 @@ export function scoreV2(h, spot, userLevel, tideCtx) {
   // appliquée UNE fois ici), baseSize, multiplicateurs, chop, micro-cap.
   const partScore = (part) => {
     const hEff = part.swellHeight * att;
-    const baseSize = levelBaseSize(part.swellHeight, part.swellPeriod, level, att);
+    const baseSize = levelBaseSize(part.swellHeight, part.swellPeriod, level, att * exposureFactor(spot, part.swellDir));
     const periodMult = part.periodKnown ? lookupPeriodMult(part.swellPeriod) : 1.00;
     const swellDelta = (part.swellDir != null && ideal != null) ? angDelta(part.swellDir, ideal) : null;
-    const dirMult = swellDelta != null ? lookupDirMult(swellDelta) : 1.00;
+    // Searched spot: idealSwellDir is the mean of the swell that arrives, so
+    // the delta above is ~0 and paid a 1.22 bonus even to swell wrapping round
+    // a headland (Thomas Beach, 16/11: sets every 10 min). The exposure to
+    // the beach's own facing (1 within 60°) carries that loss of consistency.
+    const dirMult = (swellDelta != null ? lookupDirMult(swellDelta) : 1.00) * exposureFactor(spot, part.swellDir);
     // Chop windswell : pénalité en rampe sur le ratio (anciens paliers
     // 0.5→0.91 / 0.8→0.82 comme ancres), modulée par une porte de période
     // qui s'éteint entre 9.5s et 11s (avant : conditions sèches <10s/<11s).
