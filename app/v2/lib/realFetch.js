@@ -6,6 +6,7 @@
 // Scoring delegates to the production engine in prodScoring.js so v2 stays in
 // lock-step with the canonical verdict logic while evolving the visual design.
 
+import { fetchMetnoWind } from "./metnoWind";
 import {
   scoreV2,
   pickDominantSwell,
@@ -351,8 +352,11 @@ async function fetchResilient(url, signal, tries = 2) {
   for (let attempt = 0; attempt < tries; attempt++) {
     try {
       const res = await fetch(url, { signal });
-      // 4xx hors 429 = erreur permanente (mauvais param) : inutile de retenter.
-      if (res.ok || (res.status < 500 && res.status !== 429)) return res;
+      // 4xx = erreur permanente (mauvais param) OU quota (429) : inutile de
+      // retenter. Un 429 ne se lève pas en quelques millisecondes, et le
+      // quota gratuit Open-Meteo est compté par SITE (17/11) : retenter
+      // doublait la consommation au pire moment.
+      if (res.ok || res.status < 500) return res;
       lastErr = new Error(`HTTP ${res.status}`);
     } catch (e) {
       if (signal?.aborted) throw e; // vrai timeout / annulation → on sort
@@ -784,15 +788,26 @@ export async function fetchRealForecast(spot, signal) {
     fetch(pastMarineUrl, { signal }).catch(() => null),
     fetch(pastWindUrl, { signal }).catch(() => null),
     fetchResilient(futureMarineUrl, signal),
-    fetchResilient(futureWindUrl, signal),
+    // Le vent peut être refusé sans en-têtes CORS (quota Open-Meteo par
+    // site épuisé, 17/11) : le navigateur rejette alors la promesse. On ne
+    // jette plus, on passe au secours MET Norway ci-dessous.
+    fetchResilient(futureWindUrl, signal).catch(() => null),
   ]);
 
   if (!futureMarineRes.ok) throw new Error(`Marine API: HTTP ${futureMarineRes.status}`);
-  if (!futureWindRes.ok) throw new Error(`Wind API: HTTP ${futureWindRes.status}`);
   const futureMarine = await futureMarineRes.json();
-  const futureResolved = resolveSeaWind(
-    await futureWindRes.json(), futureWindCoords.km, windBearing,
-  );
+  let futureResolved = { wind: null, pickedKm: null };
+  let windSource = "open-meteo";
+  if (futureWindRes && futureWindRes.ok) {
+    futureResolved = resolveSeaWind(await futureWindRes.json(), futureWindCoords.km, windBearing);
+  } else {
+    // Secours : MET Norway (gratuit, mondial, CORS). Échec → même erreur
+    // qu'avant, donc même comportement (cache ou données d'exemple).
+    const backup = await fetchMetnoWind(spot, futureMarine, signal).catch(() => null);
+    if (!backup) throw new Error(`Wind API: HTTP ${futureWindRes ? futureWindRes.status : "blocked"}`);
+    futureResolved = { wind: backup, pickedKm: null };
+    windSource = "metno";
+  }
   const futureWind = futureResolved.wind;
   if (!futureMarine.hourly || !futureWind?.hourly) throw new Error("Invalid API response");
   // On mémorise la distance retenue (ou `null` = aucun candidat ne sortait
@@ -802,7 +817,7 @@ export async function fetchRealForecast(spot, signal) {
   // dont la sonde de cap a échoué n'envoie AUCUN point au large, et on ne
   // veut pas graver "pas de décalage" alors que la sonde réussira peut-être
   // au prochain chargement.
-  if (cachedWindKm === undefined && !hasWindOverride && futureWindCoords.km.length) {
+  if (windSource === "open-meteo" && cachedWindKm === undefined && !hasWindOverride && futureWindCoords.km.length) {
     writeWindOffsetKm(spot, futureResolved.pickedKm);
   }
 
@@ -1004,5 +1019,5 @@ export async function fetchRealForecast(spot, signal) {
   if (!days.length) {
     throw new Error("Open-Meteo returned no usable hours (empty/null fields — likely rate-limited or blocked)");
   }
-  return { days, sunByDay, effectiveSpot };
+  return { days, sunByDay, effectiveSpot, windSource };
 }

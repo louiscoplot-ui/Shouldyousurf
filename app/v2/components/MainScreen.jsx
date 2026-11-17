@@ -97,6 +97,12 @@ export default function MainScreen({ theme, setTheme }) {
   // restoration (they re-run the [spot] effect but are not user picks).
   const spotEffectRanRef = useRef(false);
   const restoredSpotRef = useRef(false);
+  // Le spot sauvegardé est relu APRÈS le premier rendu (localStorage). Sans
+  // ce drapeau, le fetch partait d'abord pour Trigg (spot par défaut), puis
+  // une deuxième fois pour le vrai spot : deux fois plus d'appels Open-Meteo
+  // pour tous ceux qui ne surfent pas à Trigg (mesuré 17/11 : Balangan 10
+  // appels vent au lieu de 5), sur un quota gratuit partagé par tout le site.
+  const [spotRestored, setSpotRestored] = useState(false);
 
   // ── Un appareil = une personne, pour toujours ──────────────────────
   // ⚠️ PostHog tourne en `person_profiles: 'identified_only'` et
@@ -158,6 +164,7 @@ export default function MainScreen({ theme, setTheme }) {
     if (savedLvl) setUserLevel(savedLvl);
     const onboarded = safeGet("surf-onboarded-v2");
     if (!onboarded && !savedLvl) setOnboardingOpen(true);
+    setSpotRestored(true);
     const savedCountry = safeGet("surf-country");
     if (savedCountry) setCountry(savedCountry);
     const notifOpt = safeGet("surf-notif-opt-in");
@@ -295,6 +302,7 @@ export default function MainScreen({ theme, setTheme }) {
   // user's network blocks Open-Meteo.
   const [lastFetchAt, setLastFetchAt] = useState(0);
   useEffect(() => {
+    if (!spotRestored) return undefined;
     let cancelled = false;
     // Seed : le DERNIER forecast live de ce spot (cache localStorage,
     // re-étiqueté par date) s'affiche instantanément — pas de mock, pas de
@@ -320,6 +328,14 @@ export default function MainScreen({ theme, setTheme }) {
       setDataSource("loading");
     }
     setFetchError(null);
+
+    // Cache de moins de 10 min : rien à refaire. Chaque ouverture de l'app
+    // relançait 4 à 6 appels même pour des données vieilles de 2 minutes, et
+    // le quota gratuit Open-Meteo est compté par SITE (17/11). Le refetch au
+    // retour sur l'onglet (> 5 min, plus bas) garde les données fraîches.
+    if (cached && Date.now() - cached.cachedAt < 10 * 60 * 1000) {
+      return () => { cancelled = true; };
+    }
 
     // Open-Meteo's marine API can be slow (its two marine calls dominate the
     // 4-request fan-out). 15s timeout via AbortController so the four
@@ -351,7 +367,7 @@ export default function MainScreen({ theme, setTheme }) {
       }
     })();
     return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
-  }, [spot]);
+  }, [spot, spotRestored]);
 
   // Refetch when the tab regains focus AND it's been > 5 minutes since the
   // last successful real fetch. Without this the user could leave the app
