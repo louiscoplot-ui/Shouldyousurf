@@ -18,7 +18,13 @@ Lis ce fichier en entier avant chaque session. Il contient tout le contexte du p
 
 - Next.js 14.2.35 + React 18.3.1 (App Router)
 - Tests : vitest (`npm test`) — `tests/scoring.test.mjs` verrouille les invariants du moteur. OBLIGATOIRE avant push si tu touches au scoring.
-- APIs : Open-Meteo Marine + Forecast (GFS/ICON) — gratuit, no key. ⚠️ tier gratuit = non-commercial, migration plan Standard 29$/mois à prévoir.
+- APIs : Open-Meteo Marine + Forecast (GFS/ICON) — gratuit, no key. **L'app ne gagne pas d'argent (confirmé par Louis 17/11) → tier gratuit non-commercial OK.** Si elle est un jour monétisée (pubs, abonnement, affiliation) : clé payante via `NEXT_PUBLIC_OPENMETEO_KEY`, le code bascule seul sur `customer-*`.
+  - ⚠️ **Quota gratuit compté PAR SITE** (mesuré 17/11 : même requête, même IP → 200 sans Origin, 429 « Daily API request limit exceeded » avec Origin/Referer shouldyousurf.com). Le 16-17/11 il a sauté : plus de vent pour personne → données d'exemple partout (Bali, Perth).
+  - ✅ **Cache partagé `/api/wx`** (PR #74, `app/v2/lib/sharedFetch.js`) : le navigateur passe par notre route, la réponse est partagée par le CDN Vercel (30 min prévisions, 6 h jours passés, 30 j altitude, stale 24 h). Un spot ≈ 48 appels/jour max quel que soit le nombre d'utilisateurs. Vérifié en prod : MISS puis HIT. Liste blanche d'hôtes. Échec → appel direct comme avant.
+  - ✅ **Secours vent MET Norway** (PR #73, `app/v2/lib/metnoWind.js`) si l'API vent Open-Meteo refuse : gratuit, CC BY 4.0 (crédit footer), mondial. Pas de rafales, pas de pluie, pas de jours passés en mode secours ; verdicts identiques (vérifié Dreamland).
+  - Moins d'appels (PR #73) : spot sauvegardé restauré AVANT le premier fetch (avant : Trigg puis le vrai spot), cache < 10 min réutilisé, pas de retry sur 429.
+  - Alternatives testées 17/11 : MET Norway Océan = Norvège seulement ; NOAA WW3 (ERDDAP) = mailles ~50 km, injoignable depuis la session. Rien de mieux qu'Open-Meteo Marine en gratuit mondial.
+  - Open-Meteo est désormais JOIGNABLE depuis la session (17/11) : vérifier par une vraie requête plutôt que supposer.
 - Analytics : PostHog US Cloud + Session Replay (`NEXT_PUBLIC_POSTHOG_KEY`) + GA4 (gtag dans layout.js)
   - **Où regarder les chiffres** : GA4 ID **`G-77RCEQZ2YS`**, en dur dans `layout.js` donc toujours actif → [analytics.google.com](https://analytics.google.com) (utilisateurs, pays). PostHog → **us.posthog.com** (events custom + Session Replay), actif seulement si `NEXT_PUBLIC_POSTHOG_KEY` est posée côté Vercel.
   - ✅ **Exclusion du trafic INTERNE** (`ss-no-analytics`) : **rien n'excluait Louis de ses propres stats** — chacune de ses visites comptait comme un utilisateur dans GA ET dans PostHog, et à faible trafic ses propres ouvertures dominent les chiffres. Ouvrir le site avec **`?noanalytics=1`** pose un drapeau localStorage permanent sur CET appareil ; **`?noanalytics=0`** l'enlève. Le drapeau pose `window["ga-disable-G-77RCEQZ2YS"]` (mécanisme d'opt-out officiel de Google) **AVANT** le chargement de `gtag.js`, saute le `gtag('config')`, et appelle `posthog.opt_out_capturing()`. ⚠️ Par appareil ET par navigateur : à refaire sur le téléphone, le laptop, etc.
@@ -212,6 +218,14 @@ Déclencheur : Thomas Beach (spot cherché, Bali) affiché « 3-5 ft · Good 59 
   - Hors-ligne pour le catalogue : `node scripts/spot-agent.mjs --ids a,b | --country XX [--max N] [--apply] [--out f.md]`. `--apply` n'écrit que les désaccords haute confiance dans `breaks.js` ; relire le diff.
 - **Cohérence de l'affichage = règles fixes, PAS d'IA** (`app/v2/lib/coherence.js`, `tests/coherence.test.mjs`, tourne à chaque `npm test` donc en CI). Balaye 233 280 heures synthétiques (6 niveaux × sable/reef/heavy × taille × période × vent × direction × courant) : conseil « go » sous MAYBE/SKIP, libellé de score au-dessus de la bande du verdict. A trouvé exactement le cas Thomas Beach : early_int + courant "strong" → WORTH IT mais conseil `sweet_clean`. Corrigé par `tip_early_int_current_caution` (EN+FR). Si tu ajoutes un plafond de GO, ce test te dira s'il manque un conseil.
 - **Écart terrain = arithmétique** (`accuracy/lib/terrain-gap.mjs`, `npm run gap -- --log <accuracy-data>/log`). A : modèle vs bouée au large (ratio médian, biais). B : fourchette affichée vs rapport terrain (`accuracy/data/field-reports.jsonl`, écrit à la main, format dans `field-reports.example.jsonl`). Ne marche que pour les spots du catalogue (les spots cherchés ne sont pas loggés).
+
+## CORRECTIFS CALCUL BALI (14-16/11, PR #71/#72)
+
+- **`DEFAULT_SWELL_ATTENUATION` = 0.6** (était 1.0) pour tout spot sans valeur propre. Perth gardait un 0.6 posé à la main qui masquait une conversion trop généreuse ; Uluwatu 14/11 passe de 3-5 à 1-3 ft. Perth inchangé. Cas terrain « Bali » dans scoring.test.mjs.
+- **Courant « strong » = MAYBE pour TOUS les learners**, plus de SKIP (seul « dangerous » 0.56 m/s reste SKIP). Le courant Open-Meteo vient d'un modèle océanique ~9 km : ≥ 0.28 m/s 100 % du temps à Thomas Beach, 82 % à Kuta, 0 % à Trigg. CACHE_V 15.
+- **Meilleur créneau en plein jour** (`pickBestHour`, sunByDay) : il tombait à 4h/20h, Trigg compris.
+- **Spots cherchés : `shoreNormal` + `exposureFactor`** (PR #72) : houle à > 60° de l'orientation de la plage réduite jusqu'à ×0.5 à 120°, sur la face ET le multiplicateur de direction. Cas terrain Thomas Beach 16/11 (vu ≤ 2 ft, app 2-4 ft). ⚠️ Spots curés non concernés (Balangan curé reste plus optimiste que Dreamland cherché, à 1 km) ; points/reefs qui vivent du wrap (Uluwatu, J-Bay, Noosa) ajoutés à la main sont sous-estimés. Si l'appel altitude échoue, pas de correction → verdict optimiste. CACHE_V 16.
+- **Agent IA profil de spot** (route `/api/spot-profile`) : OFF tant que `ANTHROPIC_API_KEY` + `SPOT_AGENT_ENABLED=1` ne sont pas posés dans Vercel.
 
 ## RÈGLES DE TRAVAIL
 
