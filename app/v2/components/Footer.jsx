@@ -21,6 +21,10 @@ export default function Footer({ t }) {
       <div className="attr">
         <AttributionText text={(!footer || footer === "footer") ? FALLBACK_FOOTER : footer} />
       </div>
+      {/* Secours vent quand Open-Meteo refuse (realFetch / metnoWind.js). */}
+      <div className="attr">
+        backup wind: <a href="https://api.met.no/" target="_blank" rel="noopener noreferrer">MET Norway</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>
+      </div>
     </div>
   );
 }
