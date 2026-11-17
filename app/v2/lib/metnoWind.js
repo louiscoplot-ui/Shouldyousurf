@@ -16,6 +16,8 @@
 // are interpolated (speed linearly, direction as a vector). No past hours:
 // the dimmed "yesterday" days simply do not show while on backup.
 
+import { sharedFetch } from "./sharedFetch";
+
 export const METNO_URL = "https://api.met.no/weatherapi/locationforecast/2.0/complete";
 const MS_TO_KN = 1.943844;
 
@@ -118,7 +120,7 @@ export function metnoToOpenMeteo(json, localTimes, offsetSec, lat, lng, timezone
 
 export async function fetchMetnoWind(spot, marine, signal) {
   const lat = Number(spot.lat).toFixed(4), lng = Number(spot.lng).toFixed(4);
-  const res = await fetch(`${METNO_URL}?lat=${lat}&lon=${lng}`, { signal });
+  const res = await sharedFetch(`${METNO_URL}?lat=${lat}&lon=${lng}`, { signal });
   if (!res.ok) throw new Error(`MET Norway: HTTP ${res.status}`);
   const json = await res.json();
   return metnoToOpenMeteo(json, marine?.hourly?.time || [], marine?.utc_offset_seconds || 0, spot.lat, spot.lng, marine?.timezone || null);
