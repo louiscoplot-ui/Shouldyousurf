@@ -7,6 +7,7 @@
 // lock-step with the canonical verdict logic while evolving the visual design.
 
 import { fetchMetnoWind } from "./metnoWind";
+import { sharedFetch } from "./sharedFetch";
 import {
   scoreV2,
   pickDominantSwell,
@@ -228,7 +229,7 @@ export async function probeOffshoreBearing(spot, marineModels, signal) {
 
   let json = null;
   try {
-    const res = await fetch(url, { signal });
+    const res = await sharedFetch(url, { signal });
     if (!res.ok) return null;
     json = await res.json();
   } catch { return null; }
@@ -351,7 +352,7 @@ async function fetchResilient(url, signal, tries = 2) {
   let lastErr = null;
   for (let attempt = 0; attempt < tries; attempt++) {
     try {
-      const res = await fetch(url, { signal });
+      const res = await sharedFetch(url, { signal });
       // 4xx = erreur permanente (mauvais param) OU quota (429) : inutile de
       // retenter. Un 429 ne se lève pas en quelques millisecondes, et le
       // quota gratuit Open-Meteo est compté par SITE (17/11) : retenter
@@ -785,8 +786,8 @@ export async function fetchRealForecast(spot, signal) {
   // requêtes FUTUR (critiques) passent par fetchResilient (1 retry sur panne
   // transitoire) ; le passé reste best-effort (.catch → null).
   const [pastMarineRes, pastWindRes, futureMarineRes, futureWindRes] = await Promise.all([
-    fetch(pastMarineUrl, { signal }).catch(() => null),
-    fetch(pastWindUrl, { signal }).catch(() => null),
+    sharedFetch(pastMarineUrl, { signal }).catch(() => null),
+    sharedFetch(pastWindUrl, { signal }).catch(() => null),
     fetchResilient(futureMarineUrl, signal),
     // Le vent peut être refusé sans en-têtes CORS (quota Open-Meteo par
     // site épuisé, 17/11) : le navigateur rejette alors la promesse. On ne
