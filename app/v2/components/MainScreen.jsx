@@ -650,7 +650,10 @@ function Loaded({
     // au danger sur une journée inoffensive use l'alerte : le jour où elle
     // sort sur un vrai rip, elle ne sera plus lue.
     const bigEnoughToHurt = cls.size !== "too_small" && cls.size !== "small";
-    return cls.currentHazard !== "none"
+    // Courant : seul "dangerous" alerte. "strong" vient d'un modèle océanique
+    // ~9 km qui ne voit pas une baïne (cf. getPersonalVerdict 14/11) : le
+    // bandeau sortait sur un 0-2 ft "trop petit" à Dreamland (18/11).
+    return cls.currentHazard === "dangerous"
         || cls.size === "too_big"
         || cls.reefTooMuch
         || cls.heavyTooMuch
