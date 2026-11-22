@@ -6,6 +6,9 @@
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Le cache de données de Next (fetch) gardait la réponse upstream du 17/11 et la
+// resservait en MISS CDN : on le coupe, seul le CDN (en-têtes ci-dessous) cache.
+export const fetchCache = "force-no-store";
 
 const ALLOWED = {
   "marine-api.open-meteo.com": ["/v1/marine"],
@@ -33,6 +36,7 @@ export async function GET(req) {
     upstream = await fetch(u.toString(), {
       // MET Norway's terms ask callers to identify themselves.
       headers: { "user-agent": "ShouldYouSurf/1.0 (+https://shouldyousurf.com)" },
+      cache: "no-store",
       signal: AbortSignal.timeout(12000),
     });
   } catch {
