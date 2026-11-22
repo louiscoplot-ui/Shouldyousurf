@@ -88,8 +88,8 @@ export function deviceId() {
   try {
     let id = localStorage.getItem(DEVICE_KEY);
     if (!id) {
-      id = (crypto && crypto.randomUUID)
-        ? crypto.randomUUID()
+      id = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
         : "d-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
       localStorage.setItem(DEVICE_KEY, id);
     }
