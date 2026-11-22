@@ -91,10 +91,16 @@ export default function StickyInfoBar({
   // Sun — same lookup as v1
   const dayKey = sel.time.split("T")[0];
   const sun = sunByDay ? sunByDay[dayKey] : null;
-  const fmtTime = (iso) => iso
-    ? new Date(iso).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz || "Australia/Perth" })
-        .toLowerCase().replace(" ", "")
-    : null;
+  // Open-Meteo renvoie l'heure LOCALE du spot sans fuseau ("2026-11-22T05:06").
+  // new Date() la lisait dans le fuseau de l'APPAREIL puis la reconvertissait
+  // vers `tz` : double conversion, lever du soleil à 12:06pm vu de Paris.
+  // On lit les chiffres tels quels (même correctif que HourlyList).
+  const fmtTime = (iso) => {
+    const m = iso ? /T(\d{2}):(\d{2})/.exec(iso) : null;
+    if (!m) return null;
+    const h = parseInt(m[1], 10);
+    return `${h % 12 === 0 ? 12 : h % 12}:${m[2]}${h < 12 ? "am" : "pm"}`;
+  };
   const sunrise = sun ? fmtTime(sun.sunrise) : null;
   const sunset  = sun ? fmtTime(sun.sunset)  : null;
 
@@ -147,9 +153,6 @@ export default function StickyInfoBar({
           </div>
           <div className="C-m-sub mono">
             {degToCompass(sel2.windDir)} · {tt(windTypeKey)}
-            {sel.windGustKn != null && Math.round(knToKmh(sel.windGustKn)) >= windKmh + 8 && (
-              <> · {tt("gusts")} {Math.round(knToKmh(sel.windGustKn))}</>
-            )}
             {sel.rainProb != null ? ` · ${Math.round(sel.rainProb)}% ${tt("rain").toLowerCase()}` : ""}
           </div>
         </div>
