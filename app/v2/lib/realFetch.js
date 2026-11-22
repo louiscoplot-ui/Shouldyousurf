@@ -619,7 +619,7 @@ const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 // fourchette de vent "11-33" alors que le moteur déployé rendait "OK · 44
 // Fair" sans fourchette sur exactement les mêmes données. Les deux
 // corrections de la veille étaient en prod ; c'est le cache qui les masquait.
-const CACHE_V = 16; // 16 : spots cherchés, exposition houle / orientation de la plage (16/11) ; 15 : courant "strong" = MAYBE pour tous les learners, plus de SKIP (14/11) ; 14 : atténuation par défaut 1.0 -> 0.6 (14/11) ; 13 : early_int / intermediate, houle < 7 s = plafond WORTH IT (10/10) ; 12 : grilles beginner/early_int sur la face (10/10) ; 11 : early_int courant "strong" 0.28 -> 0.40 m/s (09/10) ; 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
+const CACHE_V = 17; // 17 : cache CDN date + heures dédoublonnées, payloads locaux avec heures en double jetés (22/11) ; 16 : spots cherchés, exposition houle / orientation de la plage (16/11) ; 15 : courant "strong" = MAYBE pour tous les learners, plus de SKIP (14/11) ; 14 : atténuation par défaut 1.0 -> 0.6 (14/11) ; 13 : early_int / intermediate, houle < 7 s = plafond WORTH IT (10/10) ; 12 : grilles beginner/early_int sur la face (10/10) ; 11 : early_int courant "strong" 0.28 -> 0.40 m/s (09/10) ; 10 : spots libres, vent offshore = côte géométrique (29/09) ; 9 : first_timer grille face + sweet ≤ 2 ft (29/09) ; 8 : learners cross < 12 km/h clean (29/09) ; 7 : grilles adv/exp sur la face + cross < 12 km/h clean (28/09)
 
 export function writeCachedPayload(spotId, payload) {
   try {
@@ -885,7 +885,11 @@ export async function fetchRealForecast(spot, signal) {
     } catch {}
   }
 
-  const allRaw = [...pastRaw, ...futureRaw];
+  // Une heure ne doit exister qu'UNE fois (le futur l'emporte) : un
+  // chevauchement passé/futur doublait les points et cassait la courbe de marée.
+  const rawByTime = new Map();
+  for (const r of [...pastRaw, ...futureRaw]) rawByTime.set(r.time, r);
+  const allRaw = [...rawByTime.values()];
   // Infer spot profile if the curated spot didn't pre-fill idealSwellDir.
   const needsInfer = spot.idealSwellDir == null || spot.offshoreWindDir == null;
   // inferSpotProfile lit la direction RÉELLE de la houle sur la période : plus

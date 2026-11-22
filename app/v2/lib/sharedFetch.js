@@ -19,10 +19,22 @@ function useProxy() {
   return typeof window !== "undefined" && /^https?:$/.test(window.location?.protocol || "");
 }
 
+// Clé de cache DATÉE. L'URL d'une prévision ("forecast_days=5", sans date) est
+// identique tous les jours : sans ceci le CDN en gardait une copie du 17/11
+// (qui s'arrête au 21/11) et la resservait indéfiniment à tout le monde →
+// plus aucune prévision à partir du 22/11 et heures du passé en double.
+// Le paramètre `d` change à chaque tranche de 30 min (prévisions) ou 6 h
+// (jours passés) ; l'altitude ne change jamais, pas de tranche.
+export function cacheBucket(url, now = Date.now()) {
+  if (/\/v1\/elevation/.test(url)) return 0;
+  const win = /[?&]start_date=/.test(url) ? 6 * 3600000 : 30 * 60000;
+  return Math.floor(now / win);
+}
+
 export async function sharedFetch(url, opts = {}) {
   if (useProxy()) {
     try {
-      const res = await fetch(`${PROXY_PATH}?u=${encodeURIComponent(url)}`, opts);
+      const res = await fetch(`${PROXY_PATH}?u=${encodeURIComponent(url)}&d=${cacheBucket(url)}`, opts);
       if (res.ok) return res;
     } catch (e) {
       if (opts.signal?.aborted) throw e;

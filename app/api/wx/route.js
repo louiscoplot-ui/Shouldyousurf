@@ -50,8 +50,8 @@ export async function GET(req) {
       "content-type": "application/json",
       // Shared by everyone at the CDN; a stale copy is still served for a
       // day while a fresh one is fetched, so an upstream hiccup is invisible.
-      "cache-control": `public, max-age=0, s-maxage=${ttl}, stale-while-revalidate=86400`,
-      "cdn-cache-control": `public, s-maxage=${ttl}, stale-while-revalidate=86400`,
+      "cache-control": `public, max-age=0, s-maxage=${ttl}, stale-while-revalidate=60`,
+      "cdn-cache-control": `public, s-maxage=${ttl}, stale-while-revalidate=60`,
     },
   });
 }
